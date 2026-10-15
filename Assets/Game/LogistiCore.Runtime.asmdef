@@ -4,7 +4,8 @@
     "references": [
         "Unity.Localization",
         "Unity.ResourceManager",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Firebase.Functions"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

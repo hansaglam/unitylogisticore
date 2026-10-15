@@ -56,3 +56,7 @@ crashlytics-buildid.txt
 /[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
 /[Aa]ssets/[Ss]treamingAssets/aa*
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
+
+# Local non-production Firebase client override. Never commit project ids or keys.
+/Assets/Game/Backend/Resources/LocalClientEnvironment.asset
+/Assets/Game/Backend/Resources/LocalClientEnvironment.asset.meta
