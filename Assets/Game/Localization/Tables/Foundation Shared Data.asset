@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: Foundation Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: Foundation
+  m_TableCollectionNameGuidString: 8f124d292b7094c69a869f226a413670
+  m_Entries:
+  - m_Id: 355459072
+    m_Key: ui.verification.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 368041984
+    m_Key: ui.verification.body
+    m_Metadata:
+      m_Items: []
+  - m_Id: 368041985
+    m_Key: ui.verification.greeting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236288
+    m_Key: ui.verification.deliveries
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236289
+    m_Key: ui.verification.active_locale
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236290
+    m_Key: ui.verification.label_number
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236291
+    m_Key: ui.verification.label_currency
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236292
+    m_Key: ui.verification.label_percent
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236293
+    m_Key: ui.verification.label_distance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236294
+    m_Key: ui.verification.label_weight
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236295
+    m_Key: ui.verification.label_duration
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236296
+    m_Key: ui.verification.label_datetime
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236297
+    m_Key: ui.verification.portrait
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236298
+    m_Key: ui.verification.landscape
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236299
+    m_Key: ui.language.en
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236300
+    m_Key: ui.language.tr
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236301
+    m_Key: ui.language.de
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 256199762875252953
+  references:
+    version: 2
+    RefIds:
+    - rid: 256199762875252953
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1792099259195
