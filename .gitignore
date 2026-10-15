@@ -73,3 +73,6 @@ crashlytics-buildid.txt
 /backend/**/*.key
 /backend/**/*.local.json
 /backend/emulator-export/
+# Local non-production Firebase client override. Never commit project ids or keys.
+/Assets/Game/Backend/Resources/LocalClientEnvironment.asset
+/Assets/Game/Backend/Resources/LocalClientEnvironment.asset.meta
