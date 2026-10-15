@@ -1,0 +1,87 @@
+# LogistiCore — yerel backend temeli
+
+BACKEND-01 yalnız yerel geliştirmedir. Unity dosyalarına bağımlı değildir. Oyun komutu, veri geçişi veya production dağıtımı içermez. `CLIENT SENDS INTENT. BACKEND VALIDATES AND DECIDES.`
+
+## Gereksinimler ve bağımlılıklar
+
+- Node.js **22.x**, npm 10.x; global Firebase CLI gerekmez.
+- Java **21 veya üstü**, `java` PATH üzerinde olmalı. Makine araçları otomatik kurulmaz.
+- İlk `npm ci` için npm registry; ilk Firestore emulator çalışması için resmi emulator indirme sunucusuna erişim.
+- Auth 9099, Firestore 8080/9150, Functions 5001, hub 4400, logging 4500 portları boş olmalı. UI kapalıdır.
+
+Node 22, [Functions runtime belgesinde](https://firebase.google.com/docs/functions/manage-functions) desteklenir. Paketler npm engine/peer metadata kontrolüyle seçildi: Functions 7.4.0, Admin 14.5.0, CLI 15.34.0, Rules test SDK 5.0.2, Firebase test istemcisi 12.19.0, TypeScript 5.9.3. Rules test SDK 6.x Node 24 gerektirdiğinden seçilmedi. Exact manifest sürümleri ve tek kök workspace `package-lock.json` geçişli bağımlılıkları sabitler. Functions altında ikinci lockfile oluşturmayın.
+
+## Yapı
+
+```text
+backend/
+  package.json / package-lock.json    tooling + npm workspace
+  firebase.json                      yalnız demo emulator config
+  firestore.rules / firestore.indexes.json
+  functions/
+    package.json / tsconfig.json
+    src/index.ts                     yerel, auth zorunlu localHealth
+    src/localEnvironment.ts          fail-closed kontroller
+    lib/                             üretilmiş, Git dışında
+  scripts/emulators.mjs              kontrollü CLI başlatıcısı
+  tests/unit.test.mjs                guard ve entrypoint testleri
+  tests/emulators.test.mjs           Rules + Auth + Callable integration
+  .local/                            özel CLI config ve binary cache, Git dışında
+```
+
+Test çerçevesi Node'un yerleşik `node:test` modülüdür. Ayrı lint framework'ü yerine strict TypeScript, unused kontrolleri ve testler kullanılır. `src` yalnız TS, test/başlatıcılar küçük ESM JavaScript dosyalarıdır. Build çıktısı `functions/lib/` dışına çıkmaz.
+
+## Windows PowerShell
+
+Tüm komutlar açıkça backend kökünde çalışır:
+
+```powershell
+Set-Location 'D:\Projects\unitylogisticore\backend'
+node --version
+npm --version
+java -version
+npm ci --ignore-scripts --no-fund --no-audit
+npm run check
+npm run test:emulators
+```
+
+`check`: build + typecheck + unit. `test:emulators`: build + port/config/environment guard + CLI `emulators:exec` + integration testleri + emulator kapatma. Tam yerel kontrol `npm run validate` ile yapılır. `npm run test:unit` mevcut derleme çıktısını kullanır; kaynak değişikliğinden sonra `npm run check` tercih edin. Başlatıcı build'i otomatik yapar.
+
+Elle geliştirme:
+
+```powershell
+Set-Location 'D:\Projects\unitylogisticore\backend'
+npm run emulators
+```
+
+Aynı terminalde **Ctrl+C** ile kapatın; CLI emülatörleri sonlandırır. `emulators:exec` testler bittiğinde kendisi kapatır. Başlatıcı dolu portta durur; ilgisiz süreçleri öldürmez. Açık elle çalışan suite varken ikinci `test:emulators` çalıştırmayın; önce kendi suite'inizi kapatın. Java veya Node yoksa runtime testleri BLOCKED olur; derleme tek başına BACKEND-01 PASS sayılmaz.
+
+CLI yerel `node_modules/firebase-tools/lib/bin/firebase.js` dosyasından, açık `--project demo-logisticore-local --config <backend/firebase.json> --only auth,firestore,functions --non-interactive` ile çalışır. Başlatıcı serbest argüman almaz; proje değiştirme veya deploy script'i yoktur. `.firebaserc` gerekmez. `firebase login`, gerçek proje seçimi ve deploy bu fazın parçası değildir.
+
+## İzolasyon ve güvenlik
+
+Tek izinli ID **demo-logisticore-local**. Auth/Firestore/Functions adresleri yalnız `127.0.0.1` ve sabit portlardır. Başlatıcı mevcut proje/endpoint override'larını doğrular; farklı veya eksik runtime config fail-closed sonuç verir. Credentials/token environment değişkeni mevcutsa değerini göstermeden reddeder. Farklı bir çalışma için ayarlanmışsa o işi etkilemeden ayrı temiz terminal kullanın.
+
+CLI child environment allowlist ile kurulur; kullanıcı Firebase login ayarları için ayrı `.local/config` XDG config dizini kullanılır. ADC credential yolu aktarılmaz. Admin SDK uygulaması guard sonrasında açık emulator-only credential ile oluşturulur; ADC keşfi kullanılmaz. `localHealth` dosyası yanlış ortamda export/SDK initialization öncesinde hata verir ve her istekte ortamı tekrar doğrular. Bu entrypoint production için hazır değildir; daha sonraki production backend tasarımı yerel sağlık endpoint'ini kaldırmalı veya ayrı tutmalıdır.
+
+Her başlatmada `.local/config/run-*` altında yeni XDG/APPDATA dizini seçilir; önceki CLI login dosyaları tekrar kullanılmaz. Metadata server keşfi `METADATA_SERVER_DETECTION=none` ile kapalıdır. Functions discovery alt süreci özel Functions client endpoint değişkenini taşımadığından runtime guard Auth/Firestore adreslerini ve `FUNCTIONS_EMULATOR=true` değerini zorunlu tutar; test runner üç endpoint'i de zorunlu tutar. Emulator token doğrulaması production kriptografik doğrulaması değildir; handler ayrıca boş/eksik trusted UID'yi reddeder.
+
+Demo projeler yerel test amacı taşır; [Firebase emulator rehberi](https://firebase.google.com/docs/emulator-suite/connect_functions) proje ID tutarlılığını açıklar. Koruma mekanizmaları desteklenen kod yolunu güvenli kılar; geliştiricinin repo kodunu değiştirip doğrudan CLI çalıştırmasını engelleyen bir işletim sistemi sandbox'ı değildir. Yeni servis SDK'sı eklenirse endpoint ve egress sınırı yeniden incelenmelidir.
+
+Rules tüm belge get/list/create/update/delete işlemlerini hem anonymous hem authenticated istemci için reddeder. Index listesi boştur; TTL veya varsayımsal index yoktur. **Admin SDK Rules'ı aşar**; ileride her komutta trusted Auth UID + ayrı company ownership + domain doğrulaması gerekir. App Check şu anda uygulanmadı; production Auth/authorization yerine geçmez.
+
+Health fonksiyonu veri okumaz/yazmaz, oyuncu kimliğini cevapta döndürmez. Integration testi yalnız Auth Emulator'da geçici anonim sentetik kimlik üretir ve sonunda siler; gerçek provider credential kullanılmaz. Rules testleri yalnız reddedilmesi beklenen sentetik erişimler yapar; kanonik gameplay koleksiyonları seed edilmez. Emulator verisi export edilmez.
+
+## Bağımsız çalışma ve sonraki sınır
+
+Backend geliştiricisi yalnız `backend/` ve ilgili belgelerde çalışır; Unity geliştiricisi API sözleşmesindeki sentetik örnekleri kullanabilir. `Assets/`, `Packages/`, `ProjectSettings/`, mevcut `ARCHITECTURE.md` ve BACKEND-00 değişmez. Bütün ortam/test/derleme dosyaları backend altında kalır.
+
+Auth kimliği trusted request context'ten alınır; payload UID'si kabul edilmez. Company authorization ve anonymous linking BACKEND-02'ye, command idempotency BACKEND-03'e aittir. Başlangıç schema veya financial ledger henüz uygulanmaz. `money/cash` ve `level/companyLevel` eşdeğerliği UNKNOWN; mapping yapılmaz. Her domain mutation'da merkezi company stateVersion yazılması zorunlu değildir; domain bazlı version seçimi gelecekte transaction sınırları ve ölçümle kararlaştırılacak.
+
+Geçici API sözleşmesi: [FOUNDATION_CONTRACT](../docs/api-contracts/FOUNDATION_CONTRACT.md). Gerçek test sonuçları: [BACKEND-01_REPORT](../docs/backend/BACKEND-01_REPORT.md). BACKEND-02 otomatik başlamaz.
+
+## Bilinen bağımlılık sınırlaması
+
+16 Ekim 2026 kontrolünde `npm audit --omit=dev --audit-level=high --json` sıfır bulgu döndürdü. Tam audit, Firebase CLI'nin development bağımlılıklarında 3 high + 4 moderate paket kaydı döndürüyor (üç temel advisory'nin bağımlılık zincirine yayılımı). Bunlar temiz sonuç olarak raporlanmadı; ayrıntılar BACKEND-01 raporunda. Untrusted repo/glob/URL girdileri bu yerel CLI'ye verilmemeli. Otomatik `npm audit fix --force` çalıştırmayın.
+
+Firebase test istemcisinin eski gRPC sürümü için yalnız `@firebase/firestore → @grpc/grpc-js` yolu 1.13.6'ya override edildi; aynı major içindeki güvenlik düzeltmesi Rules emulator testinden geçti. Bu override upstream düzeltildiğinde kaldırılmak üzere belgelenmiştir. CLI'nin kalan bulguları için sürüm düzeltmesi veya kapsamı belgelenmiş risk kabulü gerekir; işlevsel test başarısı genel güvenlik onayı değildir.
