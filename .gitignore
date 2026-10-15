@@ -57,6 +57,22 @@ crashlytics-buildid.txt
 /[Aa]ssets/[Ss]treamingAssets/aa*
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 
+# Backend local dependencies, outputs and private configuration
+/backend/**/node_modules/
+/backend/functions/lib/
+/backend/coverage/
+/backend/.local/
+/backend/.firebase/
+/backend/**/*-debug.log*
+/backend/**/.env*
+!/backend/**/.env.example
+/backend/**/*service-account*.json
+/backend/**/*serviceAccount*.json
+/backend/**/credentials*.json
+/backend/**/*.pem
+/backend/**/*.key
+/backend/**/*.local.json
+/backend/emulator-export/
 # Local non-production Firebase client override. Never commit project ids or keys.
 /Assets/Game/Backend/Resources/LocalClientEnvironment.asset
 /Assets/Game/Backend/Resources/LocalClientEnvironment.asset.meta

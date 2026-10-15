@@ -1,0 +1,26 @@
+{
+  "name": "logisticore-backend-local",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": "22.x" },
+  "workspaces": ["functions"],
+  "overrides": {
+    "@firebase/firestore": { "@grpc/grpc-js": "1.13.6" }
+  },
+  "scripts": {
+    "build": "npm run build --workspace functions",
+    "typecheck": "npm run typecheck --workspace functions",
+    "test:unit": "node --test tests/unit.test.mjs",
+    "check": "npm run build && npm run typecheck && npm run test:unit",
+    "emulators": "npm run build && node scripts/emulators.mjs start",
+    "test:emulators": "npm run build && node scripts/emulators.mjs test",
+    "validate": "npm run check && npm run test:emulators"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "@types/node": "22.19.15",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.34.0",
+    "typescript": "5.9.3"
+  }
+}
