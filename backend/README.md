@@ -85,3 +85,13 @@ Geçici API sözleşmesi: [FOUNDATION_CONTRACT](../docs/api-contracts/FOUNDATION
 16 Ekim 2026 kontrolünde `npm audit --omit=dev --audit-level=high --json` sıfır bulgu döndürdü. Tam audit, Firebase CLI'nin development bağımlılıklarında 3 high + 4 moderate paket kaydı döndürüyor (üç temel advisory'nin bağımlılık zincirine yayılımı). Bunlar temiz sonuç olarak raporlanmadı; ayrıntılar BACKEND-01 raporunda. Untrusted repo/glob/URL girdileri bu yerel CLI'ye verilmemeli. Otomatik `npm audit fix --force` çalıştırmayın.
 
 Firebase test istemcisinin eski gRPC sürümü için yalnız `@firebase/firestore → @grpc/grpc-js` yolu 1.13.6'ya override edildi; aynı major içindeki güvenlik düzeltmesi Rules emulator testinden geçti. Bu override upstream düzeltildiğinde kaldırılmak üzere belgelenmiştir. CLI'nin kalan bulguları için sürüm düzeltmesi veya kapsamı belgelenmiş risk kabulü gerekir; işlevsel test başarısı genel güvenlik onayı değildir.
+
+## BACKEND-02 — yerel identity eklemesi
+
+`ensurePlayerIdentity` ve sunucu içi `requireCompanyOwner` uygulanmıştır; ayrıntılı sözleşme [IDENTITY_CONTRACT](../docs/api-contracts/IDENTITY_CONTRACT.md), güncel doğrulamalar [BACKEND-02_REPORT](../docs/backend/BACKEND-02_REPORT.md). Yukarıdaki BACKEND-01 kapsam açıklamaları tarihsel başlangıç durumudur. Komutlar, dependency sürümleri, lockfile ve launcher aynıdır.
+
+`src/identity.ts` trusted UID/payload doğrulaması, transaction ile minimal identity ve ownership kontrolünü içerir. Testler yalnız geçici sentetik kimlik/company/legacy fixtures kullanır; anonymous→email linking, ikinci oturum ve collision SDK üzerinden sınanır. Her test yalnız kendi kayıtlarını temizler; genel reset/export yoktur.
+
+Firestore, Admin SDK'nin export ettiği `Firestore` constructor'ından guard sonrasında sabit demo proje/loopback host ve `ssl:false` ile oluşturulur. Kurulu SDK'nin emulator transport'u `Bearer owner` kullanır; ADC veya gerçek sertifika gerekmez. `getFirestore(app)` mevcut özel health credential nesnesini kabul etmediği için kullanılmaz. Guard ve sabit endpoint olmadan bu istemci başka ortama taşınmamalıdır.
+
+Firestore tip zincirindeki CommonJS/ESM uyumu için `module` ve `moduleResolution` NodeNext oldu; strict ve skipLibCheck=false korunur. Doğrulanan ortam Node 22.23.2, TypeScript 5.9.3; eski Node 22 minor sürümleri ayrıca doğrulanmadı. Yeni dependency, Pub/Sub, tracing, glob, telemetry veya remote emulator erişimi eklenmedi. Üç advisory ve BACKEND-01 §19 süreli yerel risk koşulları geçerliliğini korur; production/CI onayı değildir.

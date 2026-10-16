@@ -3,6 +3,21 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { assertLocalEnvironment, assertSafeOverrides, LOCAL_PROJECT, LOCAL_ENDPOINTS } from '../functions/lib/localEnvironment.js';
+import { requireUid, validateIdentityRequest } from '../functions/lib/identity.js';
+
+test('identity trust boundary rejects malformed auth and all non-allowlisted request fields', () => {
+  for (const auth of [undefined, null, {}, { uid: '' }, { uid: ' ' }, { uid: 7 }, { uid: 'a/b' }, { uid: '..' }, { uid: 'x'.repeat(129) }]) {
+    assert.throws(() => requireUid(auth), error => error.code === 'unauthenticated' && error.details.messageKey === 'errors.unauthenticated');
+  }
+  assert.equal(requireUid({ uid: 'synthetic-player' }), 'synthetic-player');
+  validateIdentityRequest({ protocolVersion: 1 });
+  for (const field of ['uid', 'ownerUid', 'userId', 'authUid', 'companyOwnerUid', 'role', 'isAdmin', 'cash', 'unexpected']) {
+    assert.throws(() => validateIdentityRequest({ protocolVersion: 1, [field]: 'synthetic' }), { code: 'invalid-argument' });
+  }
+  for (const data of [null, [], {}, { protocolVersion: 2 }, { protocolVersion: '1' }]) {
+    assert.throws(() => validateIdentityRequest(data), { code: 'invalid-argument' });
+  }
+});
 
 const valid = { GCLOUD_PROJECT: LOCAL_PROJECT, ...LOCAL_ENDPOINTS, FUNCTIONS_EMULATOR: 'true' };
 
