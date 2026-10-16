@@ -101,3 +101,9 @@ Firestore tip zincirindeki CommonJS/ESM uyumu için `module` ve `moduleResolutio
 `src/commands.ts` trusted Auth UID, strict protocol/envelope, bounded canonical JSON/SHA-256 fingerprint ve atomik domain-effect/receipt yürütücüsünü içerir. Yeni callable export edilmez; test-only synthetic operasyon yalnız integration test dosyasındadır. Receipt `v2Players/{uid}/commands/{key}` altında kalıcıdır, TTL yoktur. Command replay result ve ilk commit zamanını korur; identity callable davranışı değişmez.
 
 Mevcut `npm run validate` komutuyla bütün eski ve yeni testler çalışır; manifest, dependency, lockfile ve launcher değişmez. Contract: [COMMAND_CONTRACT](../docs/api-contracts/COMMAND_CONTRACT.md); sonuçlar: [BACKEND-03_REPORT](../docs/backend/BACKEND-03_REPORT.md). BACKEND-04/05 uygulanmadı. Mevcut local-only güvenlik istisnası CI/deployment izni değildir.
+
+## BACKEND-04 — company foundation
+
+`createCompany` ve `getMyCompanyState` yalnız mevcut demo emulator ortamında `us-central1` callable'larıdır. İlk API BACKEND-03 executor ile deterministic UID-derived şirket, player mapping ve receipt'i atomik yazar; ikinci API read-only snapshot döndürür. Kimlik invariant'ı ortak helper'a ayrıldı; eski callable davranışı korunur. Lifecycle `foundation_pending_economy`: finans/progression/inventory oluşturulmaz.
+
+Legacy/migration işaretleri ve tutarsız mapping fail-closed; aynı key replay sırasında da güncel eligibility doğrulanır. Contract: [COMPANY_CONTRACT](../docs/api-contracts/COMPANY_CONTRACT.md); kanıt: [BACKEND-04_REPORT](../docs/backend/BACKEND-04_REPORT.md). Aynı `npm run validate`, sabit bağımlılıklar/lockfile/launcher kullanılır. BACKEND-05 başlamaz; production hâlâ BLOCK.

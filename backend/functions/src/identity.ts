@@ -1,4 +1,4 @@
-import { FieldValue, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
+import { DocumentData, FieldValue, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { assertLocalEnvironment, LOCAL_PROJECT, LOCAL_ENDPOINTS } from "./localEnvironment";
 
@@ -38,6 +38,16 @@ export function validateIdentityRequest(data: unknown): void {
   }
 }
 
+/** Shared BACKEND-02 invariants; extra metadata (including companyId) is preserved. */
+export function assertIdentityRecord(existing: DocumentData | undefined, uid: string): void {
+  if (!existing || existing.schemaVersion !== 1 || existing.authUid !== uid ||
+      existing.identityStatus !== "active" || !(existing.createdAt instanceof Timestamp)) {
+    throw new HttpsError("failed-precondition", "Identity requires review.", {
+      code: "IDENTITY_CONFLICT", messageKey: "errors.identity_conflict",
+    });
+  }
+}
+
 /** Local candidate schema only: never a production migration/bootstrap endpoint. */
 export async function initializeIdentity(db: Firestore, auth: TrustedAuth, data: unknown) {
   assertLocalEnvironment(process.env, true);
@@ -47,13 +57,7 @@ export async function initializeIdentity(db: Firestore, auth: TrustedAuth, data:
   await db.runTransaction(async transaction => {
     const snapshot = await transaction.get(ref);
     if (snapshot.exists) {
-      const existing = snapshot.data()!;
-      if (existing.schemaVersion !== 1 || existing.authUid !== uid ||
-          existing.identityStatus !== "active" || !(existing.createdAt instanceof Timestamp)) {
-        throw new HttpsError("failed-precondition", "Identity requires review.", {
-          code: "IDENTITY_CONFLICT", messageKey: "errors.identity_conflict",
-        });
-      }
+      assertIdentityRecord(snapshot.data(), uid);
       return;
     }
     transaction.create(ref, {

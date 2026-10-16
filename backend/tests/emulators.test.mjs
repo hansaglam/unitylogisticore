@@ -324,3 +324,153 @@ test('durable commands: atomic effect, replay, conflicts, concurrency and rollba
     for (const result of cleanup) assert.equal(result.status, 'fulfilled');
   }
 });
+
+const { companyIdForUid } = await import('../functions/lib/company.js');
+
+test('company callable bootstrap: atomic uniqueness, safe state read, migration denial and linking', { timeout: 180000 }, async () => {
+  const previousRuntime = process.env.FUNCTIONS_EMULATOR;
+  process.env.FUNCTIONS_EMULATOR = 'true';
+  const db = createLocalFirestore();
+  const apps = [];
+  const users = [];
+  const refs = new Map();
+  const track = path => { const ref = db.doc(path); refs.set(path, ref); return ref; };
+  const player = uid => track(`v2Players/${uid}`);
+  const company = uid => track(`v2Companies/${companyIdForUid(uid)}`);
+  const receipt = (uid,key) => track(`v2Players/${uid}/commands/${key}`);
+  const invoke = async (user, name, data) => post(`http://127.0.0.1:5001/${LOCAL_PROJECT}/us-central1/${name}`, { data }, user ? await user.getIdToken() : undefined);
+  const read = user => invoke(user, 'getMyCompanyState', { protocolVersion: 1 });
+  const create = (user,key,name = 'Synthetic Logistics', extra = {}) => {
+    receipt(user.uid,key);
+    return invoke(user,'createCompany',{ protocolVersion:1,idempotencyKey:key,payload:{name,...extra} });
+  };
+  async function guest(identity = true) {
+    const app = initializeClient({ projectId:LOCAL_PROJECT,apiKey:'synthetic-key' }, `company-${Date.now()}-${apps.length}`);
+    apps.push(app);
+    const auth = getAuth(app);
+    connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});
+    const user = (await signInAnonymously(auth)).user;
+    users.push(user); player(user.uid); company(user.uid);
+    if (identity) assert.equal((await invoke(user,'ensurePlayerIdentity',{protocolVersion:1})).status,200);
+    return user;
+  }
+  const errorCode = (response,code) => { assert.notEqual(response.status,200); assert.equal(response.body.error.details.code,code); };
+  try {
+    assert.equal((await read()).status,401);
+    assert.equal((await invoke(undefined,'createCompany',{protocolVersion:1,idempotencyKey:'x',payload:{name:'Synthetic'}})).status,401);
+    const first = await guest();
+    const identityBefore = (await player(first.uid).get()).data();
+    const noCompanyBefore = (await player(first.uid).get()).updateTime;
+    assert.deepEqual((await read(first)).body.result.result,{hasCompany:false});
+    assert.deepEqual((await player(first.uid).get()).updateTime,noCompanyBefore);
+    assert.equal((await company(first.uid).get()).exists,false);
+    for (const field of ['uid','ownerUid','companyId','balance','cash','money','xp','level','reputation','isAdmin','role','startingFunds']) {
+      errorCode(await create(first,`spoof-${field}`,'Synthetic',{[field]:'spoof'}),'INVALID_ARGUMENT');
+      errorCode(await invoke(first,'createCompany',{protocolVersion:1,idempotencyKey:'spoof-top',payload:{name:'Synthetic'},[field]:'spoof'}),'INVALID_ARGUMENT');
+      errorCode(await invoke(first,'getMyCompanyState',{protocolVersion:1,[field]:'spoof'}),'INVALID_ARGUMENT');
+    }
+    for (const [i,name] of ['', 'a'.repeat(65), 'a'.repeat(9000), 'A\u202eB', 'A\nB'].entries()) errorCode(await create(first,`invalid-${i}`,name),'INVALID_ARGUMENT');
+    const results = await Promise.all(Array.from({length:8},()=>create(first,'concurrent','  İstanbul  Lojistik ')));
+    for (const result of results) { assert.equal(result.status,200); assert.deepEqual(result.body,results[0].body); }
+    const companyRef = company(first.uid);
+    const companyData = (await companyRef.get()).data();
+    assert.deepEqual(Object.keys(companyData).sort(),['bootstrapStatus','createdAt','name','ownerUid','schemaVersion']);
+    assert.equal(companyData.ownerUid,first.uid);
+    assert.equal(companyData.name,'İstanbul Lojistik');
+    assert.equal(companyData.bootstrapStatus,'foundation_pending_economy');
+    assert.ok(companyData.createdAt instanceof Timestamp);
+    assert.deepEqual((await player(first.uid).get()).data(),{...identityBefore,companyId:companyRef.id});
+    assert.deepEqual(await companyRef.listCollections(),[]);
+    const stablePlayer = (await player(first.uid).get());
+    const stableCompany = await companyRef.get();
+    const stableReceipt = await receipt(first.uid,'concurrent').get();
+    assert.deepEqual((await create(first,'concurrent','İstanbul Lojistik')).body,results[0].body);
+    errorCode(await create(first,'concurrent','Different Name'),'IDEMPOTENCY_CONFLICT');
+    errorCode(await create(first,'another-key'),'COMPANY_EXISTS');
+    assert.equal((await receipt(first.uid,'another-key').get()).exists,false);
+    const state = await read(first);
+    assert.deepEqual(state.body.result.result,{hasCompany:true,...results[0].body.result.result});
+    assert.deepEqual((await player(first.uid).get()).updateTime,stablePlayer.updateTime);
+    assert.deepEqual((await companyRef.get()).updateTime,stableCompany.updateTime);
+    assert.deepEqual((await receipt(first.uid,'concurrent').get()).updateTime,stableReceipt.updateTime);
+    assert.equal((await invoke(first,'ensurePlayerIdentity',{protocolVersion:1})).status,200);
+    assert.deepEqual((await player(first.uid).get()).data(),stablePlayer.data());
+    const linked = (await linkWithCredential(first,EmailAuthProvider.credential(`company-${first.uid.toLowerCase()}@example.invalid`,'Synthetic-only-password-42!'))).user;
+    assert.equal(linked.uid,first.uid);
+    assert.equal((await read(linked)).body.result.result.companyId,companyRef.id);
+    assert.deepEqual((await player(first.uid).get()).data(),stablePlayer.data());
+
+    // A historical receipt cannot bypass current account/mapping/migration checks.
+    await player(first.uid).update({ identityStatus:'suspended' });
+    errorCode(await create(first,'concurrent','İstanbul Lojistik'),'FAILED_PRECONDITION');
+    await player(first.uid).set({...stablePlayer.data(),migrationPending:true});
+    errorCode(await create(first,'concurrent','İstanbul Lojistik'),'MIGRATION_REQUIRED');
+    await player(first.uid).set({...stablePlayer.data(),companyId:'foreign-id'});
+    errorCode(await create(first,'concurrent','İstanbul Lojistik'),'COMPANY_STATE_INVALID');
+    await player(first.uid).set(stablePlayer.data());
+    assert.deepEqual((await receipt(first.uid,'concurrent').get()).data(),stableReceipt.data());
+
+    const second = await guest();
+    const race = await Promise.all(Array.from({length:8},(_,i)=>create(second,`key-${i}`,'Müller Straße')));
+    assert.equal(race.filter(r=>r.status===200).length,1);
+    for (const result of race.filter(r=>r.status!==200)) errorCode(result,'COMPANY_EXISTS');
+    assert.notEqual(company(second.uid).id,companyRef.id);
+    assert.equal((await read(second)).body.result.result.companyId,company(second.uid).id);
+    assert.equal((await db.collection('v2Companies').where('ownerUid','==',second.uid).get()).size,1);
+    const receiptExists = await Promise.all(Array.from({length:8},(_,i)=>receipt(second.uid,`key-${i}`).get()));
+    assert.equal(receiptExists.filter(r=>r.exists).length,1);
+
+    const missing = await guest(false);
+    errorCode(await create(missing,'no-identity'),'FAILED_PRECONDITION');
+    errorCode(await read(missing),'FAILED_PRECONDITION');
+    assert.equal((await player(missing.uid).get()).exists,false);
+    assert.equal((await company(missing.uid).get()).exists,false);
+    assert.equal((await receipt(missing.uid,'no-identity').get()).exists,false);
+
+    const fixture = await guest();
+    const cleanIdentity = (await player(fixture.uid).get()).data();
+    const legacy = track(`users/${fixture.uid}`);
+    const legacyState = track(`users/${fixture.uid}/serverState/current`);
+    const migration = track(`v2MigrationRecords/${fixture.uid}`);
+    const scenarios = [
+      {identity:{...cleanIdentity,companyId:null},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,companyId:companyRef.id},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,companyId:company(fixture.uid).id},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,schemaVersion:2},code:'FAILED_PRECONDITION'},
+      {identity:{...cleanIdentity,identityStatus:'suspended'},code:'FAILED_PRECONDITION'},
+      {identity:{...cleanIdentity,authUid:first.uid},code:'FAILED_PRECONDITION'},
+      {identity:{...cleanIdentity,migrationPending:true},code:'MIGRATION_REQUIRED'},
+      {identity:{...cleanIdentity,migrationCompleted:true},code:'MIGRATION_REQUIRED'},
+      {legacy:true,code:'MIGRATION_REQUIRED'},
+      {legacyState:true,code:'MIGRATION_REQUIRED'},
+      {migration:true,code:'MIGRATION_REQUIRED'},
+      {company:{...companyData,ownerUid:fixture.uid},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,companyId:company(fixture.uid).id},company:{...companyData,ownerUid:first.uid},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,companyId:company(fixture.uid).id},company:{schemaVersion:1,name:'Synthetic',bootstrapStatus:'foundation_pending_economy',createdAt:Timestamp.now()},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,companyId:company(fixture.uid).id},company:{...companyData,ownerUid:fixture.uid,schemaVersion:99},code:'COMPANY_STATE_INVALID'},
+      {identity:{...cleanIdentity,companyId:company(fixture.uid).id},company:{...companyData,ownerUid:fixture.uid,bootstrapStatus:'ready'},code:'COMPANY_STATE_INVALID'},
+    ];
+    for (const [i,scenario] of scenarios.entries()) {
+      await player(fixture.uid).set(scenario.identity ?? cleanIdentity);
+      if (scenario.company) await company(fixture.uid).set(scenario.company);
+      if (scenario.legacy) await legacy.set({money:17,level:2,migrationCompleted:true});
+      if (scenario.legacyState) await legacyState.set({cash:31,companyLevel:4});
+      if (scenario.migration) await migration.set({status:'pending'});
+      const testedRefs = [player(fixture.uid),company(fixture.uid),legacy,legacyState,migration];
+      const before = await Promise.all(testedRefs.map(ref=>ref.get()));
+      errorCode(await create(fixture,`fixture-${i}`),scenario.code);
+      errorCode(await read(fixture),scenario.code);
+      assert.equal((await receipt(fixture.uid,`fixture-${i}`).get()).exists,false);
+      const after = await Promise.all(testedRefs.map(ref=>ref.get()));
+      for (let j=0;j<before.length;j++) { assert.deepEqual(after[j].data(),before[j].data()); assert.deepEqual(after[j].updateTime,before[j].updateTime); }
+      await Promise.all([company(fixture.uid).delete(),legacy.delete(),legacyState.delete(),migration.delete()]);
+    }
+  } finally {
+    const cleaned = await Promise.allSettled([...refs.values()].map(ref=>ref.delete()));
+    const removed = await Promise.allSettled(users.map(user=>deleteUser(user)));
+    await Promise.all(apps.map(app=>deleteClient(app)));
+    await db.terminate();
+    if (previousRuntime === undefined) delete process.env.FUNCTIONS_EMULATOR; else process.env.FUNCTIONS_EMULATOR=previousRuntime;
+    for (const result of [...cleaned,...removed]) assert.equal(result.status,'fulfilled');
+  }
+});

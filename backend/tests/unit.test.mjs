@@ -99,3 +99,21 @@ test('domain errors expose only stable localization codes', () => {
     assert.equal(error.message, code);
   }
 });
+
+import { normalizeCompanyName, validateCompanyPayload, companyIdForUid } from '../functions/lib/company.js';
+
+test('company names normalize TR/EN/DE display text and reject unsafe or unbounded input', () => {
+  assert.equal(normalizeCompanyName('  İstanbul\u00a0 Lojistik  '), 'İstanbul Lojistik');
+  assert.equal(normalizeCompanyName('Mu\u0308ller Straße'), 'Müller Straße');
+  assert.equal(normalizeCompanyName('English Logistics'), 'English Logistics');
+  assert.equal(normalizeCompanyName('a'.repeat(64)).length, 64);
+  for (const value of ['', '  ', 'a', 'a'.repeat(65), 'a'.repeat(513), 'A\nB', 'A\u202eB', 'A\u200bB', 'A\u034fB', 'A\u2028B', '\ud800X', null, 123, '---']) {
+    assert.throws(() => normalizeCompanyName(value), e => e.details.code === 'INVALID_ARGUMENT');
+  }
+  for (const key of ['uid','ownerUid','companyId','balance','cash','money','xp','level','reputation','isAdmin','role','startingFunds']) {
+    assert.throws(() => validateCompanyPayload({ name: 'Synthetic', [key]: 'spoof' }), e => e.details.code === 'INVALID_ARGUMENT');
+  }
+  assert.equal(companyIdForUid('synthetic-uid'), companyIdForUid('synthetic-uid'));
+  assert.match(companyIdForUid('synthetic-uid'), /^co_[a-f0-9]{64}$/);
+  assert.notEqual(companyIdForUid('synthetic-uid'), companyIdForUid('synthetic-other'));
+});

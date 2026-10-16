@@ -9,6 +9,8 @@ const errors = {
   UNSUPPORTED_PROTOCOL: "failed-precondition", IDEMPOTENCY_CONFLICT: "already-exists",
   PERMISSION_DENIED: "permission-denied", FAILED_PRECONDITION: "failed-precondition",
   RETRY_LATER: "unavailable", INTERNAL: "internal",
+  COMPANY_EXISTS: "already-exists", COMPANY_STATE_INVALID: "failed-precondition",
+  MIGRATION_REQUIRED: "failed-precondition",
 } as const satisfies Record<string, FunctionsErrorCode>;
 export type CommandErrorCode = keyof typeof errors;
 
