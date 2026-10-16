@@ -4,6 +4,8 @@ import { CommandError, executeCommand } from "./commands";
 import { assertIdentityRecord, requireUid, validateIdentityRequest } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
 
+import { ECONOMY_READY, invalid, validateConfig, validateEconomy, versionId } from "./economyModel";
+
 export const COMPANY_STATUS = "foundation_pending_economy";
 
 export function companyIdForUid(uid: string): string {
@@ -38,7 +40,7 @@ function hasMigrationMarker(data: DocumentData): boolean {
 }
 
 /** Fixed direct reads in one consistent snapshot; never follow a client or corrupt mapping path. */
-async function readFoundation(tx: Transaction, db: Firestore, uid: string) {
+export async function readFoundation(tx: Transaction, db: Firestore, uid: string) {
   const companyId = companyIdForUid(uid);
   const playerRef = db.collection("v2Players").doc(uid);
   const companyRef = db.collection("v2Companies").doc(companyId);
@@ -62,11 +64,20 @@ async function readFoundation(tx: Transaction, db: Firestore, uid: string) {
     try { validName = normalizeCompanyName(companyData.name) === companyData.name; } catch { /* reject below */ }
     if (Object.keys(companyData).sort().join(",") !== "bootstrapStatus,createdAt,name,ownerUid,schemaVersion" ||
         companyData.schemaVersion !== 1 || companyData.ownerUid !== uid ||
-        companyData.bootstrapStatus !== COMPANY_STATUS || !(companyData.createdAt instanceof Timestamp) || !validName) {
+        ![COMPANY_STATUS, ECONOMY_READY].includes(companyData.bootstrapStatus) || !(companyData.createdAt instanceof Timestamp) || !validName) {
       throw new CommandError("COMPANY_STATE_INVALID");
     }
   }
-  return { playerRef, companyRef, companyId, companyData };
+  const financeRef = companyRef.collection("state").doc("finance");
+  const progressionRef = companyRef.collection("state").doc("progression");
+  const [finance, progression] = await tx.getAll(financeRef, progressionRef);
+  let economy: ReturnType<typeof validateEconomy> | undefined;
+  if (companyData?.bootstrapStatus === ECONOMY_READY) {
+    const version = versionId(finance!.data()?.configVersion);
+    const config = validateConfig((await tx.get(db.collection("v2WorldConfig").doc(version))).data(), version);
+    economy = validateEconomy(finance!.data(), progression!.data(), config);
+  } else if (finance!.exists || progression!.exists) invalid();
+  return { playerRef, companyRef, companyId, companyData, financeRef, progressionRef, economy };
 }
 
 export function createCompanyCommand(db: Firestore, auth: { uid: string } | undefined, data: unknown) {
@@ -104,7 +115,7 @@ export async function readMyCompanyState(db: Firestore, auth: { uid: string } | 
     const company = state.companyData;
     return { protocolVersion: 1, serverTime: new Date().toISOString(), result: company ? {
       hasCompany: true, companyId: state.companyId, name: company.name as string,
-      schemaVersion: 1, bootstrapStatus: COMPANY_STATUS, economyReady: false,
+      schemaVersion: 1, bootstrapStatus: company.bootstrapStatus as string, economyReady: !!state.economy,
     } : { hasCompany: false } };
   } catch (error) {
     if (error instanceof CommandError) throw error;

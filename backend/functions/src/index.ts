@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { assertLocalEnvironment, LOCAL_PROJECT } from "./localEnvironment";
 import { createLocalFirestore, initializeIdentity } from "./identity";
+import { readMyEconomyState } from "./economy";
 import { createCompanyCommand, readMyCompanyState } from "./company";
 
 // Fail before exporting a function or initializing any SDK outside the local environment.
@@ -43,3 +44,6 @@ export const localHealth = onCall({ region: "us-central1", maxInstances: 1 }, (r
   // No database access, gameplay writes, identity echo, or idempotency record is needed.
   return { protocolVersion: 1, serverTime: new Date().toISOString(), result: { status: "ok" } };
 });
+
+export const getMyEconomyState = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
+  readMyEconomyState(localFirestore, request.auth, request.data));
