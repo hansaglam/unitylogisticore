@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { assertLocalEnvironment, LOCAL_PROJECT } from "./localEnvironment";
 import { createLocalFirestore, initializeIdentity } from "./identity";
+import { createCompanyCommand, readMyCompanyState } from "./company";
 
 // Fail before exporting a function or initializing any SDK outside the local environment.
 assertLocalEnvironment(process.env, true);
@@ -17,6 +18,12 @@ initializeApp({
 const localFirestore = createLocalFirestore();
 export const ensurePlayerIdentity = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
   initializeIdentity(localFirestore, request.auth, request.data));
+
+export const createCompany = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
+  createCompanyCommand(localFirestore, request.auth, request.data));
+
+export const getMyCompanyState = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
+  readMyCompanyState(localFirestore, request.auth, request.data));
 
 export const localHealth = onCall({ region: "us-central1", maxInstances: 1 }, (request) => {
   assertLocalEnvironment(process.env, true);
