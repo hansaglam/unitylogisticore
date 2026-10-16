@@ -117,3 +117,24 @@ test('company names normalize TR/EN/DE display text and reject unsafe or unbound
   assert.match(companyIdForUid('synthetic-uid'), /^co_[a-f0-9]{64}$/);
   assert.notEqual(companyIdForUid('synthetic-uid'), companyIdForUid('synthetic-other'));
 });
+
+import { checkedAdd, validateConfig, levelFor } from '../functions/lib/economyModel.js';
+const syntheticConfig = { schemaVersion: 1, version: 'synthetic_unit', approval: 'synthetic_emulator_only', currency: 'TST', scale: 2,
+  maxBalance: 10000, startingBalance: 100, maxXp: 1000, initialXp: 0, thresholds: [0, 10, 50], rulesVersion: 'synthetic_rules' };
+test('economy exact integer arithmetic rejects negative, nonnumeric and unsafe values', () => {
+  assert.equal(checkedAdd(100, -100, 10000), 0);
+  for (const args of [[0,-1,100], [Number.MAX_SAFE_INTEGER,1,Number.MAX_SAFE_INTEGER], [1,0.1,100], [NaN,0,100], [1,Infinity,100], ['1',0,100], [101,0,100]]) {
+    assert.throws(() => checkedAdd(...args));
+  }
+});
+test('economy config is explicit synthetic-only; deterministic bounded thresholds', () => {
+  const config = validateConfig(syntheticConfig, syntheticConfig.version);
+  assert.deepEqual([0,9,10,49,50,1000].map(xp => levelFor(xp, config)), [1,1,2,2,3,3]);
+  for (const change of [{ approval: 'approved' }, { currency: 'cash' }, { scale: 7 }, { startingBalance: -1 }, { initialXp: 1001 },
+    { maxBalance: Infinity }, { thresholds: [] }, { thresholds: [1,2] }, { thresholds: [0,10,10] }, { thresholds: [0,20,10] },
+    { thresholds: [0,1001] }, { thresholds: [0,0.5] }, { rulesVersion: '../unsafe' }, { extra: true }]) {
+    assert.throws(() => validateConfig({ ...syntheticConfig, ...change }, syntheticConfig.version));
+  }
+  assert.throws(() => validateConfig(undefined, syntheticConfig.version));
+  assert.throws(() => levelFor(1001, config));
+});

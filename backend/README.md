@@ -107,3 +107,9 @@ Mevcut `npm run validate` komutuyla bütün eski ve yeni testler çalışır; ma
 `createCompany` ve `getMyCompanyState` yalnız mevcut demo emulator ortamında `us-central1` callable'larıdır. İlk API BACKEND-03 executor ile deterministic UID-derived şirket, player mapping ve receipt'i atomik yazar; ikinci API read-only snapshot döndürür. Kimlik invariant'ı ortak helper'a ayrıldı; eski callable davranışı korunur. Lifecycle `foundation_pending_economy`: finans/progression/inventory oluşturulmaz.
 
 Legacy/migration işaretleri ve tutarsız mapping fail-closed; aynı key replay sırasında da güncel eligibility doğrulanır. Contract: [COMPANY_CONTRACT](../docs/api-contracts/COMPANY_CONTRACT.md); kanıt: [BACKEND-04_REPORT](../docs/backend/BACKEND-04_REPORT.md). Aynı `npm run validate`, sabit bağımlılıklar/lockfile/launcher kullanılır. BACKEND-05 başlamaz; production hâlâ BLOCK.
+
+## BACKEND-05 — local authoritative economy
+
+`economyModel.ts` versioned synthetic config, exact bounded integer money ve XP/level doğrulamasını; `economy.ts` internal atomic initialization/entitlement/ledger/claim yürütmesini ekler. Tek yeni callable read-only `getMyEconomyState`; para/XP grant veya init callable yoktur. Gerçek ürün değerleri ve production initialization kapalıdır. [ECONOMY_CONTRACT](../docs/api-contracts/ECONOMY_CONTRACT.md), [BACKEND-05_REPORT](../docs/backend/BACKEND-05_REPORT.md). Yukarıdaki faz kapsamları tarihsel kayıttır.
+
+Aynı `npm run validate` ile tüm testler çalışır. Bağımlılıklar/lockfile/launcher/Rules değişmez; 16–30 Ekim local-only risk istisnası ve 23 Ekim yeniden kontrol koşulu korunur.

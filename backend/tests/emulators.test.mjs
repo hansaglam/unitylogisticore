@@ -14,7 +14,7 @@ test('default-deny rules reject unauthenticated and authenticated document/list 
     firestore: { host: '127.0.0.1', port: 8080, rules: await readFile(new URL('../firestore.rules', import.meta.url), 'utf8') },
   });
   try {
-    const paths = ['arbitrary/synthetic', 'v2Players/synthetic-user', 'v2Players/synthetic-user/commands/synthetic-key', 'v2Companies/synthetic-company', 'v2Companies/synthetic-company/state/finance'];
+    const paths = ['arbitrary/synthetic', 'v2Players/synthetic-user', 'v2Players/synthetic-user/commands/synthetic-key', 'v2Companies/synthetic-company', 'v2Companies/synthetic-company/state/finance', 'v2Companies/synthetic-company/state/progression', 'v2Companies/synthetic-company/ledger/synthetic', 'v2Companies/synthetic-company/claims/synthetic', 'v2Companies/synthetic-company/entitlements/synthetic', 'v2WorldConfig/synthetic'];
     for (const context of [env.unauthenticatedContext(), env.authenticatedContext('synthetic-user')]) {
       const db = context.firestore();
       for (const path of paths) {
@@ -474,3 +474,5 @@ test('company callable bootstrap: atomic uniqueness, safe state read, migration 
     for (const result of [...cleaned,...removed]) assert.equal(result.status,'fulfilled');
   }
 });
+
+await import('./economy.emulators.test.mjs');

@@ -121,3 +121,9 @@ Contention retry ve index maliyeti hariç yaklaşık belge sayıları:
 | getMyCompanyState | 5 | 0 |
 
 Ek read'ler legacy ve replay eligibility koruması içindir. Transaction retry'ları ek read maliyeti getirir; UID başına contention vardır, global counter/hotspot yok. Heartbeat/job/index değişikliği yok. Ölçülmüş production latency veya parasal bütçe iddiası değildir.
+
+## BACKEND-05 lifecycle eki (16 Ekim 2026)
+
+Yukarıdaki BACKEND-04 pending davranışı korunur. IMPLEMENTED: internal economy initializer `economy_ready` durumuna geçebilir; yalnız açık synthetic emulator config ile, public mutation API olmadan. `getMyCompanyState` bu durumda `bootstrapStatus:economy_ready,economyReady:true` döndürür; finance/progression/config kaydı ve pinned hash doğrulanmadan ready kabul edilmez. Pending/companiesiz durumda kısmi ekonomi kaydı fail-closed olur.
+
+`createCompany` ilk receipt replay'i eski pending result/serverTime'ı korur; şirketin güncel durumunu geri almaz. Güncel durum için read API kullanılmalıdır. Farklı key ikinci şirket yaratamaz. Owner/mapping/legacy/migration kontrolleri devam eder. Ayrıntılar: [ECONOMY_CONTRACT](ECONOMY_CONTRACT.md). Gerçek başlangıç değerleri ve üretim initialization hâlâ onaysız ve kapalıdır.
