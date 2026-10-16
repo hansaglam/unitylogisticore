@@ -64,3 +64,38 @@ test('actual Functions entry point cannot load outside the emulator or with a co
     assert.match(result.stderr, /Local isolation/);
   }
 });
+
+import { canonicalJson, parseCommandRequest, requestFingerprint, CommandError } from '../functions/lib/commands.js';
+
+test('command envelope enforces protocol, bounded JSON and key allowlist', () => {
+  const validRequest = { protocolVersion: 1, idempotencyKey: 'synthetic-key_1', payload: {} };
+  assert.deepEqual(parseCommandRequest(validRequest), { idempotencyKey: 'synthetic-key_1', payload: {} });
+  for (const key of ['', ' ', 'a/b', '.', 'é', '__reserved__', 'x'.repeat(129)]) {
+    assert.throws(() => parseCommandRequest({ ...validRequest, idempotencyKey: key }), e => e.details.code === 'INVALID_ARGUMENT');
+  }
+  for (const data of [null, [], { ...validRequest, uid: 'spoof' }, { ...validRequest, payload: [] }, { ...validRequest, payload: { huge: 'x'.repeat(8193) } }]) {
+    assert.throws(() => parseCommandRequest(data), e => e.details.code === 'INVALID_ARGUMENT');
+  }
+  for (const protocolVersion of [2, '1', null]) assert.throws(() => parseCommandRequest({ ...validRequest, protocolVersion }), e => e.details.code === 'UNSUPPORTED_PROTOCOL');
+});
+
+test('fingerprints are deterministic, scoped and independent of object property order', () => {
+  assert.equal(canonicalJson({ b: 2, a: { z: -0, c: [1, 2] } }), canonicalJson({ a: { c: [1, 2], z: 0 }, b: 2 }));
+  const hash = requestFingerprint('synthetic', null, { b: 2, a: 1 });
+  assert.equal(hash, requestFingerprint('synthetic', null, { a: 1, b: 2 }));
+  for (const args of [['other', null, { a: 1, b: 2 }], ['synthetic', 'company', { a: 1, b: 2 }], ['synthetic', null, { a: 2, b: 2 }]]) {
+    assert.notEqual(hash, requestFingerprint(...args));
+  }
+  const cycle = {}; cycle.self = cycle;
+  for (const value of [undefined, NaN, Infinity, new Date(), cycle, { x: undefined }, JSON.parse('{"__proto__":1}'), { get value() { throw Error('getter executed'); } }]) {
+    assert.throws(() => canonicalJson(value), e => e.details?.code === 'INVALID_ARGUMENT');
+  }
+});
+
+test('domain errors expose only stable localization codes', () => {
+  for (const code of ['UNAUTHENTICATED','INVALID_ARGUMENT','UNSUPPORTED_PROTOCOL','IDEMPOTENCY_CONFLICT','PERMISSION_DENIED','FAILED_PRECONDITION','RETRY_LATER','INTERNAL']) {
+    const error = new CommandError(code);
+    assert.deepEqual(error.details, { code, messageKey: `errors.${code.toLowerCase()}` });
+    assert.equal(error.message, code);
+  }
+});

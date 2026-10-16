@@ -95,3 +95,9 @@ Firebase test istemcisinin eski gRPC sürümü için yalnız `@firebase/firestor
 Firestore, Admin SDK'nin export ettiği `Firestore` constructor'ından guard sonrasında sabit demo proje/loopback host ve `ssl:false` ile oluşturulur. Kurulu SDK'nin emulator transport'u `Bearer owner` kullanır; ADC veya gerçek sertifika gerekmez. `getFirestore(app)` mevcut özel health credential nesnesini kabul etmediği için kullanılmaz. Guard ve sabit endpoint olmadan bu istemci başka ortama taşınmamalıdır.
 
 Firestore tip zincirindeki CommonJS/ESM uyumu için `module` ve `moduleResolution` NodeNext oldu; strict ve skipLibCheck=false korunur. Doğrulanan ortam Node 22.23.2, TypeScript 5.9.3; eski Node 22 minor sürümleri ayrıca doğrulanmadı. Yeni dependency, Pub/Sub, tracing, glob, telemetry veya remote emulator erişimi eklenmedi. Üç advisory ve BACKEND-01 §19 süreli yerel risk koşulları geçerliliğini korur; production/CI onayı değildir.
+
+## BACKEND-03 — internal command execution
+
+`src/commands.ts` trusted Auth UID, strict protocol/envelope, bounded canonical JSON/SHA-256 fingerprint ve atomik domain-effect/receipt yürütücüsünü içerir. Yeni callable export edilmez; test-only synthetic operasyon yalnız integration test dosyasındadır. Receipt `v2Players/{uid}/commands/{key}` altında kalıcıdır, TTL yoktur. Command replay result ve ilk commit zamanını korur; identity callable davranışı değişmez.
+
+Mevcut `npm run validate` komutuyla bütün eski ve yeni testler çalışır; manifest, dependency, lockfile ve launcher değişmez. Contract: [COMMAND_CONTRACT](../docs/api-contracts/COMMAND_CONTRACT.md); sonuçlar: [BACKEND-03_REPORT](../docs/backend/BACKEND-03_REPORT.md). BACKEND-04/05 uygulanmadı. Mevcut local-only güvenlik istisnası CI/deployment izni değildir.

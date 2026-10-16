@@ -14,7 +14,7 @@ test('default-deny rules reject unauthenticated and authenticated document/list 
     firestore: { host: '127.0.0.1', port: 8080, rules: await readFile(new URL('../firestore.rules', import.meta.url), 'utf8') },
   });
   try {
-    const paths = ['arbitrary/synthetic', 'v2Players/synthetic-user', 'v2Companies/synthetic-company', 'v2Companies/synthetic-company/state/finance'];
+    const paths = ['arbitrary/synthetic', 'v2Players/synthetic-user', 'v2Players/synthetic-user/commands/synthetic-key', 'v2Companies/synthetic-company', 'v2Companies/synthetic-company/state/finance'];
     for (const context of [env.unauthenticatedContext(), env.authenticatedContext('synthetic-user')]) {
       const db = context.firestore();
       for (const path of paths) {
@@ -26,6 +26,7 @@ test('default-deny rules reject unauthenticated and authenticated document/list 
       }
       await assertFails(getDocs(collection(db, 'v2Companies')));
       await assertFails(getDocs(collection(db, 'v2Players')));
+      await assertFails(getDocs(collection(db, 'v2Players/synthetic-user/commands')));
     }
   } finally { await env.cleanup(); }
 });
@@ -197,5 +198,129 @@ test('identity transaction, real emulator linking/collision and canonical owners
     await Promise.all(apps.map(app => deleteClient(app)));
     await db.terminate();
     for (const result of cleanup) assert.equal(result.status, 'fulfilled', 'synthetic cleanup must succeed');
+  }
+});
+
+const { executeCommand, CommandError } = await import('../functions/lib/commands.js');
+
+test('durable commands: atomic effect, replay, conflicts, concurrency and rollback', { timeout: 120000 }, async () => {
+  const previousRuntime = process.env.FUNCTIONS_EMULATOR;
+  process.env.FUNCTIONS_EMULATOR = 'true';
+  const db = createLocalFirestore();
+  const suffix = `${Date.now()}-${process.pid}`;
+  const uid = `synthetic-command-${suffix}`;
+  const secondUid = `${uid}-second`;
+  const refs = new Map();
+  const tracked = path => { const ref = db.doc(path); refs.set(path, ref); return ref; };
+  const state = player => tracked(`backend03Synthetic/${player}`);
+  const receipt = (player, key) => tracked(`v2Players/${player}/commands/${key}`);
+  const request = (key, payload = { label: 'proof' }) => ({ protocolVersion: 1, idempotencyKey: key, payload });
+  const definition = {
+    name: 'syntheticProof',
+    validate(payload) {
+      if (Object.keys(payload).join(',') !== 'label' || typeof payload.label !== 'string' || !['proof', 'other'].includes(payload.label.trim())) throw new CommandError('INVALID_ARGUMENT');
+      return { label: payload.label.trim() };
+    },
+    async apply(tx, player, payload) {
+      const ref = state(player);
+      const snapshot = await tx.get(ref);
+      const count = (snapshot.data()?.count ?? 0) + 1;
+      tx.set(ref, { count, label: payload.label });
+      return { count, status: 'recorded' };
+    },
+  };
+  const run = (player, key, payload, command = definition) => {
+    receipt(player, key);
+    return executeCommand(db, { uid: player }, request(key, payload), command);
+  };
+  const rejected = code => error => error.details?.code === code;
+  try {
+    const legacy = tracked(`users/${uid}/serverState/current`);
+    await legacy.set({ money: 13, cash: 27, level: 2, companyLevel: 4 });
+    await assert.rejects(executeCommand(db, undefined, request('no-auth'), definition), rejected('UNAUTHENTICATED'));
+    await assert.rejects(executeCommand(db, { uid: '' }, request('bad-auth'), definition), rejected('UNAUTHENTICATED'));
+    await assert.rejects(executeCommand(db, { uid }, { ...request('spoof'), uid: secondUid }, definition), rejected('INVALID_ARGUMENT'));
+    await assert.rejects(run(uid, 'payload-owner', { label: 'proof', ownerUid: secondUid }), rejected('INVALID_ARGUMENT'));
+    assert.equal((await state(uid).get()).exists, false);
+    const outputs = await Promise.all(Array.from({ length: 8 }, () => run(uid, 'concurrent')));
+    for (const output of outputs) assert.deepEqual(output, outputs[0]);
+    assert.equal((await state(uid).get()).data().count, 1);
+    const stored = (await receipt(uid, 'concurrent').get()).data();
+    assert.ok(stored.committedAt instanceof Timestamp);
+    assert.equal(outputs[0].serverTime, stored.committedAt.toDate().toISOString());
+    const businessBefore = (await state(uid).get()).data();
+    const stateUpdate = (await state(uid).get()).updateTime;
+    const receiptUpdate = (await receipt(uid, 'concurrent').get()).updateTime;
+    assert.deepEqual(await run(uid, 'concurrent', { label: ' proof ' }), outputs[0]);
+    assert.deepEqual((await receipt(uid, 'concurrent').get()).data(), stored);
+    assert.deepEqual((await receipt(uid, 'concurrent').get()).updateTime, receiptUpdate);
+    assert.deepEqual((await state(uid).get()).data(), businessBefore);
+    assert.deepEqual((await state(uid).get()).updateTime, stateUpdate);
+    await assert.rejects(run(uid, 'concurrent', { label: 'other' }), rejected('IDEMPOTENCY_CONFLICT'));
+    await assert.rejects(run(uid, 'concurrent', undefined, { ...definition, name: 'differentCommand' }), rejected('IDEMPOTENCY_CONFLICT'));
+    const independent = await run(secondUid, 'concurrent');
+    assert.equal(independent.result.count, 1);
+    assert.equal((await state(uid).get()).data().count, 1);
+
+    // Commit succeeds; the caller deliberately discards the response and observes a transport failure.
+    await assert.rejects((async () => { await run(uid, 'lost-response'); throw new Error('synthetic response lost'); })(), /synthetic response lost/);
+    const lostReceipt = (await receipt(uid, 'lost-response').get()).data();
+    const recovered = await run(uid, 'lost-response');
+    assert.deepEqual(recovered.result, lostReceipt.result);
+    assert.equal(recovered.serverTime, lostReceipt.committedAt.toDate().toISOString());
+    assert.equal((await state(uid).get()).data().count, 2);
+
+    const beforeFailure = (await state(uid).get()).data();
+    for (const [key, code, apply] of [
+      ['rollback', 'INTERNAL', async (tx, player, payload) => { await definition.apply(tx, player, payload); throw Error('private database path must not leak'); }],
+      ['precondition', 'FAILED_PRECONDITION', async () => { throw new CommandError('FAILED_PRECONDITION'); }],
+      ['denied', 'PERMISSION_DENIED', async () => { throw new CommandError('PERMISSION_DENIED'); }],
+      ['oversized-result', 'INTERNAL', async (tx, player, payload) => { await definition.apply(tx, player, payload); return { value: 'x'.repeat(8193) }; }],
+      ['read-after-write', 'INTERNAL', async (tx, player, payload) => { await definition.apply(tx, player, payload); await tx.get(state(player)); return {}; }],
+      ['transient', 'RETRY_LATER', async () => { throw Object.assign(new Error('private unavailable'), { code: 14 }); }],
+    ]) {
+      await assert.rejects(run(uid, key, undefined, { ...definition, apply }), error => {
+        assert.equal(error.message, code);
+        return rejected(code)(error);
+      });
+      assert.equal((await receipt(uid, key).get()).exists, false);
+      assert.deepEqual((await state(uid).get()).data(), beforeFailure);
+    }
+    // Failed keys have no successful receipt and can succeed after preconditions change.
+    assert.equal((await run(uid, 'precondition')).result.count, 3);
+    // Canonical scope resolved in the same transaction is part of the fingerprint.
+    const scopeRef = tracked(`backend03Synthetic/scope-${suffix}`);
+    await scopeRef.set({ companyId: 'synthetic-company-a' });
+    const scoped = { ...definition, resolveCompany: async tx => (await tx.get(scopeRef)).data().companyId };
+    await run(uid, 'scoped', undefined, scoped);
+    assert.equal((await receipt(uid, 'scoped').get()).data().companyId, 'synthetic-company-a');
+    await scopeRef.set({ companyId: 'synthetic-company-b' });
+    await assert.rejects(run(uid, 'scoped', undefined, scoped), rejected('IDEMPOTENCY_CONFLICT'));
+    const corrupt = receipt(uid, 'corrupt');
+    await corrupt.set({ receiptSchemaVersion: 999 });
+    await assert.rejects(run(uid, 'corrupt'), rejected('FAILED_PRECONDITION'));
+    assert.deepEqual((await corrupt.get()).data(), { receiptSchemaVersion: 999 });
+    const company = tracked(`v2Companies/synthetic-command-${suffix}`);
+    await company.set({ ownerUid: uid });
+    const owned = {
+      ...definition,
+      resolveCompany: async () => company.id,
+      apply: async (tx, player, payload, companyId) => {
+        await requireCompanyOwner(db, { uid: player }, companyId, tx);
+        return definition.apply(tx, player, payload);
+      },
+    };
+    await run(uid, 'owned', undefined, owned);
+    const secondBefore = (await state(secondUid).get()).data();
+    await assert.rejects(run(secondUid, 'owned', undefined, owned), rejected('PERMISSION_DENIED'));
+    assert.equal((await receipt(secondUid, 'owned').get()).exists, false);
+    assert.deepEqual((await state(secondUid).get()).data(), secondBefore);
+    assert.deepEqual((await legacy.get()).data(), { money: 13, cash: 27, level: 2, companyLevel: 4 });
+  } finally {
+    const cleanup = await Promise.allSettled([...refs.values()].map(ref => ref.delete()));
+    await db.terminate();
+    if (previousRuntime === undefined) delete process.env.FUNCTIONS_EMULATOR;
+    else process.env.FUNCTIONS_EMULATOR = previousRuntime;
+    for (const result of cleanup) assert.equal(result.status, 'fulfilled');
   }
 });
