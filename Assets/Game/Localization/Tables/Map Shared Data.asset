@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: Map Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: Map
+  m_TableCollectionNameGuidString: 74dd57677b9304a4ca1a89a6d72bc128
+  m_Entries:
+  - m_Id: 107995136
+    m_Key: map.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 116383744
+    m_Key: map.view.world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578048
+    m_Key: map.view.turkey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578049
+    m_Key: map.action.focus_world
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578050
+    m_Key: map.action.focus_turkey
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578051
+    m_Key: map.action.zoom_in
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578052
+    m_Key: map.action.zoom_out
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578053
+    m_Key: map.action.restore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578054
+    m_Key: map.action.collapse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578055
+    m_Key: map.action.expand
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578056
+    m_Key: map.inspector.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578057
+    m_Key: map.inspector.scope
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578058
+    m_Key: map.inspector.city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578059
+    m_Key: map.inspector.coordinates
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578060
+    m_Key: map.inspector.select_city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578061
+    m_Key: cities.izmir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578062
+    m_Key: cities.istanbul
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578063
+    m_Key: cities.ankara
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578064
+    m_Key: cities.bursa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578065
+    m_Key: cities.antalya
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578066
+    m_Key: cities.adana
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578067
+    m_Key: cities.diyarbakir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578068
+    m_Key: cities.trabzon
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 256199785245835275
+  references:
+    version: 2
+    RefIds:
+    - rid: 256199785245835275
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1792183007987

@@ -1,0 +1,43 @@
+Natural Earth public-domain data used by the UNITY-02A map bake.
+All versions of Natural Earth raster and vector data are dedicated to the public domain.
+Terms: https://www.naturalearthdata.com/about/terms-of-use/
+
+VECTOR
+Name: Natural Earth 50m cultural vectors, Admin 0 countries
+Version: 5.1.2
+URL: https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson
+Bundled file: ne_50m_admin_0_countries.geojson
+Use: coastline and country boundary lines, and the land mask that tints the relief.
+This is a small-scale cartographic source, not a legal boundary.
+
+Türkiye extent read from the ADM0_A3=TUR MultiPolygon (562 vertices):
+longitude 25.668945 to 44.817188
+latitude 35.831445 to 42.093262
+
+RASTER
+Name: Natural Earth 50m Shaded Relief
+Version: 2.0.0 (SR_50M.VERSION.txt inside the zip)
+URL: https://naciscdn.org/naturalearth/50m/raster/SR_50M.zip
+Source raster: SR_50M.tif, 10800 x 5400, WGS84 equirectangular.
+World file: pixel size 0.03333333333333 degree, top-left origin longitude -179.98333333333333, latitude 89.98333333333333.
+Bundled derivative: SR_50M_4096.png, 4096 x 2048, downsampled from that GeoTIFF.
+The 10800 x 5400 GeoTIFF is not committed.
+The editor bake samples this grayscale hillshade 1:1 through a Web Mercator land mesh.
+The land silhouette is the triangulated 50m country polygons. The texture carries hillshade color only.
+It does not dilate a glow around Türkiye, and it is not a flat sprite stretched over the map.
+
+CITIES
+Name: Natural Earth 10m populated places, simple
+Version: 5.1.2
+URL: https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_populated_places_simple.geojson
+The places file is not bundled. Marker coordinates in MapCities are the feature geometry points.
+Istanbul's properties latitude/longitude (41.106942, 29.008056) differ from its geometry (41.017602, 28.974277). The geometry point is the marker.
+These coordinates are presentation markers only. They are not server-authoritative gameplay locations.
+
+ROAD / RAIL
+No road or rail dataset is bundled. The canonical hashes named in the phase brief were not compared to a local file. No route geometry is generated.
+
+PROJECTION
+WGS84 longitude/latitude, Web Mercator, latitude clamped to ±85.05112878 degrees.
+Equirectangular texture coordinate: u = (longitude + 180) / 360, v = (latitude + 90) / 180, with v = 0 at the south.
+See MapProjection.

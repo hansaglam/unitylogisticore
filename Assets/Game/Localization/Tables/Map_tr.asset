@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Map_tr
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: 74dd57677b9304a4ca1a89a6d72bc128, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 107995136
+    m_Localized: Harita
+    m_Metadata:
+      m_Items: []
+  - m_Id: 116383744
+    m_Localized: "D\xFCnya"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578048
+    m_Localized: "T\xFCrkiye"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578049
+    m_Localized: "D\xFCnya"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578050
+    m_Localized: "T\xFCrkiye"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578051
+    m_Localized: +
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578052
+    m_Localized: "\u2212"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578053
+    m_Localized: "S\u0131f\u0131rla"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578054
+    m_Localized: Gizle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578055
+    m_Localized: "G\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578056
+    m_Localized: "Co\u011Frafya"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578057
+    m_Localized: Kapsam
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578058
+    m_Localized: "\u015Eehir"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578059
+    m_Localized: Koordinatlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578060
+    m_Localized: "Bir \u015Fehir se\xE7in"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578061
+    m_Localized: "\u0130zmir"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578062
+    m_Localized: "\u0130stanbul"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578063
+    m_Localized: Ankara
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578064
+    m_Localized: Bursa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578065
+    m_Localized: Antalya
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578066
+    m_Localized: Adana
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578067
+    m_Localized: "Diyarbak\u0131r"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578068
+    m_Localized: Trabzon
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
