@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using LogistiCore.Localization;
 using LogistiCore.UI;
 using UnityEditor;
@@ -21,27 +22,27 @@ namespace LogistiCore.EditorTools
     /// <summary>
     /// Idempotent localization and verification-scene setup.
     /// Menu: LogistiCore/Foundation/Setup.
-    /// Re-running updates the foundation strings. It does not rebuild an existing verification scene.
-    /// Use LogistiCore/Foundation/Recreate Verification Scene after deleting or to replace that scene.
+    /// Editor startup does not create, delete, or replace the verification scene.
+    /// Re-running setup updates the foundation strings and leaves an existing scene in place.
+    /// LogistiCore/Foundation/Recreate Verification Scene replaces that scene only after a snapshot
+    /// and a successful temporary save.
     /// </summary>
-    [InitializeOnLoad]
     public static class FoundationSetup
     {
         public const string ScenePath = "Assets/Game/Scenes/FoundationVerification.unity";
+        public const string PendingScenePath = "Assets/Game/Scenes/FoundationVerification.pending.unity";
 
         const string SettingsPath = "Assets/Game/Localization/Localization Settings.asset";
         const string LocalesFolder = "Assets/Game/Localization/Locales";
         const string TablesFolder = "Assets/Game/Localization/Tables";
-        const string AttemptKey = "LogistiCore.Foundation.SetupAttempts";
+        const string ViewScriptPath = "Assets/Game/UI/FoundationVerificationView.cs";
+        const string SafeAreaScriptPath = "Assets/Game/UI/SafeAreaRect.cs";
+
+        static string _sceneSavePath = ScenePath;
 
         static readonly Color Navy = new Color(0.043f, 0.090f, 0.161f, 1f);
         static readonly Color NavyButton = new Color(0.122f, 0.220f, 0.337f, 1f);
         static readonly Color Ink = new Color(0.925f, 0.945f, 0.925f, 1f);
-
-        static FoundationSetup()
-        {
-            EditorApplication.delayCall += Tick;
-        }
 
         [MenuItem("LogistiCore/Foundation/Setup")]
         public static void SetupFromMenu()
@@ -58,10 +59,7 @@ namespace LogistiCore.EditorTools
                 return;
             }
 
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null)
-                AssetDatabase.DeleteAsset(ScenePath);
-
-            CreateVerificationScene();
+            EnsureScene(replaceExisting: true);
             AddSceneToBuildSettings();
             AssetDatabase.SaveAssets();
             EditorSceneManager.OpenScene(ScenePath);
@@ -96,9 +94,7 @@ namespace LogistiCore.EditorTools
             }
 
             EnsureLocalization();
-            if (!IsVerificationSceneReady)
-                CreateVerificationScene();
-
+            EnsureScene(replaceExisting: false);
             AddSceneToBuildSettings();
             AssetDatabase.SaveAssets();
 
@@ -125,37 +121,196 @@ namespace LogistiCore.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        static void Tick()
+        public enum FoundationSceneFileAction
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            None = 0,
+            CreateMissing = 1,
+            ReplaceWithBackup = 2
+        }
+
+        /// <summary>
+        /// Editor startup never creates or replaces the verification scene.
+        /// An explicit setup request leaves an existing scene alone and creates one only when the file is missing.
+        /// An explicit recreate request replaces an existing file only after a snapshot.
+        /// </summary>
+        public static FoundationSceneFileAction FileActionFor(bool explicitRequest, bool sceneExists, bool replaceExisting)
+        {
+            if (!explicitRequest || (sceneExists && !replaceExisting))
+                return FoundationSceneFileAction.None;
+
+            return sceneExists
+                ? FoundationSceneFileAction.ReplaceWithBackup
+                : FoundationSceneFileAction.CreateMissing;
+        }
+
+        static void EnsureScene(bool replaceExisting)
+        {
+            var exists = SceneAssetExists();
+            var action = FileActionFor(explicitRequest: true, exists, replaceExisting);
+            if (action == FoundationSceneFileAction.None)
                 return;
 
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
-            {
-                EditorApplication.delayCall += Tick;
-                return;
-            }
+            ValidatePrerequisites();
 
-            if (IsLocalizationReady && IsVerificationSceneReady)
-                return;
+            string snapshot = null;
+            if (action == FoundationSceneFileAction.ReplaceWithBackup)
+                snapshot = BackupExistingScene();
 
-            var attempts = SessionState.GetInt(AttemptKey, 0);
-            if (attempts >= 8)
-            {
-                Debug.LogWarning("[LogistiCore] Foundation setup did not finish. Run LogistiCore/Foundation/Setup.");
-                return;
-            }
-
-            SessionState.SetInt(AttemptKey, attempts + 1);
+            var savePath = action == FoundationSceneFileAction.ReplaceWithBackup ? PendingScenePath : ScenePath;
+            _sceneSavePath = savePath;
+            var replaced = false;
             try
             {
-                EnsureAll(openScene: false);
+                CreateVerificationScene();
+                var saved = AbsoluteAsset(savePath);
+                if (!File.Exists(saved) || new FileInfo(saved).Length < 64)
+                    throw new InvalidOperationException("The verification scene was not saved.");
+
+                if (action == FoundationSceneFileAction.ReplaceWithBackup)
+                {
+                    ReplaceSceneFilePreservingMeta(saved, AbsoluteAsset(ScenePath));
+                    replaced = true;
+                    DeletePendingScene();
+                    AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceUpdate);
+                    RestoreMetaGuid(snapshot);
+                }
             }
-            catch (Exception exception)
+            catch (Exception)
             {
-                Debug.LogWarning("[LogistiCore] Foundation setup will retry. " + exception.Message);
-                EditorApplication.delayCall += Tick;
+                if (savePath != ScenePath)
+                    DeletePendingScene();
+                if (replaced && snapshot != null)
+                    RestoreSnapshot(snapshot);
+                throw;
             }
+        }
+
+        static void ValidatePrerequisites()
+        {
+            if (EditorApplication.isPlaying)
+                throw new InvalidOperationException("Exit Play mode before creating the verification scene.");
+
+            var active = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(active.path) && !Application.isBatchMode)
+                throw new InvalidOperationException("Save the open scene, then run LogistiCore/Foundation/Recreate Verification Scene.");
+
+            if (AssetDatabase.LoadAssetAtPath<MonoScript>(ViewScriptPath) == null ||
+                AssetDatabase.LoadAssetAtPath<MonoScript>(SafeAreaScriptPath) == null)
+                throw new InvalidOperationException("Foundation verification scripts are missing.");
+        }
+
+        static bool SceneAssetExists()
+        {
+            return File.Exists(AbsoluteAsset(ScenePath)) ||
+                   AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null;
+        }
+
+        static string BackupExistingScene()
+        {
+            var source = AbsoluteAsset(ScenePath);
+            if (!File.Exists(source))
+                throw new InvalidOperationException("The verification scene disappeared before it could be backed up.");
+
+            var directory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "LogistiCoreFoundationSceneSnapshots",
+                DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
+            Directory.CreateDirectory(directory);
+            var sceneCopy = Path.Combine(directory, "FoundationVerification.unity");
+            if (File.Exists(sceneCopy))
+                throw new InvalidOperationException("A scene snapshot already exists at " + sceneCopy);
+
+            File.Copy(source, sceneCopy, false);
+            var meta = source + ".meta";
+            if (File.Exists(meta))
+                File.Copy(meta, sceneCopy + ".meta", false);
+
+            return directory;
+        }
+
+        static void ReplaceSceneFilePreservingMeta(string savedPendingAbsolute, string sceneAbsolute)
+        {
+            var meta = sceneAbsolute + ".meta";
+            var originalScene = File.ReadAllBytes(sceneAbsolute);
+            var originalMeta = File.Exists(meta) ? File.ReadAllBytes(meta) : null;
+            var originalGuid = originalMeta == null ? null : ReadGuid(meta);
+            try
+            {
+                File.Copy(savedPendingAbsolute, sceneAbsolute, true);
+                if (originalMeta != null)
+                {
+                    var guid = ReadGuid(meta);
+                    if (guid != originalGuid)
+                        File.WriteAllBytes(meta, originalMeta);
+                }
+            }
+            catch (Exception)
+            {
+                File.WriteAllBytes(sceneAbsolute, originalScene);
+                if (originalMeta != null)
+                    File.WriteAllBytes(meta, originalMeta);
+                throw;
+            }
+        }
+
+        static void RestoreMetaGuid(string snapshotDirectory)
+        {
+            if (string.IsNullOrEmpty(snapshotDirectory))
+                return;
+
+            var metaCopy = Path.Combine(snapshotDirectory, "FoundationVerification.unity.meta");
+            if (!File.Exists(metaCopy))
+                return;
+
+            var expected = ReadGuid(metaCopy);
+            var meta = AbsoluteAsset(ScenePath) + ".meta";
+            if (expected != null && ReadGuid(meta) != expected)
+                File.Copy(metaCopy, meta, true);
+        }
+
+        static void RestoreSnapshot(string directory)
+        {
+            var sceneCopy = Path.Combine(directory, "FoundationVerification.unity");
+            if (!File.Exists(sceneCopy))
+                return;
+
+            File.Copy(sceneCopy, AbsoluteAsset(ScenePath), true);
+            var metaCopy = sceneCopy + ".meta";
+            if (File.Exists(metaCopy))
+                File.Copy(metaCopy, AbsoluteAsset(ScenePath) + ".meta", true);
+            AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceUpdate);
+        }
+
+        static void DeletePendingScene()
+        {
+            if (PendingScenePath == ScenePath)
+                return;
+
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(PendingScenePath) != null)
+                AssetDatabase.DeleteAsset(PendingScenePath);
+
+            var absolute = AbsoluteAsset(PendingScenePath);
+            if (File.Exists(absolute))
+                File.Delete(absolute);
+            if (File.Exists(absolute + ".meta"))
+                File.Delete(absolute + ".meta");
+        }
+
+        static string ReadGuid(string metaPath)
+        {
+            foreach (var line in File.ReadLines(metaPath))
+            {
+                if (line.StartsWith("guid:", StringComparison.Ordinal))
+                    return line.Substring("guid:".Length).Trim();
+            }
+
+            return null;
+        }
+
+        static string AbsoluteAsset(string assetPath)
+        {
+            var project = Directory.GetParent(Application.dataPath).FullName;
+            return Path.Combine(project, assetPath);
         }
 
         static LocalizationSettings EnsureSettings()
@@ -353,6 +508,15 @@ namespace LogistiCore.EditorTools
         static void CreateVerificationScene()
         {
             EnsureFolder("Assets/Game/Scenes");
+            var active = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(active.path))
+            {
+                if (!Application.isBatchMode)
+                    throw new InvalidOperationException("Save the open scene, then run LogistiCore/Foundation/Recreate Verification Scene.");
+
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
+
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
 
             var cameraObject = new GameObject("Main Camera");
@@ -418,8 +582,11 @@ namespace LogistiCore.EditorTools
             serialized.FindProperty("landscapeButton").objectReferenceValue = landscape.Button;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            EditorSceneManager.SaveScene(scene, ScenePath);
-            EditorSceneManager.CloseScene(scene, true);
+            if (!EditorSceneManager.SaveScene(scene, _sceneSavePath))
+                throw new InvalidOperationException("The verification scene was not saved.");
+
+            if (scene.IsValid() && SceneManager.sceneCount > 1)
+                EditorSceneManager.CloseScene(scene, true);
         }
 
         static void AddSceneToBuildSettings()
