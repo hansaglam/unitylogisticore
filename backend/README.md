@@ -123,3 +123,7 @@ Aynı `npm run validate` ile tüm testler çalışır. Bağımlılıklar/lockfil
 ## BACKEND-06 — local contract foundation
 
 Internal epoch-bound generator en çok 5 deterministik company offer'ı marker/receipt ile atomik oluşturur. Public generator/refresh yoktur. `acceptContract` strict contractId intent ile ownership/config/eligibility/server expiry/quota doğrular; wallet/XP veya fleet reservation değişmez. `getMyContracts` read-only, max20 document-ID pagination; status filter henüz yoktur. Logistics catalog v2 capabilities destekler, v1 davranışı korunur. Gerçek route/economy/katalog aktivasyonu kapalıdır. [CONTRACT_CONTRACT](../docs/api-contracts/CONTRACT_CONTRACT.md), [BACKEND-06_REPORT](../docs/backend/BACKEND-06_REPORT.md). Aynı npm run validate ve sabit dependencies; BACKEND-07 başlatılmaz.
+
+## BACKEND-07 — local authoritative deliveries
+
+Yeni callable'lar `startDelivery`, `claimDeliveryReward`, read-only `getMyDeliveries`. Internal two-phase fleet/economy planları aynı command transaction'ında atomik reservation/settlement sağlar. Synthetic rules dışında duration/XP default'u yoktur; lazy claim öncesi equipment reserved kalır. Wallet overflow tam rollback yapar. Mevcut npm run validate/dependencies/guard/Rules korunur. [DELIVERY_CONTRACT](../docs/api-contracts/DELIVERY_CONTRACT.md), [BACKEND-07_REPORT](../docs/backend/BACKEND-07_REPORT.md). Production BLOCK; BACKEND-08B başlamaz.

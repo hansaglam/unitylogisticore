@@ -93,3 +93,7 @@ Fleet read foundation(7/8) + 3 starter check + bounded page (en çok 21 doc) + d
 ## BACKEND-06 compatibility eki
 
 Yeni logistics catalog schemaVersion 2, asset tanımına `capabilities` (max16 unique safe IDs) ve `capacity` ekler. Truck/trailer capacity `{unit,amount}` positive safe integer; driver capacity null. V1 katalogları ve eski hash davranışı korunur; v1 asset'ler contract eligibility için otomatik yeterli sayılmaz. Yeni katalog yeni version ID ile oluşturulmalı; in-place upgrade pinned state'i bozacağı için yasaktır. Contract generation/acceptance mevcut validateAsset/availability/ownership kontrolünü kullanır, acceptance reservation yapmaz. Ayrıntılar [CONTRACT_CONTRACT](CONTRACT_CONTRACT.md).
+
+## BACKEND-07 transaction composition eki
+
+`prepareAssignment` tüm reads/validation sonrası write-only apply planı döndürür. `writeAssignment` compatibility adapter aynı behavior'ı korur. Delivery start/claim planı kendi executeCommand transaction'ında apply eder; nested transaction yoktur. Exact assignment ownership release'te korunur, released source yeniden kullanılmaz. Arrival tek başına release yapmaz; lazy claim gerekir. [DELIVERY_CONTRACT](DELIVERY_CONTRACT.md).

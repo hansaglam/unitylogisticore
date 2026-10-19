@@ -220,3 +220,20 @@ test('contract exact reward, server expiration boundaries and strict acceptance 
  for(const payload of [null,{}, {contractId:'x',reward:1},{contractId:'../x'},{contractId:'x',uid:'spoof'}])assert.throws(()=>acceptPayload(payload));
  assert.deepEqual(acceptPayload({contractId:'safe_id'}),{contractId:'safe_id'});
 });
+
+import { arrivalTime, MAX_TIMESTAMP, startPayload, claimPayload, validateDeliveryRules } from '../functions/lib/deliveryModel.js';
+test('delivery payloads allow intent only and timestamp arithmetic rejects overflow',()=>{
+ assert.equal(arrivalTime(100,1),101);for(const args of [[100,0],[100,-1],[100,0.5],[MAX_TIMESTAMP,1],[0,604800001]])assert.throws(()=>arrivalTime(...args));
+ assert.deepEqual(startPayload({contractId:'c',truckId:'t',driverId:'d'}),{contractId:'c',truckId:'t',driverId:'d'});
+ for(const key of ['uid','companyId','reward','xp','startedAt','expectedArrivalAt','position'])assert.throws(()=>startPayload({contractId:'c',truckId:'t',driverId:'d',[key]:1}));
+ assert.throws(()=>claimPayload({deliveryId:'d',now:123}));assert.throws(()=>claimPayload({deliveryId:'../other'}));
+});
+test('delivery rules require pinned explicit synthetic route/cargo and bounded duration/XP',()=>{
+ const f=contractFixtures('synthetic_delivery_unit');const e=validateConfig(f.economy,f.economy.version);const l=validateCatalog(f.logistics,f.logistics.version);
+ const config=validateContractConfig(f.config,f.config.version,l,e),terms=makeTerms(config,0,candidates,e);
+ const rules={schemaVersion:1,version:config.version,approval:'synthetic_emulator_only',contractConfigHash:digest(config),logisticsHash:digest(l),economyHash:terms.economyHash,
+ routes:[{routeId:terms.route.id,cargoId:terms.cargo.id,durationMs:100,xp:10}]};
+ assert.equal(validateDeliveryRules(rules,terms).rule.durationMs,100);
+ for(const change of [{approval:'real'},{economyHash:'bad'},{routes:[{...rules.routes[0],durationMs:0}]},{routes:[{...rules.routes[0],xp:-1}]},
+ {routes:[{...rules.routes[0],cargoId:'unknown'}]},{routes:[rules.routes[0],rules.routes[0]]}])assert.throws(()=>validateDeliveryRules({...rules,...change},terms));
+});
