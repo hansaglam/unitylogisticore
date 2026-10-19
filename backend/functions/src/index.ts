@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { assertLocalEnvironment, LOCAL_PROJECT } from "./localEnvironment";
 import { createLocalFirestore, initializeIdentity } from "./identity";
+import { acceptContractCommand, readMyContracts } from "./contracts";
 import { readMyFleetState, readMyWarehouseState } from "./logisticsReads";
 import { readMyEconomyState } from "./economy";
 import { createCompanyCommand, readMyCompanyState } from "./company";
@@ -53,3 +54,8 @@ export const getMyFleetState = onCall({ region: "us-central1", maxInstances: 1 }
   readMyFleetState(localFirestore, request.auth, request.data));
 export const getMyWarehouseState = onCall({ region: "us-central1", maxInstances: 1 }, request =>
   readMyWarehouseState(localFirestore, request.auth, request.data));
+
+export const acceptContract = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  acceptContractCommand(localFirestore, request.auth, request.data));
+export const getMyContracts = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyContracts(localFirestore, request.auth, request.data));

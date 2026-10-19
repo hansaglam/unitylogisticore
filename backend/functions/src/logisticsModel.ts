@@ -11,12 +11,27 @@ export function assetKind(value: unknown): AssetKind {
 export function digest(value: unknown): string { return createHash("sha256").update(canonicalJson(value, 32768)).digest("hex"); }
 export function validateCatalog(data: DocumentData | undefined, version: string) {
   exact(data, "schemaVersion,version,approval,assets,starter,cities,warehouses");
-  if (data.schemaVersion !== 1 || data.version !== versionId(version) || data.approval !== "synthetic_emulator_only") invalid();
+  if (![1, 2].includes(data.schemaVersion) || data.version !== versionId(version) || data.approval !== "synthetic_emulator_only") invalid();
   for (const list of [data.assets, data.cities, data.warehouses]) {
     if (!Array.isArray(list) || list.length > 32) invalid();
   }
   const assets = (data.assets as DocumentData[]).map(entry => {
-    exact(entry, "id,kind"); return { id: versionId(entry.id), kind: assetKind(entry.kind) };
+    const kind = assetKind(entry.kind);
+    if (data.schemaVersion === 1) {
+      exact(entry, "id,kind"); return { id: versionId(entry.id), kind };
+    }
+    exact(entry, "id,kind,capabilities,capacity");
+    if (!Array.isArray(entry.capabilities) || entry.capabilities.length > 16) invalid();
+    const capabilities = (entry.capabilities as unknown[]).map(versionId);
+    if (new Set(capabilities).size !== capabilities.length) invalid();
+    let capacity: { unit: string; amount: number } | null = null;
+    if (kind === "driver") { if (entry.capacity !== null) invalid(); }
+    else {
+      exact(entry.capacity, "unit,amount");
+      if (safe(entry.capacity.amount) < 1) invalid();
+      capacity = { unit: versionId(entry.capacity.unit), amount: entry.capacity.amount as number };
+    }
+    return { id: versionId(entry.id), kind, capabilities, capacity };
   });
   const cities = (data.cities as unknown[]).map(versionId);
   const warehouses = (data.warehouses as DocumentData[]).map(entry => {
@@ -32,7 +47,7 @@ export function validateCatalog(data: DocumentData | undefined, version: string)
   exact(data.starter, "packageVersion,truck,driver");
   const starter = { packageVersion: versionId(data.starter.packageVersion), truck: versionId(data.starter.truck), driver: versionId(data.starter.driver) };
   if (!assets.some(a => a.id === starter.truck && a.kind === "truck") || !assets.some(a => a.id === starter.driver && a.kind === "driver")) invalid();
-  return { schemaVersion: 1, version, approval: "synthetic_emulator_only", assets, cities, warehouses, starter };
+  return { schemaVersion: data.schemaVersion as number, version, approval: "synthetic_emulator_only", assets, cities, warehouses, starter };
 }
 export type LogisticsCatalog = ReturnType<typeof validateCatalog>;
 export function validateAsset(data: DocumentData | undefined, id: string, companyId: string, catalog: LogisticsCatalog) {
