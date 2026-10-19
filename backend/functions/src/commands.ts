@@ -11,6 +11,8 @@ const errors = {
   RETRY_LATER: "unavailable", INTERNAL: "internal",
   COMPANY_EXISTS: "already-exists", COMPANY_STATE_INVALID: "failed-precondition",
   MIGRATION_REQUIRED: "failed-precondition",
+  OFFER_EXPIRED: "failed-precondition", CONTRACT_NOT_OFFERED: "failed-precondition",
+  CONTRACT_INELIGIBLE: "failed-precondition", CONTRACT_QUOTA_REACHED: "resource-exhausted",
 } as const satisfies Record<string, FunctionsErrorCode>;
 export type CommandErrorCode = keyof typeof errors;
 

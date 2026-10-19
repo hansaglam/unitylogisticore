@@ -200,3 +200,23 @@ test('internal logistics transaction primitives reject nonlocal execution before
     await assert.rejects(createWarehouseInTransaction(unreachable,unreachable,unreachable,'synthetic','synthetic'),/Local isolation/);
   } finally {if(previous===undefined)delete process.env.GCLOUD_PROJECT;else process.env.GCLOUD_PROJECT=previous;}
 });
+
+import { contractFixtures, candidates } from './contracts.fixtures.mjs';
+import { validateContractConfig, rewardAmount, expired, acceptPayload, epochFor, makeTerms, contractIdFor } from '../functions/lib/contractModel.js';
+test('contract catalog links city/cargo/equipment and rejects malformed or unapproved terms',()=>{
+ const f=contractFixtures('synthetic_contract_unit');const economy=validateConfig(f.economy,f.economy.version);const logistics=validateCatalog(f.logistics,f.logistics.version);
+ const config=validateContractConfig(f.config,f.config.version,logistics,economy);
+ assert.equal(makeTerms(config,0,candidates,economy).reward,6);
+ for(const patch of [{approval:'real'},{maxOffers:6},{offerTtlMs:600001},{maxAcceptedPerEpoch:4},{logisticsHash:'bad'},
+  {routes:[{...f.config.routes[0],destinationCityId:'izmir'}]}, {templates:[{...f.config.templates[0],cargoId:'unknown'}]},
+  {templates:[{...f.config.templates[0],quantity:0.5}]},{templates:[{...f.config.templates[0],rewardPerUnit:Number.MAX_SAFE_INTEGER}]}])
+  assert.throws(()=>validateContractConfig({...f.config,...patch},f.config.version,logistics,economy));
+ assert.throws(()=>validateContractConfig(f.config,f.config.version,validateCatalog(logisticsFixture(f.config.version),f.config.version),economy));
+});
+test('contract exact reward, server expiration boundaries and strict acceptance intent',()=>{
+ assert.equal(rewardAmount(2,3,10),6);assert.throws(()=>rewardAmount(Number.MAX_SAFE_INTEGER,2,Number.MAX_SAFE_INTEGER));
+ assert.equal(expired('offered',100,99),false);assert.equal(expired('offered',100,100),true);assert.equal(expired('accepted',100,101),false);
+ assert.equal(epochFor(600001,600000),1);assert.equal(contractIdFor('company',1,0),contractIdFor('company',1,0));
+ for(const payload of [null,{}, {contractId:'x',reward:1},{contractId:'../x'},{contractId:'x',uid:'spoof'}])assert.throws(()=>acceptPayload(payload));
+ assert.deepEqual(acceptPayload({contractId:'safe_id'}),{contractId:'safe_id'});
+});
