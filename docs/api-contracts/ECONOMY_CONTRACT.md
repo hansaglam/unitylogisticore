@@ -62,3 +62,7 @@ Sabit direct document okumaları: company/economy read pending 7, ready 8; creat
 ## Karar bekleyenler
 
 **UNKNOWN:** gerçek currency/scale, başlangıç fonu/XP, XP thresholds/maxima, reputation, legacy money/cash ve level/companyLevel anlamları, migration eligibility, rollout policy ve gerçek entitlement kuralları. **DEFERRED:** üretim onayı/dağıtımı, gerçek DEV, CI güvenlik onayı, version migration, purchases/contracts/deliveries/market. Emulator PASS üretim güvenliği veya ekonomi dengesi onayı değildir.
+
+## BACKEND-07 verified delivery reward eki
+
+Economy write hesaplaması `planEconomyMutation` ile ortak write-only plana ayrıldı; eski initialize/entitlement command/result/fingerprint korunur. `prepareEconomyReward` trusted domain delivery source'u için uniqueness/currency/config/bounds okur; delivery caller önce canonical contract/rules/arrival/assignment yetkisini doğrular. Source delivery_{deliveryId}, reason delivery_reward; aynı canonical wallet/progression/ledger/claims şeması. Settlement delivery/contract/release/receipt ile tek transaction'dır. Overflow kısmi ödeme yapmaz. Public generic grant yoktur. [DELIVERY_CONTRACT](DELIVERY_CONTRACT.md).

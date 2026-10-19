@@ -1,3 +1,4 @@
+import { startDeliveryCommand, claimDeliveryRewardCommand, readMyDeliveries } from "./deliveries";
 import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { assertLocalEnvironment, LOCAL_PROJECT } from "./localEnvironment";
@@ -59,3 +60,10 @@ export const acceptContract = onCall({ region: "us-central1", maxInstances: 1 },
   acceptContractCommand(localFirestore, request.auth, request.data));
 export const getMyContracts = onCall({ region: "us-central1", maxInstances: 1 }, request =>
   readMyContracts(localFirestore, request.auth, request.data));
+
+export const startDelivery = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  startDeliveryCommand(localFirestore, request.auth, request.data));
+export const claimDeliveryReward = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  claimDeliveryRewardCommand(localFirestore, request.auth, request.data));
+export const getMyDeliveries = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyDeliveries(localFirestore, request.auth, request.data));

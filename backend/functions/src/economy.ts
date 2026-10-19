@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { DocumentData, FieldValue, Firestore, Transaction } from "firebase-admin/firestore";
 import { CommandError, executeCommand } from "./commands";
+import { EconomyConfig } from "./economyModel";
 import { readFoundation } from "./company";
 import { requireUid, validateIdentityRequest } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
@@ -59,25 +60,7 @@ export function runEconomyCommand(db: Firestore, auth: { uid: string } | undefin
             (entitlement.reason === "synthetic_debit" ? entitlement.delta >= 0 || entitlement.xpDelta !== 0 : entitlement.delta < 0)) invalid();
         delta = entitlement.delta; xpDelta = entitlement.xpDelta; reason = entitlement.reason;
       }
-      const balance = checkedAdd(state.economy?.balance ?? 0, delta, config.maxBalance);
-      const xp = checkedAdd(state.economy?.xp ?? 0, xpDelta, config.maxXp);
-      const level = levelFor(xp, config);
-      const timestamp = FieldValue.serverTimestamp();
-      const common = { schemaVersion: 1, configVersion: config.version, configHash: configHash(config), updatedAt: timestamp };
-      const finance = { ...common, balance, currency: config.currency, scale: config.scale };
-      const progression = { ...common, xp, level, rulesVersion: config.rulesVersion };
-      if (kind === "initialize") {
-        tx.create(state.financeRef, finance); tx.create(state.progressionRef, progression);
-        tx.update(state.companyRef, { bootstrapStatus: ECONOMY_READY });
-      } else {
-        tx.update(state.financeRef, finance); tx.update(state.progressionRef, progression);
-      }
-      tx.create(claimRef, { schemaVersion: 1, source, operationId: opId, configVersion: config.version, committedAt: timestamp });
-      // A zero delta is retained for initialization/XP-only evidence, never a second wallet.
-      tx.create(ledgerRef, { schemaVersion: 1, operationId: opId, reason, delta, balanceAfter: balance,
-        currency: config.currency, scale: config.scale, source, configVersion: config.version, rulesVersion: config.rulesVersion, committedAt: timestamp });
-      return { companyId: state.companyId, economyReady: true, operationId: opId, balance: String(balance), xp, level,
-        currency: config.currency, scale: config.scale, configVersion: config.version, rulesVersion: config.rulesVersion };
+      return planEconomyMutation(tx, state, config, source, delta, xpDelta, reason, kind === "initialize").apply();
     },
   });
 }
@@ -97,4 +80,48 @@ export async function readMyEconomyState(db: Firestore, auth: { uid: string } | 
     if (error instanceof CommandError) throw error;
     throw new CommandError("INTERNAL");
   }
+}
+
+/** Pure calculation followed by write-only closure. Caller must verify the trusted source and read uniqueness first. */
+export function planEconomyMutation(tx: Transaction, state: Awaited<ReturnType<typeof readFoundation>>, config: EconomyConfig,
+  source: string, delta: number, xpDelta: number, reason: string, initialize = false) {
+  assertLocalEnvironment(process.env, true);
+  const opId = operationId(state.companyId, source);
+  const claimRef = state.companyRef.collection("claims").doc(source);
+  const ledgerRef = state.companyRef.collection("ledger").doc(opId);
+  const balance = checkedAdd(state.economy?.balance ?? 0, delta, config.maxBalance);
+  const xp = checkedAdd(state.economy?.xp ?? 0, xpDelta, config.maxXp);
+  const level = levelFor(xp, config);
+  const timestamp = FieldValue.serverTimestamp();
+  const common = { schemaVersion: 1, configVersion: config.version, configHash: configHash(config), updatedAt: timestamp };
+  const finance = { ...common, balance, currency: config.currency, scale: config.scale };
+  const progression = { ...common, xp, level, rulesVersion: config.rulesVersion };
+  return { apply: () => {
+  if (initialize) {
+    tx.create(state.financeRef, finance); tx.create(state.progressionRef, progression);
+    tx.update(state.companyRef, { bootstrapStatus: ECONOMY_READY });
+  } else {
+    tx.update(state.financeRef, finance); tx.update(state.progressionRef, progression);
+  }
+  tx.create(claimRef, { schemaVersion: 1, source, operationId: opId, configVersion: config.version, committedAt: timestamp });
+  // A zero delta is retained for initialization/XP-only evidence, never a second wallet.
+  tx.create(ledgerRef, { schemaVersion: 1, operationId: opId, reason, delta, balanceAfter: balance,
+    currency: config.currency, scale: config.scale, source, configVersion: config.version, rulesVersion: config.rulesVersion, committedAt: timestamp });
+  return { companyId: state.companyId, economyReady: true, operationId: opId, balance: String(balance), xp, level,
+    currency: config.currency, scale: config.scale, configVersion: config.version, rulesVersion: config.rulesVersion };
+  } };
+}
+
+/** Read/validate phase for a domain-verified reward. No generic public entitlement writer. */
+export async function prepareEconomyReward(tx: Transaction, state: Awaited<ReturnType<typeof readFoundation>>,
+  sourceId: string, reward: number, xp: number, currency: string, scale: number, expectedConfigHash: string) {
+  assertLocalEnvironment(process.env, true);
+  if (!state.economy) invalid();
+  const config = state.economy.config;
+  safe(reward, config.maxBalance); safe(xp, config.maxXp);
+  if (currency !== config.currency || scale !== config.scale || configHash(config) !== expectedConfigHash) invalid();
+  const source = `delivery_${versionId(sourceId)}`;
+  const refs = [state.companyRef.collection("claims").doc(source), state.companyRef.collection("ledger").doc(operationId(state.companyId, source))];
+  if ((await tx.getAll(...refs)).some(doc => doc.exists)) invalid();
+  return planEconomyMutation(tx, state, config, source, reward, xp, "delivery_reward");
 }

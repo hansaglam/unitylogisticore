@@ -62,7 +62,7 @@ export function assignmentId(companyId: string, source: string): string { return
 /** All reads/preconditions finish before the first write. Reusable by a future domain transaction.
  * state must come from readFoundation in THIS transaction and trusted Auth context.
  */
-export async function writeAssignment(tx: Transaction, db: Firestore, state: CompanyState, selection: Selection,
+export async function prepareAssignment(tx: Transaction, db: Firestore, state: CompanyState, selection: Selection,
   source: string, action: "reserve" | "release") {
   assertLocalEnvironment(process.env, true);
   if (!state.economy || !["reserve", "release"].includes(action)) invalid();
@@ -85,11 +85,13 @@ export async function writeAssignment(tx: Transaction, db: Firestore, state: Com
     const asset = validateAsset(data, entries[i]!.assetId, state.companyId, await getCatalog(data?.catalogVersion));
     if (asset.kind !== entries[i]!.kind || (action === "reserve" ? !asset.available : asset.assignmentId !== id)) invalid();
   }
+  return { assignmentId: id, apply: () => {
   for (const ref of refs) tx.update(ref, { assignmentId: action === "reserve" ? id : null });
   if (action === "reserve") tx.create(assignmentRef, { schemaVersion: 1, assignmentId: id, companyId: state.companyId,
     assets: entries, status: "active", createdAt: FieldValue.serverTimestamp() });
   else tx.update(assignmentRef, { status: "released", releasedAt: FieldValue.serverTimestamp() });
   return { assignmentId: id, status: action === "reserve" ? "active" : "released" };
+  } };
 }
 export function assignmentCommand(db: Firestore, auth: { uid: string } | undefined, data: unknown,
   action: "reserve" | "release", source: string, selection: Selection) {
@@ -98,4 +100,10 @@ export function assignmentCommand(db: Firestore, auth: { uid: string } | undefin
   return logisticsCommand(db, auth, data, action === "reserve" ? "reserveFleet" : "releaseFleet",
     { action, source: sourceId, assets: entries }, async () => {},
     (tx, state) => writeAssignment(tx, db, state, entries, sourceId, action));
+}
+
+/** Compatibility adapter. Composed domain commands call prepareAssignment and defer apply. */
+export async function writeAssignment(tx: Transaction, db: Firestore, state: CompanyState, selection: Selection,
+  source: string, action: "reserve" | "release") {
+  return (await prepareAssignment(tx, db, state, selection, source, action)).apply();
 }

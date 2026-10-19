@@ -12,7 +12,7 @@ import { readContractConfig, requireContractEligibility } from "./contractEligib
 
 const poolRef = (state: CompanyState, epoch: number) => state.companyRef.collection("contractPools").doc(`epoch_${safe(epoch)}`);
 /** Validate the entire bounded pool, including aggregate quota, without repricing snapshots. */
-async function readPool(tx: Transaction, state: CompanyState, epoch: number) {
+export async function readPool(tx: Transaction, state: CompanyState, epoch: number) {
   const ref = poolRef(state,epoch); const snapshot = await tx.get(ref);
   if (!snapshot.exists) return null;
   const marker = snapshot.data();
