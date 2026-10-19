@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { assertLocalEnvironment, LOCAL_PROJECT } from "./localEnvironment";
 import { createLocalFirestore, initializeIdentity } from "./identity";
+import { readMyFleetState, readMyWarehouseState } from "./logisticsReads";
 import { readMyEconomyState } from "./economy";
 import { createCompanyCommand, readMyCompanyState } from "./company";
 
@@ -47,3 +48,8 @@ export const localHealth = onCall({ region: "us-central1", maxInstances: 1 }, (r
 
 export const getMyEconomyState = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
   readMyEconomyState(localFirestore, request.auth, request.data));
+
+export const getMyFleetState = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyFleetState(localFirestore, request.auth, request.data));
+export const getMyWarehouseState = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyWarehouseState(localFirestore, request.auth, request.data));

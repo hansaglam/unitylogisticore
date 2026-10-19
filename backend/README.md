@@ -113,3 +113,9 @@ Legacy/migration işaretleri ve tutarsız mapping fail-closed; aynı key replay 
 `economyModel.ts` versioned synthetic config, exact bounded integer money ve XP/level doğrulamasını; `economy.ts` internal atomic initialization/entitlement/ledger/claim yürütmesini ekler. Tek yeni callable read-only `getMyEconomyState`; para/XP grant veya init callable yoktur. Gerçek ürün değerleri ve production initialization kapalıdır. [ECONOMY_CONTRACT](../docs/api-contracts/ECONOMY_CONTRACT.md), [BACKEND-05_REPORT](../docs/backend/BACKEND-05_REPORT.md). Yukarıdaki faz kapsamları tarihsel kayıttır.
 
 Aynı `npm run validate` ile tüm testler çalışır. Bağımlılıklar/lockfile/launcher/Rules değişmez; 16–30 Ekim local-only risk istisnası ve 23 Ekim yeniden kontrol koşulu korunur.
+
+## BACKEND-08A — local fleet ve warehouse foundation
+
+`getMyFleetState` ve `getMyWarehouseState` authenticated, salt okunur, document-ID cursor ile en fazla 20 kayıt döndüren local callable'lardır. `starterFleetReady` ekonomiden ayrı doğrulanır. Internal starter provisioning tek truck + tek driver ve permanent marker/receipt'i atomik oluşturur; farklı key veya catalog version ikinci paketi veremez. Public grant/purchase/assignment endpoint yoktur; warehouse/trailer otomatik verilmez.
+
+`fleet.ts` transaction-bound reserve/release, `warehouses.ts` yalnız sentetik warehouse creation, `logisticsModel.ts` strict katalog/asset/capacity/pagination validators içerir. Gerçek katalog/ekonomi/rollout kapalıdır; LGC ve başlangıç bakiyesi önerileri default yapılmadı. Mevcut `npm run validate`, sabit dependency/lockfile/guard/Rules/launcher korunur. Sözleşmeler: [FLEET_CONTRACT](../docs/api-contracts/FLEET_CONTRACT.md), [WAREHOUSE_CONTRACT](../docs/api-contracts/WAREHOUSE_CONTRACT.md); kanıt: [BACKEND-08A_REPORT](../docs/backend/BACKEND-08A_REPORT.md). Genel security HOLD, production BLOCK; 23 Ekim reassessment gereklidir.
