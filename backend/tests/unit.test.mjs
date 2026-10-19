@@ -138,3 +138,65 @@ test('economy config is explicit synthetic-only; deterministic bounded threshold
   assert.throws(() => validateConfig(undefined, syntheticConfig.version));
   assert.throws(() => levelFor(1001, config));
 });
+
+import { logisticsFixture } from './logistics.fixtures.mjs';
+import { validateCatalog, validateAsset, validateWarehouse, requireCapacity, warehouseId, pageRequest, digest } from '../functions/lib/logisticsModel.js';
+import { validateSelection } from '../functions/lib/fleet.js';
+import { Timestamp } from 'firebase-admin/firestore';
+
+test('logistics catalog rejects unapproved, unknown, duplicate and incompatible definitions', () => {
+  const fixture = logisticsFixture('synthetic_unit');
+  assert.deepEqual(validateCatalog(fixture,fixture.version),fixture);
+  for(const change of [{approval:'production'}, {assets:[{id:'test_truck',kind:'boat'}]}, {assets:[...fixture.assets,fixture.assets[0]]},
+    {starter:{...fixture.starter,driver:'test_truck'}}, {cities:['synthetic_city','synthetic_city']},
+    {warehouses:[{...fixture.warehouses[0],cityId:'unknown'}]}, {warehouses:[{...fixture.warehouses[0],capacityUnits:0.5}]},
+    {warehouses:[{...fixture.warehouses[0],level:0}]}, {extra:1}, {version:'different'}]) {
+    assert.throws(()=>validateCatalog({...fixture,...change},fixture.version));
+  }
+  assert.throws(()=>validateCatalog(undefined,fixture.version));
+});
+test('asset availability and assignments validate kind, owner and state', () => {
+  const catalog=validateCatalog(logisticsFixture('synthetic_unit'),'synthetic_unit');
+  const asset={schemaVersion:1,assetId:'test_asset',kind:'truck',companyId:'synthetic_company',catalogId:'test_truck',catalogVersion:catalog.version,
+    catalogHash:digest(catalog),status:'operational',assignmentId:null,acquiredAt:Timestamp.now()};
+  assert.equal(validateAsset(asset,asset.assetId,asset.companyId,catalog).available,true);
+  assert.equal(validateAsset({...asset,status:'out_of_service'},asset.assetId,asset.companyId,catalog).available,false);
+  assert.equal(validateAsset({...asset,assignmentId:'a'.repeat(64)},asset.assetId,asset.companyId,catalog).available,false);
+  for(const change of [{companyId:'other'},{kind:'driver'},{status:'available'},{assignmentId:'client_id'},{acquiredAt:0},{catalogHash:'wrong'}]) {
+    assert.throws(()=>validateAsset({...asset,...change},asset.assetId,asset.companyId,catalog));
+  }
+  const pair=[{assetId:'truck',kind:'truck'},{assetId:'driver',kind:'driver'}];
+  assert.equal(validateSelection(pair).length,2);
+  assert.equal(validateSelection([...pair,{assetId:'trailer',kind:'trailer'}]).length,3);
+  for(const selection of [[],[pair[0]], [pair[0],pair[0]], [...pair,{assetId:'driver2',kind:'driver'}], [...pair,{assetId:'bad',kind:'boat'}]]) assert.throws(()=>validateSelection(selection));
+});
+test('warehouse capacity, ownership and deterministic city/type uniqueness are bounded', () => {
+  const catalog=validateCatalog(logisticsFixture('synthetic_unit'),'synthetic_unit'); const def=catalog.warehouses[0];
+  const id=warehouseId(def.cityId,def.type);
+  assert.equal(id,warehouseId(def.cityId,def.type)); assert.notEqual(id,warehouseId(def.cityId,'other_type'));
+  const record={schemaVersion:1,warehouseId:id,companyId:'synthetic_company',catalogId:def.id,catalogVersion:catalog.version,catalogHash:digest(catalog),
+    cityId:def.cityId,type:def.type,level:def.level,status:'operational',capacityModelId:def.capacityModelId,usedCapacity:0,acquiredAt:Timestamp.now()};
+  assert.equal(validateWarehouse(record,id,record.companyId,catalog).capacityUnits,'10');
+  for(const change of [{companyId:'foreign'},{cityId:'unknown'},{usedCapacity:11},{level:2},{catalogHash:'wrong'}]) assert.throws(()=>validateWarehouse({...record,...change},id,record.companyId,catalog));
+  requireCapacity(9,1,10);
+  for(const args of [[9,2,10],[-1,0,10],[0,0.5,10],[0,NaN,10],[0,1,Infinity],[Number.MAX_SAFE_INTEGER,1,Number.MAX_SAFE_INTEGER]]) assert.throws(()=>requireCapacity(...args));
+});
+test('logistics pagination rejects spoofing and oversized limits/cursors', () => {
+  assert.deepEqual(pageRequest({protocolVersion:1}),{limit:20,after:null});
+  assert.deepEqual(pageRequest({protocolVersion:1,limit:1,after:'starter_driver'}),{limit:1,after:'starter_driver'});
+  for(const data of [null,{protocolVersion:2},{protocolVersion:1,companyId:'other'},{protocolVersion:1,uid:'other'},
+    {protocolVersion:1,limit:0},{protocolVersion:1,limit:21},{protocolVersion:1,limit:1.5},{protocolVersion:1,after:'../foreign'},
+    {protocolVersion:1,after:'a'.repeat(65)}]) assert.throws(()=>pageRequest(data));
+});
+
+test('internal logistics transaction primitives reject nonlocal execution before database access', async () => {
+  const { writeAssignment, readStarter } = await import('../functions/lib/fleet.js');
+  const { createWarehouseInTransaction } = await import('../functions/lib/warehouses.js');
+  const previous=process.env.GCLOUD_PROJECT;process.env.GCLOUD_PROJECT='synthetic-nonlocal';
+  const unreachable=new Proxy({}, {get(){throw Error('database touched before isolation');}});
+  try {
+    await assert.rejects(readStarter(unreachable,unreachable,unreachable),/Local isolation/);
+    await assert.rejects(writeAssignment(unreachable,unreachable,unreachable,[],'synthetic','reserve'),/Local isolation/);
+    await assert.rejects(createWarehouseInTransaction(unreachable,unreachable,unreachable,'synthetic','synthetic'),/Local isolation/);
+  } finally {if(previous===undefined)delete process.env.GCLOUD_PROJECT;else process.env.GCLOUD_PROJECT=previous;}
+});
