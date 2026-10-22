@@ -1,0 +1,62 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {candidate as c,initial,ready,validateConfig,limit,parseAmount,borrow,repay,settle,levelUp,debt,assertState} from './bank-model.mjs';
+import {money as m,MAX,add} from './model.mjs';
+import {simulate,cycles,render,waiting} from './bank-report.mjs';
+const loan=(s=initial(c),p='20000')=>borrow(s,c,String(m(p)));
+const job={gross:m('4500'),costs:m('1400'),upfront:m('800')};
+const bad=(fn,code)=>assert.throws(fn,e=>!code||e.code===code);
+test('ready level 1 company borrows at zero deliveries',()=>{const s=loan();assert.equal(s.completed,0);assert.equal(s.activeId,1);});
+test('complete readiness accepted',()=>assertState(initial(c,{readiness:ready}),c));
+for(const key of Object.keys(ready))test(`incomplete readiness rejected: ${key}`,()=>bad(()=>initial(c,{readiness:{...ready,[key]:!ready[key]}}),'NOT_READY'));
+test('every tier lower and upper boundary',()=>{for(const t of c.tiers)for(const n of [t.from,t.to])assert.equal(limit(c,n),t.max);bad(()=>limit(c,0));bad(()=>limit(c,51));});
+for(const kind of ['overlap','gap','missing-end'])test(`invalid tiers ${kind}`,()=>{const cfg=structuredClone(c);if(kind==='overlap')cfg.tiers[1].from=4;else if(kind==='gap')cfg.tiers[1].from=6;else cfg.tiers[3].to=49;bad(()=>validateConfig(cfg),'INVALID_TIERS');});
+test('minimum greater than tier maximum rejected',()=>bad(()=>validateConfig({...c,minPrincipal:m('21000')})));
+test('below minimum rejected',()=>bad(()=>loan(initial(c),'999')));
+test('above tier maximum rejected',()=>bad(()=>loan(initial(c),'21000')));
+test('increment rejected',()=>bad(()=>loan(initial(c),'1500'),'INVALID_STEP'));
+test('invalid wire integers rejected',()=>{for(const x of [1,1.5,'-1','0','01','1.1','1e3','+1','9007199254740992','9'.repeat(100),NaN])bad(()=>parseAmount(x));});
+test('exact 8 percent fee',()=>assert.equal(loan().feesCharged,m('1600')));
+test('positive minimum fee prevents tiny-loan rounding exploit',()=>{const cfg={...c,minPrincipal:1,step:1,chargeBps:1};const s=borrow(initial(cfg),cfg,'1');assert.equal(s.feesCharged,1);bad(()=>validateConfig({...cfg,minFee:0}));});
+test('payout creates principal plus fee liability',()=>{const s=loan();assert.equal(s.cash,m('35000'));assert.equal(debt(s),m('21600'));assert.equal(s.cash-debt(s),m('13400'));});
+test('origination generates no operating income, progress or XP',()=>{const s=loan();assert.equal(s.revenue,0);assert.equal(s.costs,0);assert.equal(s.completed,0);assert.equal(s.level,1);assert.equal('xp' in s,false);});
+test('second outstanding loan rejected without mutation',()=>{const s=loan(),before=structuredClone(s);bad(()=>loan(s),'ACTIVE_LOAN');assert.deepEqual(s,before);});
+test('partial payoff retains anchor; full payoff releases it',()=>{let s=loan(initial(c,{cash:m('100000')}));s=repay(s,c,'1');assert.equal(s.activeId,1);s=repay(s,c,String(MAX));assert.equal(s.activeId,null);assert.equal(debt(s),0);assert.equal(s.loans[0].status,'paid');});
+test('immediate reborrow distinct identity and immutable paid record',()=>{let s=repay(loan(initial(c,{cash:m('100000')})),c,String(MAX));const old=structuredClone(s.loans[0]);s=loan(s);assert.equal(s.activeId,2);assert.equal(s.loans[1].source,'loan_2');assert.deepEqual(s.loans[0],old);assert.equal(s.completed,0);});
+test('three cycles conserve lifetime cash debt and fees',()=>{const {state:s}=cycles();assert.equal(s.principalReceived,m('115000'));assert.equal(s.feesCharged,m('9200'));assert.equal(s.cash,m('90800'));assert.equal(debt(s),0);assert.equal(s.revenue,0);});
+test('determinism includes repeated loans',()=>assert.deepEqual(simulate({borrowAt:0,repeat:true,deliveries:60}),simulate({borrowAt:0,repeat:true,deliveries:60})));
+test('level up changes future tier but pins active terms',()=>{let s=loan(initial(c,{cash:m('100000')}));const terms=structuredClone(s.loans[0].terms);s=levelUp(s,c,5);assert.deepEqual(s.loans[0].terms,terms);assert.equal(limit(c,s.level),m('35000'));s=repay(s,c,String(MAX));s=loan(s,'35000');assert.equal(s.loans[1].terms.principal,m('35000'));assert.deepEqual(s.loans[0].terms,terms);});
+test('day zero repayments can delay expansion relative to fifth',()=>{assert.equal(simulate({borrowAt:0}).state.purchaseAt,10);assert.equal(simulate({borrowAt:5}).state.purchaseAt,8);});
+test('partial loan costs less but expands later',()=>{const a=simulate({borrowAt:5,principal:10000}).state,b=simulate({borrowAt:5}).state;assert.ok(a.purchaseAt>b.purchaseAt);assert.equal(a.feesCharged,m('800'));assert.equal(b.feesCharged,m('1600'));});
+test('automatic reserve caps repayment',()=>{let s=loan(initial(c,{cash:0}),'1000');s=settle(s,c,{gross:m('4500'),costs:0,upfront:0});assert.equal(s.cash,m('5000'));assert.equal(s.feesRepaid+s.principalRepaid,m('500'));});
+test('negative net produces no repayment',()=>{const s=loan(),n=settle(s,c,{gross:0,costs:m('100'),upfront:0});assert.equal(debt(n),debt(s));assert.equal(n.cash,s.cash-m('100'));});
+test('automatic full repayment never overpays',()=>{const s=loan(initial(c),'1000'),n=settle(s,c,{gross:m('10000'),costs:0,upfront:0});assert.equal(debt(n),0);assert.equal(n.principalRepaid+n.feesRepaid,m('1080'));});
+test('manual repeated payment and final one-unit boundary',()=>{let s=loan(initial(c,{cash:m('100000')}),'1000');s=repay(s,c,String(m('1080')-1));assert.equal(debt(s),1);s=repay(s,c,String(MAX));assert.equal(debt(s),0);bad(()=>repay(s,c,'1'),'NO_ACTIVE_LOAN');});
+test('manual reserve and no-capacity reject',()=>{const s=loan(initial(c,{cash:0}),'1000');bad(()=>repay(s,c,'1'),'NO_REPAYMENT_CAPACITY');});
+test('config version and hash drift reject',()=>{bad(()=>initial({...c,version:'bank-00-v2'}));bad(()=>assertState(loan(),{...c,chargeBps:900}),'CONFIG_DRIFT');});
+test('config malformed extras and unsupported values reject',()=>{bad(()=>validateConfig({...c,unlockDeliveries:5}));bad(()=>validateConfig({...c,step:0}));bad(()=>validateConfig({...c,chargeBps:10001}));});
+test('wallet maximum prevents loan payout',()=>bad(()=>loan(initial(c,{cash:c.maxBalance}))));
+test('wallet maximum prevents overflowing settlement',()=>bad(()=>settle(initial(c,{cash:c.maxBalance}),c,job)));
+test('atomic net settlement can fit wallet even when pre-repayment sum exceeds cap',()=>{
+  const s=loan(initial(c,{cash:c.maxBalance-m('20000')-m('2500')}));
+  const next=settle(s,c,job);assert.equal(next.cash,c.maxBalance-m('485'));
+});
+test('zero profit does not repay and absent loan never deducts repayment',()=>{
+  const s=loan(),n=settle(s,c,{gross:100,costs:100,upfront:0});assert.equal(n.cash,s.cash);assert.equal(debt(n),debt(s));
+  assert.equal(settle(initial(c),c,job).cash,m('18100'));
+});
+test('large repeated-cycle run has no positive wealth without work',()=>{
+  let s=initial(c,{cash:m('100000')});for(let i=0;i<100;i++){s=loan(s,'1000');s=repay(s,c,String(MAX));}
+  assert.equal(s.sequence,100);assert.equal(s.cash,m('92000'));assert.equal(s.feesCharged,m('8000'));assert.equal(debt(s),0);
+});
+test('needs-based timing reaches earliest cash threshold',()=>{
+  for(const [profit,at] of [[2500,8],[3100,7],[3800,6]])assert.equal(simulate({profit,borrowAt:at}).state.purchaseAt,at);
+});
+test('safe integer intermediate overflow rejected',()=>{bad(()=>add(MAX,1),'OVERFLOW');const cfg={...c,maxBalance:MAX,tiers:[{from:1,to:50,max:MAX}],minPrincipal:1,step:1};bad(()=>validateConfig(cfg),'OVERFLOW');});
+test('tampered cumulative totals and orphan anchor fail closed',()=>{const s=loan();bad(()=>assertState({...s,feesCharged:0},c));bad(()=>assertState({...s,activeId:null},c));});
+test('no operating profit double count after repayment',()=>{const s=settle(loan(),c,job);assert.equal(s.revenue-s.costs,m('3100'));assert.equal(s.cash,m('35000')+m('3100')-m('1085'));});
+test('loss preserves debt until operating cash exhaustion',()=>{const r=simulate({borrowAt:0,profit:-400,deliveries:100});assert.equal(r.blocked,'INSUFFICIENT_OPERATING_CASH');assert.equal(debt(r.state),m('21600'));});
+test('zero cash cannot prefund a delivery',()=>{const r=simulate({startingCash:0});assert.equal(r.state.completed,0);assert.equal(r.blocked,'INSUFFICIENT_OPERATING_CASH');});
+test('contract supply controls capacity benefit',()=>{const a=simulate(),b=simulate({borrowAt:5});assert.equal(waiting(a,1,60),1800);assert.equal(waiting(b,1,60),1800);assert.ok(waiting(b,2,60)<waiting(a,2,60));assert.equal(waiting(a,2,30)*2,waiting(a,2,60));});
+test('generated BANK-00 report is reproducible',()=>assert.equal(readFileSync(new URL('../../../docs/backend/BANK-00_SIMULATION_REPORT.md',import.meta.url),'utf8').replace(/\r\n/g,'\n'),render()));
