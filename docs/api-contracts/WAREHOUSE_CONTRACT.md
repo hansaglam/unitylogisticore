@@ -36,3 +36,7 @@ Create: foundation 8 + receipt 1 + catalog 1 + warehouse 1 = 11 transaction read
 **PROPOSED:** future opening/upgrading command server catalog/price, progression, owner, canonical wallet, ledger, durable receipt, uniqueness ve capacity kontrollerini tek transaction'da kullanmalı. Bütün domain reads yazılardan önce bitmeli. Bu helper'ın ardından yeni Firestore read eklenmemeli; future orchestrator önce tüm finans/domain reads'i toplamalı. İkinci para otoritesi veya client-supplied price yoktur.
 
 **DEFERRED/UNKNOWN:** gerçek cities/types/capacity/price/upgrade policy, multi-site uniqueness, storage goods, actual economy/migration/rollout. No real user data; no deploy. 16–30 Ekim trusted local exception, 23 Ekim zorunlu reassessment; genel audit HOLD, production BLOCK.
+
+## BACKEND-08B — ücretli açılış ve yükseltme
+
+23 Ekim 2026: LOCAL openWarehouse/upgradeWarehouse artık explicit sentetik offer ile exact canonical debit uygular. Önceki internal ücretsiz fixture helper public değildir ve değişmedi. Schema1/company+city+type ID korunur. Upgrade eski definition'ı doğrular; yeni immutable definition/version için tek level artışı, aynı capacity model, nondecreasing maximum ve preserved usedCapacity/acquiredAt zorunludur. No migration/in-place catalog edit. [COMMERCE_CONTRACT](COMMERCE_CONTRACT.md).

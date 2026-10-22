@@ -237,3 +237,17 @@ test('delivery rules require pinned explicit synthetic route/cargo and bounded d
  for(const change of [{approval:'real'},{economyHash:'bad'},{routes:[{...rules.routes[0],durationMs:0}]},{routes:[{...rules.routes[0],xp:-1}]},
  {routes:[{...rules.routes[0],cargoId:'unknown'}]},{routes:[rules.routes[0],rules.routes[0]]}])assert.throws(()=>validateDeliveryRules({...rules,...change},terms));
 });
+
+import { acquisitionPayload, acquisitionId, acquisitionSource, validateCommerceCatalog, validateAcquisitionOffer } from '../functions/lib/commerceModel.js';
+import { commerceFixtures } from './commerce.fixtures.mjs';
+test('commerce strict intent, positive bounded price, pinned config, progression and one-step warehouse definitions',()=>{
+ const f=commerceFixtures('synthetic_commerce_unit');const e=validateConfig(f.economy,f.economy.version),l=validateCatalog(f.logistics,f.logistics.version);
+ assert.equal(validateCommerceCatalog(f.commerce,f.commerce.version,l,e).items.length,7);
+ for(const extra of ['price','ownerUid','companyId','level','catalogVersion'])assert.throws(()=>acquisitionPayload({offerId:'x',[extra]:1}));
+ assert.throws(()=>acquisitionPayload({offerId:'../x'}));assert.deepEqual(acquisitionPayload({offerId:'x'}),{offerId:'x'});
+ for(const price of [-1,0,0.1,Number.MAX_SAFE_INTEGER+1,e.maxBalance+1])assert.throws(()=>validateCommerceCatalog({...f.commerce,items:[{...f.commerce.items[0],price}]},f.commerce.version,l,e));
+ for(const change of [{approval:'production'},{economyHash:'bad'},{logisticsHash:'bad'},{rulesVersion:'bad'},
+  {items:[{...f.commerce.items[4],expectedLevel:0}]},{items:[{...f.commerce.items[0],requiredLevel:4}]}])assert.throws(()=>validateCommerceCatalog({...f.commerce,...change},f.commerce.version,l,e));
+ assert.notEqual(acquisitionId('company','a'),acquisitionId('company','b'));
+ assert.equal(acquisitionSource('company','a'),`commerce_${acquisitionId('company','a')}`);
+});

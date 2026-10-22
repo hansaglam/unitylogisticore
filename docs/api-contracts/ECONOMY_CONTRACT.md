@@ -66,3 +66,7 @@ Sabit direct document okumaları: company/economy read pending 7, ready 8; creat
 ## BACKEND-07 verified delivery reward eki
 
 Economy write hesaplaması `planEconomyMutation` ile ortak write-only plana ayrıldı; eski initialize/entitlement command/result/fingerprint korunur. `prepareEconomyReward` trusted domain delivery source'u için uniqueness/currency/config/bounds okur; delivery caller önce canonical contract/rules/arrival/assignment yetkisini doğrular. Source delivery_{deliveryId}, reason delivery_reward; aynı canonical wallet/progression/ledger/claims şeması. Settlement delivery/contract/release/receipt ile tek transaction'dır. Overflow kısmi ödeme yapmaz. Public generic grant yoktur. [DELIVERY_CONTRACT](DELIVERY_CONTRACT.md).
+
+## BACKEND-08B — edinim harcaması
+
+23 Ekim 2026: Commerce aynı planEconomyMutation ile server offer price'ın negatif signed delta'sını uygular; ledger reason commerce_purchase, permanent source commerce_{company-offer-hash}. Offer/target/finance/progression/ledger/claim/receipt tek commit; insufficient funds partial grant yapmaz. XP delta0, level korunur; common writer progression.updatedAt'i yeniler. Public generic spend/grant yok. [COMMERCE_CONTRACT](COMMERCE_CONTRACT.md).

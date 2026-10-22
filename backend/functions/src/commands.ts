@@ -12,6 +12,8 @@ const errors = {
   COMPANY_EXISTS: "already-exists", COMPANY_STATE_INVALID: "failed-precondition",
   MIGRATION_REQUIRED: "failed-precondition",
   DELIVERY_STATE_INVALID: "failed-precondition", DELIVERY_NOT_ARRIVED: "failed-precondition",
+  OFFER_CONSUMED: "failed-precondition", OFFER_NOT_ACTIVE: "failed-precondition", ACQUISITION_INELIGIBLE: "failed-precondition",
+  WAREHOUSE_UPGRADE_INVALID: "failed-precondition", ACQUISITION_TARGET_EXISTS: "already-exists", INSUFFICIENT_FUNDS: "failed-precondition",
   OFFER_EXPIRED: "failed-precondition", CONTRACT_NOT_OFFERED: "failed-precondition",
   CONTRACT_INELIGIBLE: "failed-precondition", CONTRACT_QUOTA_REACHED: "resource-exhausted",
 } as const satisfies Record<string, FunctionsErrorCode>;

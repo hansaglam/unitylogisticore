@@ -127,3 +127,7 @@ Internal epoch-bound generator en çok 5 deterministik company offer'ı marker/r
 ## BACKEND-07 — local authoritative deliveries
 
 Yeni callable'lar `startDelivery`, `claimDeliveryReward`, read-only `getMyDeliveries`. Internal two-phase fleet/economy planları aynı command transaction'ında atomik reservation/settlement sağlar. Synthetic rules dışında duration/XP default'u yoktur; lazy claim öncesi equipment reserved kalır. Wallet overflow tam rollback yapar. Mevcut npm run validate/dependencies/guard/Rules korunur. [DELIVERY_CONTRACT](../docs/api-contracts/DELIVERY_CONTRACT.md), [BACKEND-07_REPORT](../docs/backend/BACKEND-07_REPORT.md). Production BLOCK; BACKEND-08B başlamaz.
+
+## BACKEND-08B — sentetik yerel edinim
+
+LOCAL buyVehicle/hireDriver/acquireTrailer/openWarehouse/upgradeWarehouse ve read-only getMyAcquisitionOffers eklendi. Public offer publisher yok; config/offer yalnız kontrollü sentetik test setup'ında hazırlanır. Mevcut npm run validate komutu commerce suite'i de çalıştırır. [Sözleşme](../docs/api-contracts/COMMERCE_CONTRACT.md), [23 Ekim güvenlik yeniden değerlendirmesi](../docs/backend/BACKEND-08B_SECURITY_REASSESSMENT.md).

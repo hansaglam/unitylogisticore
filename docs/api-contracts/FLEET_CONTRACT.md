@@ -97,3 +97,7 @@ Yeni logistics catalog schemaVersion 2, asset tanımına `capabilities` (max16 u
 ## BACKEND-07 transaction composition eki
 
 `prepareAssignment` tüm reads/validation sonrası write-only apply planı döndürür. `writeAssignment` compatibility adapter aynı behavior'ı korur. Delivery start/claim planı kendi executeCommand transaction'ında apply eder; nested transaction yoktur. Exact assignment ownership release'te korunur, released source yeniden kullanılmaz. Arrival tek başına release yapmaz; lazy claim gerekir. [DELIVERY_CONTRACT](DELIVERY_CONTRACT.md).
+
+## BACKEND-08B — satın alınan filo
+
+23 Ekim 2026: LOCAL buyVehicle/hireDriver/acquireTrailer canonical asset schema1 ile create-only edinim sağlar; fiyat/offer/ledger/claim aynı transaction'dadır. Starter grant ve assignment davranışı korunur. Model ID yerine şirket+offer hash'i asset ID'dir; acquired asset mevcut v2 eligibility/delivery akışında kullanılabilir. [COMMERCE_CONTRACT](COMMERCE_CONTRACT.md) ayrıntıları ve sentetik kapsamı tanımlar.
