@@ -7,7 +7,7 @@ import { requireUid, validateIdentityRequest } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
 import { checkedAdd, configHash, ECONOMY_READY, exact, invalid, levelFor, safe, validateConfig, versionId } from "./economyModel";
 
-function operationId(companyId: string, source: string): string {
+export function operationId(companyId: string, source: string): string {
   return createHash("sha256").update(`${companyId}:${source}`).digest("hex");
 }
 /** Internal server orchestration only. Payload must be empty; selector is trusted backend input.

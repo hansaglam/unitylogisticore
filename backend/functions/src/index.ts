@@ -1,3 +1,4 @@
+import { acquisitionCommand, readMyAcquisitionOffers } from "./commerce";
 import { startDeliveryCommand, claimDeliveryRewardCommand, readMyDeliveries } from "./deliveries";
 import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -67,3 +68,14 @@ export const claimDeliveryReward = onCall({ region: "us-central1", maxInstances:
   claimDeliveryRewardCommand(localFirestore, request.auth, request.data));
 export const getMyDeliveries = onCall({ region: "us-central1", maxInstances: 1 }, request =>
   readMyDeliveries(localFirestore, request.auth, request.data));
+
+export const buyVehicle = onCall({ region: "us-central1", maxInstances: 1 }, request => acquisitionCommand(localFirestore, request.auth, request.data, "buyVehicle"));
+
+export const hireDriver = onCall({ region: "us-central1", maxInstances: 1 }, request => acquisitionCommand(localFirestore, request.auth, request.data, "hireDriver"));
+
+export const acquireTrailer = onCall({ region: "us-central1", maxInstances: 1 }, request => acquisitionCommand(localFirestore, request.auth, request.data, "acquireTrailer"));
+
+export const openWarehouse = onCall({ region: "us-central1", maxInstances: 1 }, request => acquisitionCommand(localFirestore, request.auth, request.data, "openWarehouse"));
+
+export const upgradeWarehouse = onCall({ region: "us-central1", maxInstances: 1 }, request => acquisitionCommand(localFirestore, request.auth, request.data, "upgradeWarehouse"));
+export const getMyAcquisitionOffers = onCall({ region: "us-central1", maxInstances: 1 }, request => readMyAcquisitionOffers(localFirestore, request.auth, request.data));
