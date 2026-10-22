@@ -23,3 +23,16 @@ node --input-type=module -e "import {writeFileSync} from 'node:fs';import {compa
 ```
 
 See docs/backend/ECONOMY-00_DESIGN.md and docs/api-contracts/BANK_CONTRACT_DRAFT.md. Production and future banking implementation remain blocked pending separate reviews.
+
+## BANK-00 — ayrı policy model
+
+`bank-model.mjs`, `bank-report.mjs`, `bank-model.test.mjs` BANK-00'ın ayrı offline sürümüdür. Yukarıdaki ECONOMY-00 model ve tarihsel rapor değişmedi; onun beş teslimat/lifetime-loan kısıtları yeni banka politikası değildir.
+
+Repository kökünden:
+```powershell
+node --test backend/tools/economy-sim/bank-model.test.mjs backend/tools/economy-sim/model.test.mjs
+node backend/tools/economy-sim/bank-report.mjs
+node --input-type=module -e "import {writeFileSync} from 'node:fs'; import {render} from './backend/tools/economy-sim/bank-report.mjs'; writeFileSync('docs/backend/BANK-00_SIMULATION_REPORT.md',render());"
+```
+
+BANK-00 CLI yalnız checked-in adayları raporlar; yeni input dosyası veya network kullanmaz. Model fonksiyonları strict bank config ve canonical integer amount intent'i doğrular. Tüm rakamlar UNAPPROVED DESIGN CANDIDATES. `simulate` seviyesindeki job planı trusted test fixture'ıdır; Firebase request validator değildir. `initial/borrow/repay/settle/levelUp/acquire` pure offline transitions, quote/receipt/transaction endpoint değildir. Gerçek level-up XP thresholds, loan quote concurrency ve rollout ayrı BANK-01 kapsamındadır. Ayrıntılar docs/backend/BANK-00_POLICY.md ve BANK-00_SIMULATION_REPORT.md.
