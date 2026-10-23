@@ -45,8 +45,8 @@ export function claimPayload(value:unknown) {
 export function validateDelivery(raw:DocumentData|undefined,id:string,companyId:string,terms:ContractTerms) {
   if(!raw)invalid();
   exact(raw,"schemaVersion,deliveryId,companyId,contractId,status,assignmentId,assets,termsHash,routeId,cargoId,startedAt,expectedArrivalAt,deliveryRulesVersion,deliveryRulesHash,rewardState"+
-    (raw.status==="completed"?",completedAt":""));
-  if(raw.schemaVersion!==1 || raw.companyId!==companyId || raw.deliveryId!==id || id!==deliveryIdFor(companyId,raw.contractId) ||
+    (raw.status==="completed"?",completedAt":"")+(terms.settlement?",settlement":""));
+  if(raw.schemaVersion!==(terms.settlement?2:1) || (terms.settlement && digest(raw.settlement)!==digest(terms.settlement)) || raw.companyId!==companyId || raw.deliveryId!==id || id!==deliveryIdFor(companyId,raw.contractId) ||
     raw.assignmentId!==assignmentId(companyId,id) || !["active","completed"].includes(raw.status) ||
     raw.termsHash!==digest(terms) || raw.routeId!==terms.route.id || raw.cargoId!==terms.cargo.id ||
     raw.deliveryRulesVersion!==terms.configVersion || typeof raw.deliveryRulesHash!=="string" || !/^[a-f0-9]{64}$/.test(raw.deliveryRulesHash) ||

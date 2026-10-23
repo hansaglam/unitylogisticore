@@ -5,12 +5,15 @@ import { readStarter } from "./fleet";
 import { CompanyState, catalogReader } from "./logisticsContext";
 import { validateAsset } from "./logisticsModel";
 import { ContractTerms, validateContractConfig } from "./contractModel";
+import { validateCostCatalog } from "./operatingCosts";
 
 export async function readContractConfig(tx: Transaction, db: Firestore, state: CompanyState, version: string) {
   if (!state.economy) throw new CommandError("CONTRACT_INELIGIBLE");
   const raw = (await tx.get(db.collection("v2ContractCatalog").doc(versionId(version)))).data();
   const logistics = await catalogReader(tx,db)(raw?.logisticsVersion);
-  return { config: validateContractConfig(raw,version,logistics,state.economy.config), logistics };
+  const config=validateContractConfig(raw,version,logistics,state.economy.config);
+  const costs=config.schemaVersion===2?validateCostCatalog((await tx.get(db.collection("v2OperatingCostCatalog").doc(config.costCatalogVersion!))).data(),config.costCatalogVersion!,logistics,state.economy.config):undefined;
+  return { config, logistics, costs };
 }
 /** Point reads only, server-selected candidate set. Eligibility is not a reservation promise. */
 export async function requireContractEligibility(tx: Transaction, db: Firestore, state: CompanyState, terms: ContractTerms) {

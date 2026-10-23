@@ -251,3 +251,47 @@ test('commerce strict intent, positive bounded price, pinned config, progression
  assert.notEqual(acquisitionId('company','a'),acquisitionId('company','b'));
  assert.equal(acquisitionSource('company','a'),`commerce_${acquisitionId('company','a')}`);
 });
+
+import {settlementFixtures} from './settlement.fixtures.mjs';
+import {costTotal,validateCostCatalog,validateCostQuote,makeCostQuote} from '../functions/lib/operatingCosts.js';
+import {settlementAccounting} from '../functions/lib/settlement.js';
+test('net settlement helpers reject nonlocal execution before any database access',async()=>{
+ const {prepareDeliverySettlement,validateSettlementJournal}=await import('../functions/lib/settlement.js');
+ const {readPinnedCosts}=await import('../functions/lib/operatingCosts.js');
+ const previous=process.env.GCLOUD_PROJECT;process.env.GCLOUD_PROJECT='synthetic-nonlocal';
+ const unreachable=new Proxy({}, {get(){throw Error('database accessed');}});
+ try{
+  await assert.rejects(prepareDeliverySettlement(unreachable,unreachable,'synthetic',unreachable,0),/Local isolation/);
+  await assert.rejects(validateSettlementJournal(unreachable,unreachable,'synthetic',unreachable,0),/Local isolation/);
+  await assert.rejects(readPinnedCosts(unreachable,unreachable,unreachable,unreachable),/Local isolation/);
+ }finally{if(previous===undefined)delete process.env.GCLOUD_PROJECT;else process.env.GCLOUD_PROJECT=previous;}
+});
+test('operating costs use bounded exact sums and reject negative/fractional/unsafe categories',()=>{
+ assert.equal(costTotal({fuelCost:70000,driverCost:40000,maintenanceCost:20000,tollCost:10000}),140000);
+ for(const n of [-1,0.1,NaN,Infinity,Number.MAX_SAFE_INTEGER+1])assert.throws(()=>costTotal({fuelCost:n,driverCost:0,maintenanceCost:0,tollCost:0}));
+ assert.throws(()=>costTotal({fuelCost:Number.MAX_SAFE_INTEGER,driverCost:1,maintenanceCost:0,tollCost:0}));
+ assert.throws(()=>costTotal({fuelCost:2,driverCost:0,maintenanceCost:0,tollCost:0},1));
+});
+test('cost catalog has strict acyclic pins, bounded applicability and synthetic approval',()=>{
+ const f=settlementFixtures('synthetic_cost_unit'),e=validateConfig(f.economy,f.economy.version),l=validateCatalog(f.logistics,f.logistics.version);
+ assert.deepEqual(validateCostCatalog(f.costCatalog,f.costCatalog.version,l,e),f.costCatalog);
+ for(const patch of [{approval:'production'},{currency:'LGC'},{scale:3},{economyHash:'bad'},{logisticsVersion:'other'},
+  {entries:[]},{entries:Array(6).fill(f.costCatalog.entries[0])},{entries:[f.costCatalog.entries[0],f.costCatalog.entries[0]]},{contractConfigHash:'circular'}])
+  assert.throws(()=>validateCostCatalog({...f.costCatalog,...patch},f.costCatalog.version,l,e));
+});
+test('new quotes require strictly positive net; minimal positive and zero costs valid',()=>{
+ const f=settlementFixtures('synthetic_quote_unit');
+ for(const gross of [0,3,4])assert.throws(()=>makeCostQuote(f.costCatalog,'synthetic_job_0','synthetic_route','synthetic_cargo',gross));
+ assert.equal(makeCostQuote(f.costCatalog,'synthetic_job_0','synthetic_route','synthetic_cargo',5).netReward,1);
+ const zero=settlementFixtures('synthetic_zero',{costs:{fuelCost:0,driverCost:0,maintenanceCost:0,tollCost:0}});
+ assert.equal(makeCostQuote(zero.costCatalog,'synthetic_job_0','synthetic_route','synthetic_cargo',6).netReward,6);
+});
+test('v2 terms pin exact quote; schema1 hashes and missing-cost rejection remain explicit',()=>{
+ const f=settlementFixtures('synthetic_terms_unit'),e=validateConfig(f.economy,f.economy.version),l=validateCatalog(f.logistics,f.logistics.version);
+ const cfg=validateContractConfig(f.config,f.config.version,l,e),terms=makeTerms(cfg,0,candidates,e,f.costCatalog);
+ assert.equal(terms.settlement.netReward,2);assert.equal(digest(cfg),digest(f.config));assert.throws(()=>makeTerms(cfg,0,candidates,e));
+ for(const patch of [{netReward:6},{fuelCost:0},{grossReward:7},{costCatalogHash:'bad'},{unexpected:1}])assert.throws(()=>validateCostQuote({...terms.settlement,...patch},6));
+ const old=contractFixtures('synthetic_old');const oldCfg=validateContractConfig(old.config,old.config.version,validateCatalog(old.logistics,old.logistics.version),validateConfig(old.economy,old.economy.version));
+ assert.equal(digest(oldCfg),digest(old.config));assert.equal(Object.hasOwn(makeTerms(oldCfg,0,candidates,old.economy),'settlement'),false);
+ assert.deepEqual(settlementAccounting(terms,10,'delivery'),{grossRevenue:6,totalOperatingExpenses:4,netOperatingProfit:2,finalWalletDelta:2,eligibleXp:10,source:'delivery_delivery'});
+});

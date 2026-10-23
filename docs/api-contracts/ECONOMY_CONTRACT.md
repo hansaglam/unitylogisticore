@@ -70,3 +70,7 @@ Economy write hesaplaması `planEconomyMutation` ile ortak write-only plana ayr�
 ## BACKEND-08B — edinim harcaması
 
 23 Ekim 2026: Commerce aynı planEconomyMutation ile server offer price'ın negatif signed delta'sını uygular; ledger reason commerce_purchase, permanent source commerce_{company-offer-hash}. Offer/target/finance/progression/ledger/claim/receipt tek commit; insufficient funds partial grant yapmaz. XP delta0, level korunur; common writer progression.updatedAt'i yeniler. Public generic spend/grant yok. [COMMERCE_CONTRACT](COMMERCE_CONTRACT.md).
+
+## BACKEND-09A — net settlement compatibility
+
+23 Ekim 2026. planEconomyMutation canonical finance/progression/ledger/claim yazarı olarak korunur. prepareEconomyReward yalnız internal reason seçeneğiyle delivery_reward (legacy default) veya delivery_net_reward kabul eder. V2 delivery tek net delta uygular; ledger schema1 alanları değişmedi. Aynı transaction'daki ayrı versioned settlementJournals kaydı gross/cost/net açıklamasıdır; ikinci wallet veya ikinci finansal claim değildir. getMyEconomyState API değişmedi; commerce_purchase ve historical entitlement/init/reward kayıtları korunur. Ayrıntı [SETTLEMENT_CONTRACT](SETTLEMENT_CONTRACT.md). BANK-01 uygulanmadı.

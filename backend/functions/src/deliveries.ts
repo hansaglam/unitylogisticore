@@ -4,7 +4,8 @@ import { readFoundation } from "./company";
 import { clockTime, ServerClock, serverClock, validateContract } from "./contractModel";
 import { requireContractEligibility } from "./contractEligibility";
 import { readPool } from "./contracts";
-import { prepareEconomyReward } from "./economy";
+import { prepareDeliverySettlement, validateSettlementJournal } from "./settlement";
+import { readPinnedCosts, settlementDto } from "./operatingCosts";
 import { configHash, invalid, safe, versionId } from "./economyModel";
 import { prepareAssignment, readStarter } from "./fleet";
 import { requireUid } from "./identity";
@@ -24,9 +25,11 @@ async function deliveryState(tx:Transaction,db:Firestore,state:CompanyState,id:s
   const ref=state.companyRef.collection("deliveries").doc(versionId(id));const raw=(await tx.get(ref)).data();
   const {ref:contractRef,contract}=await contractState(tx,state,versionId(raw?.contractId));
   const delivery=validateDelivery(raw,id,state.companyId,contract.terms);
+  await readPinnedCosts(tx,db,state,contract.terms);
   if(contract.status!==(delivery.status==="active"?"in_progress":"completed") || !contract.acceptedAt || delivery.startedAt.toMillis()<contract.acceptedAt.toMillis())invalid();
   const rules=validateDeliveryRules((await tx.get(db.collection("v2DeliveryRules").doc(contract.terms.configVersion))).data(),contract.terms);
   if(digest(rules.rules)!==delivery.deliveryRulesHash || arrivalTime(delivery.startedAt.toMillis(),rules.rule.durationMs)!==delivery.expectedArrivalAt.toMillis())invalid();
+  if(delivery.status==="completed")await validateSettlementJournal(tx,state,id,contract.terms,rules.rule.xp);
   return {ref,contractRef,contract,delivery,rules};
 }
 export function startDeliveryCommand(db:Firestore,auth:{uid:string}|undefined,data:unknown,clock:ServerClock=serverClock) {
@@ -41,6 +44,7 @@ export function startDeliveryCommand(db:Firestore,auth:{uid:string}|undefined,da
       const id=deliveryIdFor(state.companyId,payload.contractId),ref=state.companyRef.collection("deliveries").doc(id);
       if((await tx.get(ref)).exists)invalid();
       await requireContractEligibility(tx,db,state,contract.terms);
+      await readPinnedCosts(tx,db,state,contract.terms);
       const rules=validateDeliveryRules((await tx.get(db.collection("v2DeliveryRules").doc(contract.terms.configVersion))).data(),contract.terms);
       if(configHash(state.economy!.config)!==contract.terms.economyHash)invalid();
       safe(rules.rule.xp,state.economy!.config.maxXp);
@@ -48,7 +52,7 @@ export function startDeliveryCommand(db:Firestore,auth:{uid:string}|undefined,da
       const now=clockTime(clock);if(!contract.acceptedAt || now<contract.acceptedAt.toMillis())invalid();
       const arrival=arrivalTime(now,rules.rule.durationMs);
       assignment.apply();
-      tx.create(ref,{schemaVersion:1,deliveryId:id,companyId:state.companyId,contractId:payload.contractId,status:"active",assignmentId:assignment.assignmentId,
+      tx.create(ref,{schemaVersion:contract.schemaVersion,...(contract.terms.settlement?{settlement:contract.terms.settlement}:{}),deliveryId:id,companyId:state.companyId,contractId:payload.contractId,status:"active",assignmentId:assignment.assignmentId,
         assets,termsHash:digest(contract.terms),routeId:contract.terms.route.id,cargoId:contract.terms.cargo.id,startedAt:Timestamp.fromMillis(now),expectedArrivalAt:Timestamp.fromMillis(arrival),
         deliveryRulesVersion:rules.rules.version,deliveryRulesHash:digest(rules.rules),rewardState:"unclaimed"});
       tx.update(contractRef,{status:"in_progress"});
@@ -66,12 +70,12 @@ export function claimDeliveryRewardCommand(db:Firestore,auth:{uid:string}|undefi
       if(delivery.status!=="active")throw new CommandError("DELIVERY_STATE_INVALID");
       if(!(await readStarter(tx,db,state)).ready)invalid();
       const release=await prepareAssignment(tx,db,state,delivery.assets,delivery.deliveryId,"release");
-      const reward=await prepareEconomyReward(tx,state,delivery.deliveryId,contract.terms.reward,rules.rule.xp,contract.terms.currency,contract.terms.scale,contract.terms.economyHash);
+      const reward=await prepareDeliverySettlement(tx,state,delivery.deliveryId,contract.terms,rules.rule.xp);
       const now=clockTime(clock);if(now<delivery.expectedArrivalAt.toMillis())throw new CommandError("DELIVERY_NOT_ARRIVED");
       release.apply();const paid=reward.apply();
       tx.update(loaded.ref,{status:"completed",rewardState:"claimed",completedAt:Timestamp.fromMillis(now)});
       tx.update(loaded.contractRef,{status:"completed"});
-      return {deliveryId:delivery.deliveryId,status:"completed",completedAt:new Date(now).toISOString(),reward:String(contract.terms.reward),currency:contract.terms.currency,
+      return {...settlementDto(contract.terms),deliveryId:delivery.deliveryId,status:"completed",completedAt:new Date(now).toISOString(),reward:String(contract.terms.reward),currency:contract.terms.currency,
         scale:contract.terms.scale,operationId:paid.operationId,balance:paid.balance,xp:paid.xp,level:paid.level};
     }
   });
@@ -91,7 +95,7 @@ export async function readMyDeliveries(db:Firestore,auth:{uid:string}|undefined,
         rows.push({delivery,contract});
       }
       const now=clockTime(clock);
-      return {serverTime:new Date(now).toISOString(),items:rows.map(({delivery:d,contract:c})=>({deliveryId:d.deliveryId,contractId:d.contractId,status:d.status,
+      return {serverTime:new Date(now).toISOString(),items:rows.map(({delivery:d,contract:c})=>({...settlementDto(c.terms),deliveryId:d.deliveryId,contractId:d.contractId,status:d.status,
         originCityId:c.terms.route.originCityId,destinationCityId:c.terms.route.destinationCityId,routeId:c.terms.route.id,cargoId:c.terms.cargo.id,
         quantity:String(c.terms.quantity),unit:c.terms.cargo.unit,assets:d.assets,startedAt:d.startedAt.toDate().toISOString(),expectedArrivalAt:d.expectedArrivalAt.toDate().toISOString(),
         arrivalReady:d.status==="active"&&now>=d.expectedArrivalAt.toMillis(),completedAt:d.completedAt?.toDate().toISOString()??null,

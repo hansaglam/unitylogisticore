@@ -114,7 +114,8 @@ export function planEconomyMutation(tx: Transaction, state: Awaited<ReturnType<t
 
 /** Read/validate phase for a domain-verified reward. No generic public entitlement writer. */
 export async function prepareEconomyReward(tx: Transaction, state: Awaited<ReturnType<typeof readFoundation>>,
-  sourceId: string, reward: number, xp: number, currency: string, scale: number, expectedConfigHash: string) {
+  sourceId: string, reward: number, xp: number, currency: string, scale: number, expectedConfigHash: string,
+  reason:"delivery_reward"|"delivery_net_reward"="delivery_reward") {
   assertLocalEnvironment(process.env, true);
   if (!state.economy) invalid();
   const config = state.economy.config;
@@ -123,5 +124,5 @@ export async function prepareEconomyReward(tx: Transaction, state: Awaited<Retur
   const source = `delivery_${versionId(sourceId)}`;
   const refs = [state.companyRef.collection("claims").doc(source), state.companyRef.collection("ledger").doc(operationId(state.companyId, source))];
   if ((await tx.getAll(...refs)).some(doc => doc.exists)) invalid();
-  return planEconomyMutation(tx, state, config, source, reward, xp, "delivery_reward");
+  return planEconomyMutation(tx, state, config, source, reward, xp, reason);
 }
