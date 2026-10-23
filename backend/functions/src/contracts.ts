@@ -9,6 +9,7 @@ import { digest, pageRequest } from "./logisticsModel";
 import { assertLocalEnvironment } from "./localEnvironment";
 import { acceptPayload, clockTime, contractDto, contractIdFor, epochFor, expired, makeTerms, ServerClock, serverClock, validateContract } from "./contractModel";
 import { readContractConfig, requireContractEligibility } from "./contractEligibility";
+import { readPinnedCosts, settlementDto } from "./operatingCosts";
 
 const poolRef = (state: CompanyState, epoch: number) => state.companyRef.collection("contractPools").doc(`epoch_${safe(epoch)}`);
 /** Validate the entire bounded pool, including aggregate quota, without repricing snapshots. */
@@ -18,7 +19,7 @@ export async function readPool(tx: Transaction, state: CompanyState, epoch: numb
   const marker = snapshot.data();
   exact(marker,"schemaVersion,companyId,epoch,epochDurationMs,offerTtlMs,configVersion,configHash,termsHashes,acceptedCount,maxAcceptedPerEpoch,createdAt");
   versionId(marker.configVersion);
-  if (marker.schemaVersion !== 1 || marker.companyId !== state.companyId || marker.epoch !== epoch ||
+  if (![1,2].includes(marker.schemaVersion) || marker.companyId !== state.companyId || marker.epoch !== epoch ||
       safe(marker.epochDurationMs,604800000)<1 || safe(marker.offerTtlMs,marker.epochDurationMs)<1 ||
       !Array.isArray(marker.termsHashes) || marker.termsHashes.length<1 || marker.termsHashes.length>5 ||
       safe(marker.maxAcceptedPerEpoch,marker.termsHashes.length)<1 || !(marker.createdAt instanceof Timestamp) ||
@@ -28,7 +29,7 @@ export async function readPool(tx: Transaction, state: CompanyState, epoch: numb
   const docs=await tx.getAll(...refs);
   const contracts=docs.map((doc,i)=>{
     const value=validateContract(doc.data(),doc.id,state.companyId);
-    if(value.epoch!==epoch || value.slot!==i || value.terms.configVersion!==marker.configVersion || value.terms.configHash!==marker.configHash ||
+    if(value.schemaVersion!==marker.schemaVersion || value.epoch!==epoch || value.slot!==i || value.terms.configVersion!==marker.configVersion || value.terms.configHash!==marker.configHash ||
       digest(value.terms)!==marker.termsHashes[i] || !value.createdAt.isEqual(marker.createdAt) ||
       value.expiresAt.toMillis()!==epoch*marker.epochDurationMs+marker.offerTtlMs) invalid();
     return value;
@@ -56,18 +57,18 @@ export function generateContractOffers(db: Firestore, auth: {uid:string}|undefin
     },
     async apply(tx){
       const state=states.get(tx)!;
-      const {config}=await readContractConfig(tx,db,state,version);
+      const {config,costs}=await readContractConfig(tx,db,state,version);
       if((await tx.get(poolRef(state,epoch))).exists) invalid();
       const now=clockTime(clock); const expiry=epoch*config.epochDurationMs+config.offerTtlMs;
       if(epochFor(now,config.epochDurationMs)!==epoch || now>=expiry) throw new CommandError("OFFER_EXPIRED");
-      const terms=config.templates.map((_,slot)=>makeTerms(config,slot,assets,state.economy!.config));
+      const terms=config.templates.map((_,slot)=>makeTerms(config,slot,assets,state.economy!.config,costs));
       const refs=terms.map((_,slot)=>state.companyRef.collection("contracts").doc(contractIdFor(state.companyId,epoch,slot)));
       if((await tx.getAll(...refs)).some(doc=>doc.exists)) invalid();
       for(const term of terms) await requireContractEligibility(tx,db,state,term);
       const createdAt=Timestamp.fromMillis(now),expiresAt=Timestamp.fromMillis(expiry);
-      for(let slot=0;slot<terms.length;slot++) tx.create(refs[slot]!,{schemaVersion:1,companyId:state.companyId,contractId:refs[slot]!.id,
+      for(let slot=0;slot<terms.length;slot++) tx.create(refs[slot]!,{schemaVersion:config.schemaVersion,companyId:state.companyId,contractId:refs[slot]!.id,
         status:"offered",epoch,slot,terms:terms[slot],termsHash:digest(terms[slot]),createdAt,expiresAt});
-      tx.create(poolRef(state,epoch),{schemaVersion:1,companyId:state.companyId,epoch,epochDurationMs:config.epochDurationMs,offerTtlMs:config.offerTtlMs,
+      tx.create(poolRef(state,epoch),{schemaVersion:config.schemaVersion,companyId:state.companyId,epoch,epochDurationMs:config.epochDurationMs,offerTtlMs:config.offerTtlMs,
         configVersion:version,configHash:digest(config),termsHashes:terms.map(digest),acceptedCount:0,maxAcceptedPerEpoch:config.maxAcceptedPerEpoch,createdAt});
       return {epoch,contractIds:refs.map(ref=>ref.id)};
     }
@@ -84,15 +85,15 @@ export function acceptContractCommand(db:Firestore,auth:{uid:string}|undefined,d
       const contract=validateContract((await tx.get(ref)).data(),payload.contractId,state.companyId);
       const pool=await readPool(tx,state,contract.epoch);if(!pool) invalid();
       if(contract.status!=="offered") throw new CommandError("CONTRACT_NOT_OFFERED");
-      const {config}=await readContractConfig(tx,db,state,contract.terms.configVersion);
-      if(digest(makeTerms(config,contract.slot,contract.terms.candidateAssets,state.economy!.config))!==digest(contract.terms)) invalid();
+      const {config,costs}=await readContractConfig(tx,db,state,contract.terms.configVersion);
+      if(digest(makeTerms(config,contract.slot,contract.terms.candidateAssets,state.economy!.config,costs))!==digest(contract.terms)) invalid();
       await requireContractEligibility(tx,db,state,contract.terms);
       const now=clockTime(clock);
       if(now<contract.createdAt.toMillis() || expired(contract.status,contract.expiresAt.toMillis(),now)) throw new CommandError("OFFER_EXPIRED");
       if(pool.marker.acceptedCount>=pool.marker.maxAcceptedPerEpoch) throw new CommandError("CONTRACT_QUOTA_REACHED");
       tx.update(ref,{status:"accepted",acceptedAt:Timestamp.fromMillis(now)});
       tx.update(pool.ref,{acceptedCount:pool.marker.acceptedCount+1});
-      return {contractId:payload.contractId,status:"accepted",acceptedAt:new Date(now).toISOString(),reward:String(contract.terms.reward),currency:contract.terms.currency,
+      return {...settlementDto(contract.terms),contractId:payload.contractId,status:"accepted",acceptedAt:new Date(now).toISOString(),reward:String(contract.terms.reward),currency:contract.terms.currency,
         scale:contract.terms.scale,equipmentReserved:false};
     }
   });
@@ -110,6 +111,7 @@ export async function readMyContracts(db:Firestore,auth:{uid:string}|undefined,d
         const contract=validateContract(doc.data(),doc.id,state.companyId);
         if(!pools.has(contract.epoch)) pools.set(contract.epoch,await readPool(tx,state,contract.epoch));
         if(!pools.get(contract.epoch)?.contracts.some(c=>c.contractId===doc.id)) invalid();contracts.push(contract);
+        await readPinnedCosts(tx,db,state,contract.terms);
       }
       const now=clockTime(clock);
       return {items:contracts.map(c=>contractDto(c,now)),nextCursor:records.size>page.limit?records.docs[page.limit-1]!.id:null,serverTime:new Date(now).toISOString()};

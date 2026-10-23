@@ -70,3 +70,9 @@ Global locks/counters, cron, PubSub, full scans, new dependencies veya external 
 ## BACKEND-07 lifecycle eki
 
 accepted→in_progress→completed geçişleri artık delivery start/claim ile atomik uygulanır; contract terms, acceptedAt ve pool acceptedCount korunur. Historical accept replay değişmez. Delivery süreleri original offer expiry'den bağımsızdır. Bkz. [DELIVERY_CONTRACT](DELIVERY_CONTRACT.md). Failed/penalty ve real product activation hâlâ deferred.
+
+## BACKEND-09A — explicit settlement-v2 eki
+
+23 Ekim 2026. Yeni contract catalog schema2 costCatalogVersion/hash ekler; yeni pool/contract schema2 ve terms.settlement zorunludur. V1 terms/ID/hash/receipt ve gross-only davranış korunur. Yeni catalog synthetic-only ve acyclic economy/logistics pin'lidir. Generation tüm templates için positive net ister; geçersiz tek template bütün pool'u writes öncesi reddeder. Accept quote'u yeniden doğrular; start/claim/read pinned version drift'inde fail-closed olur. Pool max5/acceptedCount ve hash listesi aynı garantileri korur.
+
+V2 accept ve getMyContracts DTO'larına settlement breakdown eklenir; mevcut reward gross anlamını korur, netReward decimal string'dir. Acceptance ekonomik write yapmaz. Ayrıntılar [OPERATING_COST_CONTRACT](OPERATING_COST_CONTRACT.md), [SETTLEMENT_CONTRACT](SETTLEMENT_CONTRACT.md). Önceki bölümde ertelenmiş olarak yazılan maliyetler artık yalnız bu sentetik net-at-claim kapsamındadır; gerçek tüketim/fiyatlar hâlâ ertelenmiştir.
