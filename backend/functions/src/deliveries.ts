@@ -75,7 +75,7 @@ export function claimDeliveryRewardCommand(db:Firestore,auth:{uid:string}|undefi
       release.apply();const paid=reward.apply();
       tx.update(loaded.ref,{status:"completed",rewardState:"claimed",completedAt:Timestamp.fromMillis(now)});
       tx.update(loaded.contractRef,{status:"completed"});
-      return {...settlementDto(contract.terms),deliveryId:delivery.deliveryId,status:"completed",completedAt:new Date(now).toISOString(),reward:String(contract.terms.reward),currency:contract.terms.currency,
+      return {...settlementDto(contract.terms),...(reward.bankRepayment?{bankRepayment:reward.bankRepayment}:{}),deliveryId:delivery.deliveryId,status:"completed",completedAt:new Date(now).toISOString(),reward:String(contract.terms.reward),currency:contract.terms.currency,
         scale:contract.terms.scale,operationId:paid.operationId,balance:paid.balance,xp:paid.xp,level:paid.level};
     }
   });

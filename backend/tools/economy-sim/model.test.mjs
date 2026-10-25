@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {MAX,money,display,basisPoints,add,initialState,takeLoan,settleDelivery,earlyRepay,acquirePair,affordable,assertState,metrics,simulate,liability,validateScenario,waitingBound} from './model.mjs';
 import {candidate,scenarios,sensitivities} from './scenarios.mjs';
 import {comparisonReport} from './report.mjs';
@@ -120,10 +121,15 @@ test('CLI accepts local JSON scenarios and rejects malformed usage without netwo
  const bad=spawnSync(process.execPath,[script,'--deploy'],{encoding:'utf8'});assert.equal(bad.status,1);
  }finally{rmSync(join(temp,'input.json'),{force:true});rmdirSync(temp);}
 });
-test('existing runtime, canonical schemas, manifests and Unity files match reviewed base',()=>{
+// The design-only runtime freeze ended with BACKEND-09A. Keep infrastructure
+// protected without incorrectly freezing every later authorized implementation.
+test('dependency manifests, isolation infrastructure and Unity files match reviewed base',()=>{
  const result=spawnSync('git',['-c',`safe.directory=${root.replace(/\\/g,'/')}`,'diff','--name-only','186f8bcc203c5e39409ae4818e1b1d47938c352d','--',
- 'backend/functions','backend/scripts','backend/tests','backend/package.json','backend/package-lock.json','backend/firebase.json','backend/firestore.rules','backend/firestore.indexes.json','Assets','Packages','ProjectSettings'],{cwd:root,encoding:'utf8'});
+ 'backend/functions/package.json','backend/functions/src/localEnvironment.ts','backend/scripts','backend/package.json','backend/firebase.json','backend/firestore.rules','backend/firestore.indexes.json','Assets','Packages','ProjectSettings'],{cwd:root,encoding:'utf8'});
  assert.equal(result.status,0,result.stderr);assert.equal(result.stdout.trim(),'');
+ // SECURITY-02 approved four-package refresh; normalize only checkout line endings.
+ const lock=readFileSync(join(root,'backend/package-lock.json'),'utf8').replace(/\r\n/g,'\n');
+ assert.equal(createHash('sha256').update(lock).digest('hex'),'14d593562413c39bfaff9e74b7490c900ae33e570770cd049e2c77437002ab4a');
 });
 
 test('immutable model config rejects altered repayment terms after loan origination',()=>{

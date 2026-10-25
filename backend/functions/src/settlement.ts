@@ -5,6 +5,7 @@ import { checkedAdd, exact, invalid, safe } from "./economyModel";
 import { CompanyState } from "./logisticsContext";
 import { digest } from "./logisticsModel";
 import { assertLocalEnvironment } from "./localEnvironment";
+import { prepareBankSettlement, validateBankSettlement } from "./bankSettlement";
 
 /** BANK-01 may extend this plan inside the same transaction. No debt/payment side effect exists here. */
 export function settlementAccounting(terms:ContractTerms,eligibleXp:number,deliveryId:string) {
@@ -14,13 +15,14 @@ export function settlementAccounting(terms:ContractTerms,eligibleXp:number,deliv
 }
 export async function prepareDeliverySettlement(tx:Transaction,state:CompanyState,deliveryId:string,terms:ContractTerms,xp:number) {
   assertLocalEnvironment(process.env,true);
+  if(terms.bankPolicy)return prepareBankSettlement(tx,state,deliveryId,terms,xp);
   const accounting=settlementAccounting(terms,xp,deliveryId),opId=operationId(state.companyId,accounting.source);
   const journalRef=state.companyRef.collection("settlementJournals").doc(opId);
   if(terms.settlement && (await tx.get(journalRef)).exists)invalid();
   const payment=await prepareEconomyReward(tx,state,deliveryId,accounting.finalWalletDelta,xp,terms.currency,terms.scale,terms.economyHash,
     terms.settlement?"delivery_net_reward":"delivery_reward");
   const previousBalance=state.economy!.balance;
-  return {accounting,apply:()=>{
+  return {accounting,bankRepayment:undefined,apply:()=>{
     const result=payment.apply();
     if(terms.settlement)tx.create(journalRef,{schemaVersion:1,settlementVersion:2,companyId:state.companyId,deliveryId,source:accounting.source,operationId:opId,
       termsHash:digest(terms),quote:terms.settlement,currency:terms.currency,scale:terms.scale,economyVersion:terms.economyVersion,economyHash:terms.economyHash,
@@ -31,6 +33,7 @@ export async function prepareDeliverySettlement(tx:Transaction,state:CompanyStat
 /** Completed v2 reads validate explanation against the original financial claim; never repair it. */
 export async function validateSettlementJournal(tx:Transaction,state:CompanyState,deliveryId:string,terms:ContractTerms,xp:number) {
   assertLocalEnvironment(process.env,true);
+  if(terms.bankPolicy)return validateBankSettlement(tx,state,deliveryId,terms,xp);
   if(!terms.settlement)return;
   if(!state.economy)invalid();
   const source=`delivery_${deliveryId}`,opId=operationId(state.companyId,source),config=state.economy.config;

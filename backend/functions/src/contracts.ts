@@ -19,7 +19,7 @@ export async function readPool(tx: Transaction, state: CompanyState, epoch: numb
   const marker = snapshot.data();
   exact(marker,"schemaVersion,companyId,epoch,epochDurationMs,offerTtlMs,configVersion,configHash,termsHashes,acceptedCount,maxAcceptedPerEpoch,createdAt");
   versionId(marker.configVersion);
-  if (![1,2].includes(marker.schemaVersion) || marker.companyId !== state.companyId || marker.epoch !== epoch ||
+  if (![1,2,3].includes(marker.schemaVersion) || marker.companyId !== state.companyId || marker.epoch !== epoch ||
       safe(marker.epochDurationMs,604800000)<1 || safe(marker.offerTtlMs,marker.epochDurationMs)<1 ||
       !Array.isArray(marker.termsHashes) || marker.termsHashes.length<1 || marker.termsHashes.length>5 ||
       safe(marker.maxAcceptedPerEpoch,marker.termsHashes.length)<1 || !(marker.createdAt instanceof Timestamp) ||
