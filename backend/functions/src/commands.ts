@@ -5,6 +5,8 @@ import { requireUid } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
 
 const errors = {
+  BANK_RATE_LIMITED: "resource-exhausted", BANK_QUOTE_STALE: "failed-precondition", BANK_ACTIVE_LOAN: "failed-precondition",
+  BANK_LOAN_NOT_ACTIVE: "failed-precondition", BANK_NO_CAPACITY: "failed-precondition",
   UNAUTHENTICATED: "unauthenticated", INVALID_ARGUMENT: "invalid-argument",
   UNSUPPORTED_PROTOCOL: "failed-precondition", IDEMPOTENCY_CONFLICT: "already-exists",
   PERMISSION_DENIED: "permission-denied", FAILED_PRECONDITION: "failed-precondition",

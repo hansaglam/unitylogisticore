@@ -107,3 +107,10 @@ Concurrent iki cihaz quote replacement/consume; same/different key aynı offer; 
 ## DEFERRED / UNKNOWN
 
 Gerçek fiyatlar/XP/thresholds/maxBalance, rate/minFee/reserve/minimum/step/tiers, fee allocation/rebate, quote TTL/budget ve cost timing/recovery final onay bekler. Onaysız numeric config production'a yüklenemez. BANK-00 → BACKEND-09A → BANK-01 → BACKEND-09B → BACKEND-10; sonraki fazlar başlamadı. General audit HOLD; production/real DEV/CI/untrusted/deploy/migration BLOCK. Yerel istisna 30 Ekim 2026'da sona erer; bu belge uzatmaz.
+# BANK-01 durum eki — 24 Ekim 2026
+
+Bu tarihsel BANK-00 önerisinin runtime taslağı [BANK_CONTRACT](BANK_CONTRACT.md) ve explicit V3 taslağı [BANK_SETTLEMENT_CONTRACT](BANK_SETTLEMENT_CONTRACT.md) altında hazırlanıyor. Yeni dependency bulguları nedeniyle functional/local security HOLD; emulator doğrulaması tamamlanmadı. Bu ek BANK-00 simulation sonuçlarını veya numeric onay durumunu değiştirmez.
+
+## BANK-01 final review eki — 26 Ekim 2026
+
+Yukarıdaki24 Ekim HOLD/not-run notu ilk uygulama anına aittir. SECURITY-02 remediation ve final review tamamlandı: functional PASS, trusted LOCAL security CONDITIONAL PASS, general audit HOLD; production/migration BLOCK. Son validate30 unit/95 emulator ve75 offline PASS. Tam kanıt ve75 gereksinim matrisi [BANK-01_FINAL_REVIEW](../backend/BANK-01_FINAL_REVIEW.md). Tarihsel BANK-00/BACKEND-09A sonuçları ve numeric onay durumu değiştirilmedi.

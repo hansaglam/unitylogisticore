@@ -253,6 +253,35 @@ test('commerce strict intent, positive bounded price, pinned config, progression
 });
 
 import {settlementFixtures} from './settlement.fixtures.mjs';
+import {bankFixtures} from './bank.fixtures.mjs';
+import {bankCatalog,bankPolicy,validateBankPolicy,creditLimit,loanTerms,amountIntent,repayment,offerIdFor,loanIdFor} from '../functions/lib/bankModel.js';
+test('bank catalog strict tiers cover canonical progression without gaps, overlap, drift or unsafe limits',()=>{
+ const f=bankFixtures('bank_unit'),c=bankCatalog(f.bank,f.bank.version,f.economy);assert.equal(digest(c),digest(f.bank));
+ for(const patch of [{tiers:[]},{tiers:[{from:1,to:2,maximum:40},{from:2,to:3,maximum:60}]},{tiers:[{from:1,to:1,maximum:40},{from:3,to:3,maximum:60}]},
+  {maxLevel:50},{minLevel:0},{minPrincipal:0},{increment:0},{minPrincipal:11},{maxLiability:10},{chargeBps:10001},{repaymentBps:-1},{quoteTtlMs:0},{maxQuoteRequests:101},{maxQuoteWrites:21},{reserve:10001},{extra:1}])assert.throws(()=>bankCatalog({...f.bank,...patch},f.bank.version,f.economy));
+ assert.equal(creditLimit(c,1),40);assert.equal(creditLimit(c,2),60);assert.throws(()=>creditLimit(c,4));
+});
+test('bank money intents and fixed fees use exact bounded integers; fee-first reserve/debt caps',()=>{
+ const f=bankFixtures('bank_math'),c=bankCatalog(f.bank,f.bank.version,f.economy);assert.equal(amountIntent('9007199254740991'),Number.MAX_SAFE_INTEGER);
+ for(const n of ['01','+1','1.0','1e3','0','-1','9007199254740992',10,null])assert.throws(()=>amountIntent(n));
+ assert.equal(loanTerms(c,10,1).fee,1);assert.equal(loanTerms(c,40,1).fee,3);assert.throws(()=>loanTerms(c,50,1));
+ const l={terms:loanTerms(c,40,1),remainingPrincipal:40,remainingFee:3};
+ assert.deepEqual(repayment(l,999,7n),{total:2,fee:2,principal:0,debtBefore:43,debtAfter:41,remainingPrincipal:40,remainingFee:1});
+ assert.equal(repayment(l,999,5n).total,0);assert.equal(repayment(l,999,100n).total,43);
+ assert.equal(repayment(l,999,BigInt(Number.MAX_SAFE_INTEGER)+100n).total,43);
+});
+test('V3 policy pin extends schema while V2 operating cost snapshot remains authoritative',()=>{
+ const f=bankFixtures('bank_terms'),l=validateCatalog(f.logistics,f.logistics.version),c=validateContractConfig(f.config,f.config.version,l,f.economy),t=makeTerms(c,0,candidates,f.economy,f.costCatalog);
+ assert.equal(digest(c),digest(f.config));assert.deepEqual(t.bankPolicy,bankPolicy());assert.equal(t.settlement.settlementVersion,2);assert.equal(t.settlement.netReward,20);
+ assert.throws(()=>validateBankPolicy({...bankPolicy(),policy:'other'}));assert.notEqual(offerIdFor('a',1),offerIdFor('a',2));assert.notEqual(loanIdFor('a',1),loanIdFor('a',2));
+});
+test('bank entry points and settlement reject nonlocal environment before touching database',async()=>{
+ const {initializeBank,bankCommand,readMyBankState,readBank}=await import('../functions/lib/bank.js');
+ const {prepareBankSettlement,validateBankSettlement}=await import('../functions/lib/bankSettlement.js');
+ const previous=process.env.GCLOUD_PROJECT;process.env.GCLOUD_PROJECT='synthetic-nonlocal';const db=new Proxy({}, {get(){throw Error('database accessed');}});
+ try{for(const action of [()=>initializeBank(db,{uid:'synthetic'},{},'test'),()=>bankCommand(db,{uid:'synthetic'},{},'quoteCompanyLoan'),()=>readMyBankState(db,{uid:'synthetic'},{}),()=>readBank(db,db,db),()=>prepareBankSettlement(db,db,'test',db,0),()=>validateBankSettlement(db,db,'test',db,0)])await assert.rejects(action,/Local isolation/);}
+ finally{if(previous===undefined)delete process.env.GCLOUD_PROJECT;else process.env.GCLOUD_PROJECT=previous;}
+});
 import {costTotal,validateCostCatalog,validateCostQuote,makeCostQuote} from '../functions/lib/operatingCosts.js';
 import {settlementAccounting} from '../functions/lib/settlement.js';
 test('net settlement helpers reject nonlocal execution before any database access',async()=>{

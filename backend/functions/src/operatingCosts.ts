@@ -56,6 +56,6 @@ export async function readPinnedCosts(tx:Transaction,db:Firestore,state:CompanyS
 }
 export function settlementDto(terms:ContractTerms) {
   const q=terms.settlement;
-  return q?{settlement:{settlementVersion:2,policy:q.policy,grossReward:String(q.grossReward),fuelCost:String(q.fuelCost),driverCost:String(q.driverCost),
+  return q?{settlement:{settlementVersion:terms.bankPolicy?3:2,policy:terms.bankPolicy?.policy??q.policy,grossReward:String(q.grossReward),fuelCost:String(q.fuelCost),driverCost:String(q.driverCost),
     maintenanceCost:String(q.maintenanceCost),tollCost:String(q.tollCost),totalOperatingCosts:String(q.totalOperatingCosts),netReward:String(q.netReward),currency:terms.currency,scale:terms.scale}}:{};
 }

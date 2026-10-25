@@ -70,3 +70,11 @@ Future extension: `netOperatingProfit → capped loan repayment → finalWalletD
 ## Sınırlamalar
 
 Sentetik costs gerçek tüketim/maaş değildir. Failed/cancelled refund/penalty, dynamic economy, bank, production/migration/backfill, gerçek kullanıcı ve cihaz testleri yok. Positive net wallet/XP cap soft-lock'unu tamamen çözmez; otomatik rescue grant/repair yok. Dar LOCAL exception30 Ekim2026'da sona erer; general HOLD, gerçek DEV/production/untrusted CI/deploy/migration BLOCK.
+
+## BANK-01 durum eki — 24 Ekim 2026
+
+V1/V2 tarihsel davranışı yukarıda korunur. Yeni V3 kod taslağı [BANK_SETTLEMENT_CONTRACT](BANK_SETTLEMENT_CONTRACT.md) içindedir; yeni güvenlik bulguları nedeniyle HOLD, emulator doğrulaması tamamlanmadı. Yukarıdaki BANK-01 uygulanmadı ifadeleri BACKEND-09A tarihsel teslim durumunu anlatır; V3 için tamamlanma/PASS iddiası değildir.
+
+## BANK-01 final review eki — 26 Ekim 2026
+
+Yukarıdaki24 Ekim HOLD/not-run notu ilk uygulama anına aittir. SECURITY-02 remediation ve final review tamamlandı: functional PASS, trusted LOCAL security CONDITIONAL PASS, general audit HOLD; production/migration BLOCK. Son validate30 unit/95 emulator ve75 offline PASS. Tam kanıt ve75 gereksinim matrisi [BANK-01_FINAL_REVIEW](../backend/BANK-01_FINAL_REVIEW.md). Tarihsel BANK-00/BACKEND-09A sonuçları ve numeric onay durumu değiştirilmedi.

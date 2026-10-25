@@ -1,4 +1,5 @@
 import { acquisitionCommand, readMyAcquisitionOffers } from "./commerce";
+import { bankCommand, readMyBankState } from "./bank";
 import { startDeliveryCommand, claimDeliveryRewardCommand, readMyDeliveries } from "./deliveries";
 import { initializeApp } from "firebase-admin/app";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -21,6 +22,11 @@ initializeApp({
 });
 
 const localFirestore = createLocalFirestore();
+export const getMyBankState = onCall({ region: "us-central1", maxInstances: 1 }, r => readMyBankState(localFirestore,r.auth,r.data));
+export const quoteCompanyLoan = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"quoteCompanyLoan"));
+export const cancelCompanyLoanQuote = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"cancelCompanyLoanQuote"));
+export const takeCompanyLoan = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"takeCompanyLoan"));
+export const repayCompanyLoan = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"repayCompanyLoan"));
 export const ensurePlayerIdentity = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
   initializeIdentity(localFirestore, request.auth, request.data));
 

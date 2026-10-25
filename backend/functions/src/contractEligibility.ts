@@ -12,7 +12,7 @@ export async function readContractConfig(tx: Transaction, db: Firestore, state: 
   const raw = (await tx.get(db.collection("v2ContractCatalog").doc(versionId(version)))).data();
   const logistics = await catalogReader(tx,db)(raw?.logisticsVersion);
   const config=validateContractConfig(raw,version,logistics,state.economy.config);
-  const costs=config.schemaVersion===2?validateCostCatalog((await tx.get(db.collection("v2OperatingCostCatalog").doc(config.costCatalogVersion!))).data(),config.costCatalogVersion!,logistics,state.economy.config):undefined;
+  const costs=config.schemaVersion>=2?validateCostCatalog((await tx.get(db.collection("v2OperatingCostCatalog").doc(config.costCatalogVersion!))).data(),config.costCatalogVersion!,logistics,state.economy.config):undefined;
   return { config, logistics, costs };
 }
 /** Point reads only, server-selected candidate set. Eligibility is not a reservation promise. */

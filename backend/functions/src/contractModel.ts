@@ -1,3 +1,4 @@
+import { bankPolicy, validateBankPolicy } from "./bankModel";
 import { DocumentData, Timestamp } from "firebase-admin/firestore";
 import { CommandError } from "./commands";
 import { EconomyConfig, configHash, exact, invalid, safe, versionId } from "./economyModel";
@@ -14,8 +15,8 @@ export function rewardAmount(quantity: number, perUnit: number, maximum: number)
   safe(quantity); safe(perUnit); return safe(quantity * perUnit, maximum);
 }
 export function validateContractConfig(data: DocumentData | undefined, version: string, logistics: LogisticsCatalog, economy: EconomyConfig) {
-  exact(data, "schemaVersion,version,approval,logisticsVersion,logisticsHash,economyVersion,economyHash,epochDurationMs,offerTtlMs,maxOffers,maxAcceptedPerEpoch,routes,cargo,templates"+(data?.schemaVersion===2?",costCatalogVersion,costCatalogHash":""));
-  if (![1,2].includes(data.schemaVersion) || data.version !== versionId(version) || data.approval !== "synthetic_emulator_only" ||
+  exact(data, "schemaVersion,version,approval,logisticsVersion,logisticsHash,economyVersion,economyHash,epochDurationMs,offerTtlMs,maxOffers,maxAcceptedPerEpoch,routes,cargo,templates"+(data?.schemaVersion>=2?",costCatalogVersion,costCatalogHash":"")+(data?.schemaVersion===3?",bankPolicy":""));
+  if (![1,2,3].includes(data.schemaVersion) || data.version !== versionId(version) || data.approval !== "synthetic_emulator_only" ||
       logistics.schemaVersion !== 2 || data.logisticsVersion !== logistics.version || data.logisticsHash !== digest(logistics) ||
       data.economyVersion !== economy.version || data.economyHash !== configHash(economy)) invalid();
   if (safe(data.epochDurationMs, 604800000) < 1 || safe(data.offerTtlMs, data.epochDurationMs) < 1 ||
@@ -44,9 +45,9 @@ export function validateContractConfig(data: DocumentData | undefined, version: 
   if (templates.length > data.maxOffers) invalid();
   for (const list of [routes, cargo, templates]) if (new Set(list.map(e => e.id)).size !== list.length) invalid();
   const costPin: {costCatalogVersion?:string;costCatalogHash?:string}={};
-  if(data.schemaVersion===2){costPin.costCatalogVersion=versionId(data.costCatalogVersion);
+  if(data.schemaVersion>=2){costPin.costCatalogVersion=versionId(data.costCatalogVersion);
     if(typeof data.costCatalogHash!=="string"||!/^[a-f0-9]{64}$/.test(data.costCatalogHash))invalid();costPin.costCatalogHash=data.costCatalogHash;}
-  return { schemaVersion: data.schemaVersion as 1|2, ...costPin, version, approval: "synthetic_emulator_only", logisticsVersion: logistics.version, logisticsHash: digest(logistics),
+  return { schemaVersion: data.schemaVersion as 1|2|3, ...costPin, ...(data.schemaVersion===3?{bankPolicy:validateBankPolicy(data.bankPolicy)}:{}), version, approval: "synthetic_emulator_only", logisticsVersion: logistics.version, logisticsHash: digest(logistics),
     economyVersion: economy.version, economyHash: configHash(economy), epochDurationMs: data.epochDurationMs as number,
     offerTtlMs: data.offerTtlMs as number, maxOffers: data.maxOffers as number, maxAcceptedPerEpoch: data.maxAcceptedPerEpoch as number,
     routes, cargo, templates };
@@ -56,8 +57,9 @@ export function epochFor(now: number, duration: number) { safe(now); if (safe(du
 export function contractIdFor(companyId: string, epoch: number, slot: number) { safe(epoch);safe(slot,4);return digest({companyId,epoch,slot}); }
 export function makeTerms(config: ContractConfig, slot: number, assets: Selection, economy: EconomyConfig, costs?:CostCatalog) {
   const template = config.templates[slot];if (!template) invalid();
-  const extension:{settlement?:CostQuote}={};
-  if(config.schemaVersion===2){
+  const extension:{settlement?:CostQuote;bankPolicy?:ReturnType<typeof bankPolicy>}={};
+  if(config.schemaVersion===3)extension.bankPolicy=bankPolicy();
+  if(config.schemaVersion>=2){
     if(!costs || costs.version!==config.costCatalogVersion || digest(costs)!==config.costCatalogHash)invalid();
     extension.settlement=makeCostQuote(costs,template.id,template.routeId,template.cargoId,rewardAmount(template.quantity,template.rewardPerUnit,economy.maxBalance));
   }
@@ -74,13 +76,14 @@ export function validateContract(data: DocumentData | undefined, id: string, com
   if (!data) invalid();
   const accepted = data.status !== "offered";
   exact(data, "schemaVersion,companyId,contractId,status,epoch,slot,terms,termsHash,createdAt,expiresAt" + (accepted ? ",acceptedAt" : ""));
-  if (![1,2].includes(data.schemaVersion) || data.companyId !== companyId || data.contractId !== id ||
+  if (![1,2,3].includes(data.schemaVersion) || data.companyId !== companyId || data.contractId !== id ||
       !CONTRACT_STATUSES.includes(data.status) || id !== contractIdFor(companyId, data.epoch, data.slot) ||
       !(data.createdAt instanceof Timestamp) || !(data.expiresAt instanceof Timestamp) || data.createdAt.toMillis() >= data.expiresAt.toMillis() ||
       (accepted && (!(data.acceptedAt instanceof Timestamp) || data.acceptedAt.toMillis() < data.createdAt.toMillis() || data.acceptedAt.toMillis() >= data.expiresAt.toMillis()))) invalid();
   const t = data.terms;
-  exact(t, "templateId,route,cargo,quantity,reward,currency,scale,minLevel,requirements,candidateAssets,configVersion,configHash,logisticsVersion,logisticsHash,economyVersion,economyHash"+(data.schemaVersion===2?",settlement":""));
-  if(data.schemaVersion===2)validateCostQuote(t.settlement,t.reward);
+  exact(t, "templateId,route,cargo,quantity,reward,currency,scale,minLevel,requirements,candidateAssets,configVersion,configHash,logisticsVersion,logisticsHash,economyVersion,economyHash"+(data.schemaVersion>=2?",settlement":"")+(data.schemaVersion===3?",bankPolicy":""));
+  if(data.schemaVersion===3)validateBankPolicy(t.bankPolicy);
+  if(data.schemaVersion>=2)validateCostQuote(t.settlement,t.reward);
   exact(t.route,"id,originCityId,destinationCityId,distance,unit,verification");exact(t.cargo,"id,unit,capability");exact(t.requirements,"truck,driver,trailer");
   for (const value of [t.templateId,t.route.id,t.route.originCityId,t.route.destinationCityId,t.route.unit,t.cargo.id,t.cargo.unit,t.cargo.capability,
     t.requirements.truck,t.requirements.driver,t.configVersion,t.logisticsVersion,t.economyVersion]) versionId(value);
@@ -90,7 +93,7 @@ export function validateContract(data: DocumentData | undefined, id: string, com
   safe(t.reward);safe(t.scale,6);validateSelection(t.candidateAssets);
   for (const hash of [t.configHash,t.logisticsHash,t.economyHash,data.termsHash]) if (typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) invalid();
   if (data.termsHash !== digest(t)) invalid();
-  return { schemaVersion:data.schemaVersion as 1|2, contractId: id, terms: t as ContractTerms, status: data.status as ContractStatus,
+  return { schemaVersion:data.schemaVersion as 1|2|3, contractId: id, terms: t as ContractTerms, status: data.status as ContractStatus,
     epoch: data.epoch as number, slot: data.slot as number, createdAt: data.createdAt as Timestamp,
     expiresAt: data.expiresAt as Timestamp, acceptedAt: accepted ? data.acceptedAt as Timestamp : null };
 }
