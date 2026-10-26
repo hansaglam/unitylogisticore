@@ -1,3 +1,5 @@
+import { marketDto } from "./marketModel";
+import { readPinnedMarket } from "./market";
 import { DocumentData, Firestore, Transaction } from "firebase-admin/firestore";
 import { configHash, EconomyConfig, exact, invalid, safe, versionId } from "./economyModel";
 import { digest, LogisticsCatalog } from "./logisticsModel";
@@ -48,6 +50,7 @@ export function validateCostQuote(q:DocumentData|undefined,gross:number):asserts
 export async function readPinnedCosts(tx:Transaction,db:Firestore,state:CompanyState,terms:ContractTerms) {
   assertLocalEnvironment(process.env,true);
   if(!terms.settlement)return;
+  await readPinnedMarket(tx,db,state,terms);
   if(!state.economy)invalid();
   const q=terms.settlement, logistics=await catalogReader(tx,db)(terms.logisticsVersion);
   const catalog=validateCostCatalog((await tx.get(db.collection("v2OperatingCostCatalog").doc(q.costCatalogVersion))).data(),q.costCatalogVersion,logistics,state.economy.config);
@@ -56,6 +59,6 @@ export async function readPinnedCosts(tx:Transaction,db:Firestore,state:CompanyS
 }
 export function settlementDto(terms:ContractTerms) {
   const q=terms.settlement;
-  return q?{settlement:{settlementVersion:terms.bankPolicy?3:2,policy:terms.bankPolicy?.policy??q.policy,grossReward:String(q.grossReward),fuelCost:String(q.fuelCost),driverCost:String(q.driverCost),
+  return q?{...(terms.market?{market:marketDto(terms.market)}:{}),settlement:{settlementVersion:terms.bankPolicy?3:2,policy:terms.bankPolicy?.policy??q.policy,grossReward:String(q.grossReward),fuelCost:String(q.fuelCost),driverCost:String(q.driverCost),
     maintenanceCost:String(q.maintenanceCost),tollCost:String(q.tollCost),totalOperatingCosts:String(q.totalOperatingCosts),netReward:String(q.netReward),currency:terms.currency,scale:terms.scale}}:{};
 }

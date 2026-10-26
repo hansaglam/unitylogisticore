@@ -1,9 +1,10 @@
+import { validateMarketCatalog } from "./marketModel";
 import { Firestore, Transaction } from "firebase-admin/firestore";
 import { CommandError } from "./commands";
 import { versionId } from "./economyModel";
 import { readStarter } from "./fleet";
 import { CompanyState, catalogReader } from "./logisticsContext";
-import { validateAsset } from "./logisticsModel";
+import { digest, validateAsset } from "./logisticsModel";
 import { ContractTerms, validateContractConfig } from "./contractModel";
 import { validateCostCatalog } from "./operatingCosts";
 
@@ -13,7 +14,9 @@ export async function readContractConfig(tx: Transaction, db: Firestore, state: 
   const logistics = await catalogReader(tx,db)(raw?.logisticsVersion);
   const config=validateContractConfig(raw,version,logistics,state.economy.config);
   const costs=config.schemaVersion>=2?validateCostCatalog((await tx.get(db.collection("v2OperatingCostCatalog").doc(config.costCatalogVersion!))).data(),config.costCatalogVersion!,logistics,state.economy.config):undefined;
-  return { config, logistics, costs };
+  const market=config.schemaVersion===4?validateMarketCatalog((await tx.get(db.collection("v2MarketCatalog").doc(config.marketVersion!))).data(),config.marketVersion!,logistics,state.economy.config,config.cargo.map(c=>c.id)):undefined;
+  if(market && config.marketHash!==digest(market))throw new CommandError("FAILED_PRECONDITION");
+  return { config, logistics, costs, market };
 }
 /** Point reads only, server-selected candidate set. Eligibility is not a reservation promise. */
 export async function requireContractEligibility(tx: Transaction, db: Firestore, state: CompanyState, terms: ContractTerms) {
