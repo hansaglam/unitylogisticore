@@ -78,3 +78,7 @@ V1/V2 tarihsel davranışı yukarıda korunur. Yeni V3 kod taslağı [BANK_SETTL
 ## BANK-01 final review eki — 26 Ekim 2026
 
 Yukarıdaki24 Ekim HOLD/not-run notu ilk uygulama anına aittir. SECURITY-02 remediation ve final review tamamlandı: functional PASS, trusted LOCAL security CONDITIONAL PASS, general audit HOLD; production/migration BLOCK. Son validate30 unit/95 emulator ve75 offline PASS. Tam kanıt ve75 gereksinim matrisi [BANK-01_FINAL_REVIEW](../backend/BANK-01_FINAL_REVIEW.md). Tarihsel BANK-00/BACKEND-09A sonuçları ve numeric onay durumu değiştirilmedi.
+
+## BACKEND-09B — Dynamic gross eki
+
+26 Ekim 2026. Contract/delivery schema4, original market epoch'unda sabitlenmiş adjusted gross ve mevcut pinned costs ile çalışır. Cost quote V2, bank-aware settlement V3, journal schema2 korunur; yeni settlement version veya wallet yoktur. Loan yoksa repayment0; varsa mevcut BANK-01 capped repayment aynı transaction içindedir. Market değişimi costs, loan policy, XP veya historical receipt'i yeniden hesaplatmaz. Pinned market/config drift fail-closed; current selector tarihsel delivery'yi değiştirmez. Bkz. [DYNAMIC_PRICING_CONTRACT](DYNAMIC_PRICING_CONTRACT.md) ve [BACKEND-09B_REPORT](../backend/BACKEND-09B_REPORT.md).

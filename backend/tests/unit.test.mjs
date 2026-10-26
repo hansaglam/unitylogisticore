@@ -324,3 +324,5 @@ test('v2 terms pin exact quote; schema1 hashes and missing-cost rejection remain
  assert.equal(digest(oldCfg),digest(old.config));assert.equal(Object.hasOwn(makeTerms(oldCfg,0,candidates,old.economy),'settlement'),false);
  assert.deepEqual(settlementAccounting(terms,10,'delivery'),{grossRevenue:6,totalOperatingExpenses:4,netOperatingProfit:2,finalWalletDelta:2,eligibleXp:10,source:'delivery_delivery'});
 });
+
+await import('./market.unit.test.mjs');

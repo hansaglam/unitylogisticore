@@ -1,3 +1,4 @@
+import { readMyMarketState } from "./market";
 import { acquisitionCommand, readMyAcquisitionOffers } from "./commerce";
 import { bankCommand, readMyBankState } from "./bank";
 import { startDeliveryCommand, claimDeliveryRewardCommand, readMyDeliveries } from "./deliveries";
@@ -22,6 +23,7 @@ initializeApp({
 });
 
 const localFirestore = createLocalFirestore();
+export const getMyMarketState = onCall({region:"us-central1",maxInstances:1},r=>readMyMarketState(localFirestore,r.auth,r.data));
 export const getMyBankState = onCall({ region: "us-central1", maxInstances: 1 }, r => readMyBankState(localFirestore,r.auth,r.data));
 export const quoteCompanyLoan = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"quoteCompanyLoan"));
 export const cancelCompanyLoanQuote = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"cancelCompanyLoanQuote"));
