@@ -190,7 +190,10 @@ namespace LogistiCore.Map
 
         void CacheBounds()
         {
-            MapFrames.World(out _worldMin, out _worldMax);
+            // Travel limits match the World presentation frame. World() stays the full
+            // geographic span used by the meshes, so Antarctica remains in the data
+            // and outside the camera.
+            MapFrames.WorldPresentation(out _worldMin, out _worldMax);
             MapFrames.Turkey(out _turkeyMin, out _turkeyMax);
         }
 

@@ -22,15 +22,34 @@ namespace LogistiCore.Map
         public const float WorldFocusPadding = 1.02f;
 
         /// <summary>
+        /// South edge of the default World camera. Cape Horn is near 56°S.
+        /// The Antarctic Peninsula begins near 63°S. Full coverage stays in World().
+        /// </summary>
+        public const double WorldPresentationMinLatitude = -58d;
+
+        /// <summary>
         /// Closest orthographic size, as a fraction of the Türkiye frame.
         /// 0.46 is a regional city cluster. It stops zoom short of street scale,
         /// where the 50m relief would only blur.
         /// </summary>
         public const float ClosestRelativeToTurkeyFrame = 0.46f;
 
+        /// <summary>
+        /// Full Web Mercator span, about ±85°. Mesh generation and coverage use this.
+        /// The default World camera uses WorldPresentation().
+        /// </summary>
         public static void World(out Vector2 min, out Vector2 max)
         {
             ProjectedBounds(-MapProjection.MaxLatitude, MapProjection.MaxLatitude, -180d, 180d, out min, out max);
+        }
+
+        /// <summary>
+        /// Default World camera. Longitude stays -180..180. The south is cut at
+        /// WorldPresentationMinLatitude so the polar ice is outside the frame.
+        /// </summary>
+        public static void WorldPresentation(out Vector2 min, out Vector2 max)
+        {
+            ProjectedBounds(WorldPresentationMinLatitude, MapProjection.MaxLatitude, -180d, 180d, out min, out max);
         }
 
         public static void Turkey(out Vector2 min, out Vector2 max)
@@ -50,7 +69,7 @@ namespace LogistiCore.Map
 
         public static float MaximumOrthographicSize(float aspect)
         {
-            World(out var min, out var max);
+            WorldPresentation(out var min, out var max);
             MapViewMath.Fit(min, max, aspect, WorldFocusPadding, out _, out var size);
             return size;
         }

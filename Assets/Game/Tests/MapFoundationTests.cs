@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using LogistiCore.EditorTools;
 using LogistiCore.Map;
 using NUnit.Framework;
@@ -7,6 +8,7 @@ using UnityEditor.Localization;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace LogistiCore.Tests
 {
@@ -217,30 +219,52 @@ namespace LogistiCore.Tests
             Assert.IsNotNull(texture);
             Assert.AreEqual(MapGeographyBaker.ReliefWidth, texture.width);
             Assert.AreEqual(MapGeographyBaker.ReliefHeight, texture.height);
-            Assert.IsTrue(texture.isReadable);
+            Assert.IsFalse(texture.isReadable, "The shipping relief texture does not keep a CPU pixel copy.");
+            var importer = AssetImporter.GetAtPath(MapGeographyBaker.ReliefTexturePath) as TextureImporter;
+            Assert.IsNotNull(importer);
+            Assert.IsFalse(importer.isReadable);
+            Assert.IsTrue(importer.mipmapEnabled);
+            Assert.AreEqual("6e9f3de0069e641949ab22edb11c09c6", AssetDatabase.AssetPathToGUID(MapGeographyBaker.ReliefTexturePath));
+            var platform = importer.GetDefaultPlatformTextureSettings();
+            Assert.AreEqual(4096, platform.maxTextureSize);
+            Assert.AreEqual(TextureImporterCompression.Uncompressed, platform.textureCompression);
+            Assert.IsFalse(platform.overridden);
+            Assert.IsFalse(importer.GetPlatformTextureSettings("iPhone").overridden);
+            Assert.IsFalse(importer.GetPlatformTextureSettings("Android").overridden);
 
-            var ocean = Sample(texture, 30d, -30d);
-            var mediterranean = Sample(texture, 34d, 18d);
-            var ankara = Sample(texture, 39.929184d, 32.862446d);
-            var paris = Sample(texture, 48.85d, 2.35d);
-            Assert.AreEqual(4, ocean.r, "Atlantic pixel should stay the baked ocean color.");
-            Assert.AreEqual(12, ocean.g);
-            Assert.AreEqual(22, ocean.b);
-            Assert.AreEqual(255, ocean.a, "Ocean pixels stay opaque. A transparent halo is the old glow artifact.");
-            Assert.IsTrue(Same(ocean, mediterranean), "The Mediterranean south of Türkiye should stay ocean.");
-            var blackSea = Sample(texture, 42.4d, 35.2d);
-            var southCoastWater = Sample(texture, 36.0d, 31.0d);
-            var aegean = Sample(texture, 38.5d, 25.5d);
-            Assert.IsTrue(Same(ocean, blackSea), "The Black Sea north of the Turkish coast must not carry a glow band.");
-            Assert.AreEqual(255, blackSea.a);
-            Assert.IsTrue(Same(ocean, southCoastWater), "The Mediterranean immediately south of Türkiye must stay ocean.");
-            Assert.IsTrue(Same(ocean, aegean), "The Aegean west of Türkiye must stay ocean.");
-            Assert.IsFalse(Same(ocean, ankara), "Ankara should be land, not ocean.");
-            Assert.IsFalse(Same(ocean, paris), "Paris should be land, not ocean.");
-            Assert.Less(ankara.g, 100, "Türkiye should not be painted as a bright cyan polygon.");
-            var pontic = Sample(texture, 40.6d, 39.5d);
-            var taurus = Sample(texture, 37.2d, 33.5d);
-            Assert.GreaterOrEqual(Mathf.Abs(taurus.g - pontic.g), 12, "Mountain and valley shades in Türkiye should separate.");
+            var decoded = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
+            try
+            {
+                Assert.IsTrue(decoded.LoadImage(File.ReadAllBytes(MapGeographyBaker.ReliefTexturePath)));
+                Assert.AreEqual(MapGeographyBaker.ReliefWidth, decoded.width);
+                Assert.AreEqual(MapGeographyBaker.ReliefHeight, decoded.height);
+                var ocean = Sample(decoded, 30d, -30d);
+                var mediterranean = Sample(decoded, 34d, 18d);
+                var ankara = Sample(decoded, 39.929184d, 32.862446d);
+                var paris = Sample(decoded, 48.85d, 2.35d);
+                Assert.AreEqual(4, ocean.r, "Atlantic pixel should stay the baked ocean color.");
+                Assert.AreEqual(12, ocean.g);
+                Assert.AreEqual(22, ocean.b);
+                Assert.AreEqual(255, ocean.a, "Ocean pixels stay opaque. A transparent halo is the old glow artifact.");
+                Assert.IsTrue(Same(ocean, mediterranean), "The Mediterranean south of Türkiye should stay ocean.");
+                var blackSea = Sample(decoded, 42.4d, 35.2d);
+                var southCoastWater = Sample(decoded, 36.0d, 31.0d);
+                var aegean = Sample(decoded, 38.5d, 25.5d);
+                Assert.IsTrue(Same(ocean, blackSea), "The Black Sea north of the Turkish coast must not carry a glow band.");
+                Assert.AreEqual(255, blackSea.a);
+                Assert.IsTrue(Same(ocean, southCoastWater), "The Mediterranean immediately south of Türkiye must stay ocean.");
+                Assert.IsTrue(Same(ocean, aegean), "The Aegean west of Türkiye must stay ocean.");
+                Assert.IsFalse(Same(ocean, ankara), "Ankara should be land, not ocean.");
+                Assert.IsFalse(Same(ocean, paris), "Paris should be land, not ocean.");
+                Assert.Less(ankara.g, 100, "Türkiye should not be painted as a bright cyan polygon.");
+                var pontic = Sample(decoded, 40.6d, 39.5d);
+                var taurus = Sample(decoded, 37.2d, 33.5d);
+                Assert.GreaterOrEqual(Mathf.Abs(taurus.g - pontic.g), 12, "Mountain and valley shades in Türkiye should separate.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(decoded);
+            }
 
             var coast = AssetDatabase.LoadAssetAtPath<Mesh>(MapGeographyBaker.CoastMeshPath);
             var turkey = AssetDatabase.LoadAssetAtPath<Mesh>(MapGeographyBaker.TurkeyMeshPath);
@@ -356,6 +380,284 @@ namespace LogistiCore.Tests
                 if (scene.IsValid() && scene.isLoaded && SceneManager.sceneCount > 1)
                     EditorSceneManager.CloseScene(scene, true);
             }
+        }
+
+        [Test]
+        public void HudLayout_KeepsTheAuthoredSizeAtReferenceResolution()
+        {
+            var full = new Rect(0f, 0f, 1920f, 1080f);
+            var metrics = MapHudLayout.Evaluate(1920f, 1080f, full, true);
+            var again = MapHudLayout.Evaluate(1920f, 1080f, full, true);
+
+            Assert.AreEqual(MapHudLayout.RailButtonHeight, metrics.RailButtonHeight, 0.01f);
+            Assert.AreEqual(MapHudLayout.TopBarHeight, metrics.TopBarHeight, 0.01f);
+            Assert.AreEqual(MapHudLayout.StatusHeight, metrics.StatusHeight, 0.01f);
+            Assert.AreEqual(MapHudLayout.RailWidth, metrics.RailWidth, 0.01f);
+            Assert.AreEqual(MapHudLayout.InspectorWidth, metrics.InspectorWidth, 0.01f);
+            Assert.AreEqual(MapHudLayout.TitleSize, metrics.TitleSize);
+            Assert.AreEqual(MapHudLayout.InspectorLabelSize, metrics.InspectorLabelSize);
+            Assert.AreEqual(MapHudLayout.InspectorValueSize, metrics.InspectorValueSize);
+            Assert.AreEqual(32f, metrics.InspectorTitleRow, 0.01f);
+            Assert.AreEqual(20f, metrics.InspectorLabelRow, 0.01f);
+            Assert.AreEqual(28f, metrics.InspectorValueRow, 0.01f);
+            Assert.AreEqual(52f, metrics.CoordinatesRow, 0.01f);
+            Assert.AreEqual(metrics.RailButtonHeight, again.RailButtonHeight, 0.001f);
+            Assert.AreEqual(metrics.TitleSize, again.TitleSize);
+            Assert.IsFalse(metrics.Compact);
+            AssertPositiveAndFitting(metrics, 1920f, 1080f, full, true);
+        }
+
+        [Test]
+        public void HudLayout_EnlargesShortLandscapeViewportsWithoutOverflow()
+        {
+            var viewports = new[]
+            {
+                new Vector2(1280f, 720f),
+                new Vector2(960f, 540f),
+                new Vector2(844f, 390f),
+                new Vector2(932f, 430f)
+            };
+
+            for (var i = 0; i < viewports.Length; i++)
+            {
+                var width = viewports[i].x;
+                var height = viewports[i].y;
+                var safe = new Rect(0f, 0f, width, height);
+                var open = MapHudLayout.Evaluate(width, height, safe, true);
+                var closed = MapHudLayout.Evaluate(width, height, safe, false);
+                var repeat = MapHudLayout.Evaluate(width, height, safe, true);
+
+                Assert.Greater(open.RailButtonHeight, MapHudLayout.RailButtonHeight, width + "x" + height);
+                Assert.GreaterOrEqual(open.TitleSize, MapHudLayout.TitleSize);
+                Assert.GreaterOrEqual(closed.RailButtonHeight, open.RailButtonHeight);
+                Assert.AreEqual(open.RailButtonHeight, repeat.RailButtonHeight, 0.001f);
+                Assert.AreEqual(open.TitleSize, repeat.TitleSize);
+                AssertPositiveAndFitting(open, width, height, safe, true);
+                AssertPositiveAndFitting(closed, width, height, safe, false);
+            }
+
+            var wide = MapHudLayout.Evaluate(1280f, 720f, new Rect(0f, 0f, 1280f, 720f), true);
+            var compactWide = MapHudLayout.Evaluate(960f, 540f, new Rect(0f, 0f, 960f, 540f), true);
+            Assert.AreEqual(wide.RailButtonHeight, compactWide.RailButtonHeight, 0.05f);
+            Assert.AreEqual(wide.InspectorLabelSize, compactWide.InspectorLabelSize);
+        }
+
+        [Test]
+        public void HudLayout_RaisesCompactTypeWithoutFlatteningTheHierarchy()
+        {
+            var viewports = new[]
+            {
+                new Vector2(1280f, 720f),
+                new Vector2(960f, 540f),
+                new Vector2(844f, 390f),
+                new Vector2(932f, 430f)
+            };
+
+            for (var i = 0; i < viewports.Length; i++)
+            {
+                var width = viewports[i].x;
+                var height = viewports[i].y;
+                var safe = new Rect(0f, 0f, width, height);
+                var metrics = MapHudLayout.Evaluate(width, height, safe, true);
+                var blindLabel = Mathf.RoundToInt(MapHudLayout.InspectorLabelSize * metrics.Boost);
+
+                Assert.Greater(metrics.InspectorLabelSize, blindLabel, width + "x" + height);
+                Assert.Greater(metrics.TitleSize, metrics.InspectorTitleSize);
+                Assert.Greater(metrics.InspectorTitleSize, metrics.InspectorValueSize);
+                Assert.Greater(metrics.InspectorValueSize, metrics.InspectorLabelSize);
+                Assert.Greater(
+                    metrics.RailLabelSize,
+                    Mathf.RoundToInt(MapHudLayout.RailLabelSize * metrics.Boost),
+                    width + "x" + height);
+                Assert.Greater(metrics.ZoomLabelSize, metrics.RailLabelSize);
+                Assert.GreaterOrEqual(metrics.InspectorLabelRow, metrics.InspectorLabelSize);
+                Assert.GreaterOrEqual(metrics.InspectorValueRow, metrics.InspectorValueSize);
+                Assert.Greater(metrics.InspectorLabelScreenPixels, MapHudLayout.InspectorLabelSize * metrics.CanvasScale);
+                Assert.Greater(metrics.RailButtonScreenPixels, 0f);
+                Assert.AreEqual(metrics.RailButtonHeight * metrics.CanvasScale, metrics.RailButtonScreenPixels, 0.01f);
+                Assert.IsTrue(MapHudLayout.FitsOneLine(
+                    MapHudLayout.LongestRailLabel,
+                    metrics.RailLabelSize,
+                    metrics.RailWidth - metrics.RailPadding * 2f - 12f));
+                Assert.IsTrue(MapHudLayout.FitsOneLine(
+                    MapHudLayout.LongestCollapseLabel,
+                    metrics.CollapseSize,
+                    metrics.CollapseWidth - 16f));
+                var localHeight = height / metrics.CanvasScale;
+                Assert.LessOrEqual(metrics.InspectorStackHeight, localHeight - metrics.TopBarHeight - metrics.StatusHeight + 0.5f);
+            }
+        }
+
+        [Test]
+        public void HudLayout_ShrinksWhenTheSafeAreaCannotHoldTheComfortSize()
+        {
+            var full = new Rect(0f, 0f, 1280f, 720f);
+            var open = MapHudLayout.Evaluate(1280f, 720f, full, true);
+            var narrow = new Rect(0f, 0f, 700f, 720f);
+            var squeezed = MapHudLayout.Evaluate(1280f, 720f, narrow, true);
+            var collapsed = MapHudLayout.Evaluate(1280f, 720f, narrow, false);
+            var shortSafe = new Rect(0f, 0f, 1280f, 80f);
+            var compact = MapHudLayout.Evaluate(1280f, 720f, shortSafe, true);
+
+            Assert.LessOrEqual(squeezed.RailButtonHeight, open.RailButtonHeight + 0.01f);
+            Assert.GreaterOrEqual(collapsed.RailButtonHeight, squeezed.RailButtonHeight);
+            Assert.Greater(compact.RailButtonHeight, 0f);
+            Assert.IsTrue(compact.Compact);
+            AssertPositiveAndFitting(squeezed, 1280f, 720f, narrow, true);
+            AssertPositiveAndFitting(collapsed, 1280f, 720f, narrow, false);
+            AssertPositiveAndFitting(compact, 1280f, 720f, shortSafe, true);
+        }
+
+        [Test]
+        public void HudLayout_ButtonHitAreaMatchesTheEnlargedHeight()
+        {
+            var viewports = new[]
+            {
+                new Vector2(1920f, 1080f),
+                new Vector2(1280f, 720f),
+                new Vector2(960f, 540f),
+                new Vector2(844f, 390f),
+                new Vector2(932f, 430f)
+            };
+            var canvasObject = new GameObject("hud-canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            var canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            var root = new GameObject("SafeArea", typeof(RectTransform));
+            var rootRect = root.GetComponent<RectTransform>();
+            rootRect.SetParent(canvasObject.transform, false);
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+            var rail = new GameObject("CommandRail", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            var railRect = rail.GetComponent<RectTransform>();
+            railRect.SetParent(rootRect, false);
+            railRect.anchorMin = new Vector2(0f, 0f);
+            railRect.anchorMax = new Vector2(0f, 1f);
+            railRect.pivot = new Vector2(0f, 0.5f);
+            railRect.offsetMin = new Vector2(0f, 44f);
+            railRect.offsetMax = new Vector2(132f, -64f);
+            var layout = rail.GetComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(10, 10, 10, 10);
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            var names = new[] { "World", "Turkey", "ZoomIn", "ZoomOut", "Restore" };
+            var fields = new[] { "worldLabel", "turkeyLabel", "zoomInLabel", "zoomOutLabel", "restoreLabel" };
+            var buttons = new GameObject[names.Length];
+            var labels = new Text[names.Length];
+            for (var i = 0; i < names.Length; i++)
+            {
+                buttons[i] = new GameObject(names[i], typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                buttons[i].transform.SetParent(rail.transform, false);
+                var element = buttons[i].GetComponent<LayoutElement>();
+                element.minHeight = 64f;
+                element.preferredHeight = 64f;
+                buttons[i].GetComponent<Image>().raycastTarget = true;
+                var labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
+                labelObject.transform.SetParent(buttons[i].transform, false);
+                labels[i] = labelObject.GetComponent<Text>();
+                labels[i].fontSize = i == 2 || i == 3 ? 22 : 15;
+                labels[i].resizeTextForBestFit = true;
+            }
+
+            var shellObject = new GameObject("shell", typeof(MapShellView));
+            var shell = shellObject.GetComponent<MapShellView>();
+            var serialized = new SerializedObject(shell);
+            for (var i = 0; i < fields.Length; i++)
+                serialized.FindProperty(fields[i]).objectReferenceValue = labels[i];
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            try
+            {
+                for (var v = 0; v < viewports.Length; v++)
+                {
+                    var width = viewports[v].x;
+                    var height = viewports[v].y;
+                    var safe = new Rect(0f, 0f, width, height);
+                    rootRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+                    rootRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+                    for (var open = 0; open < 2; open++)
+                    {
+                        var visible = open == 0;
+                        if (shell.InspectorVisible != visible)
+                            shell.SetInspectorVisible(visible);
+                        var metrics = MapHudLayout.Evaluate(width, height, safe, visible);
+                        shell.ApplyHudLayout(width, height, safe);
+                        var buttonRect = buttons[0].GetComponent<RectTransform>();
+                        var labelRect = labels[0].rectTransform;
+                        Assert.AreEqual(metrics.RailButtonHeight, buttons[0].GetComponent<LayoutElement>().preferredHeight, 0.01f, width + "x" + height);
+                        Assert.AreEqual(metrics.RailButtonHeight, buttons[0].GetComponent<LayoutElement>().minHeight, 0.01f);
+                        Assert.AreEqual(metrics.RailButtonHeight, buttonRect.rect.height, 1.5f, width + "x" + height + " rendered");
+                        Assert.AreEqual(metrics.RailLabelSize, labels[0].fontSize);
+                        Assert.AreEqual(metrics.RailLabelSize, labels[1].fontSize);
+                        Assert.AreEqual(metrics.ZoomLabelSize, labels[2].fontSize);
+                        Assert.AreEqual(metrics.RailLabelSize, labels[4].fontSize);
+                        Assert.IsFalse(labels[0].resizeTextForBestFit);
+                        Assert.Greater(labelRect.rect.height, metrics.RailLabelSize * 0.5f);
+                        Assert.IsTrue(buttons[0].GetComponent<Image>().raycastTarget);
+                        Assert.AreEqual(buttonRect.rect.height, buttons[4].GetComponent<RectTransform>().rect.height, 0.5f);
+                        Debug.Log(
+                            "[HUD-RAIL] " + width + "x" + height
+                            + " inspector=" + visible
+                            + " canvasScaleFactor=" + canvas.scaleFactor.ToString("0.###")
+                            + " calculatedScale=" + metrics.CanvasScale.ToString("0.###")
+                            + " buttonRect=" + buttonRect.rect.height.ToString("0.#")
+                            + " font=" + labels[0].fontSize
+                            + " zoomFont=" + labels[2].fontSize
+                            + " labelRect=" + labelRect.rect.width.ToString("0.#") + "x" + labelRect.rect.height.ToString("0.#")
+                            + " editorPx=" + (buttonRect.rect.height * metrics.CanvasScale).ToString("0.#"));
+                    }
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(shellObject);
+                Object.DestroyImmediate(canvasObject);
+            }
+        }
+
+        [Test]
+        public void HudLayout_IgnoresMissingOptionalReferences()
+        {
+            var shellObject = new GameObject("shell", typeof(MapShellView));
+            var shell = shellObject.GetComponent<MapShellView>();
+            try
+            {
+                Assert.DoesNotThrow(() => shell.ApplyHudLayout(0f, 0f, new Rect(0f, 0f, 0f, 0f)));
+                Assert.DoesNotThrow(() => shell.ApplyHudLayout(960f, 540f, new Rect(0f, 0f, 960f, 540f)));
+                shell.ToggleInspector();
+                Assert.DoesNotThrow(() => shell.ApplyHudLayout(960f, 540f, new Rect(0f, 0f, 960f, 540f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(shellObject);
+            }
+        }
+
+        static void AssertPositiveAndFitting(MapHudLayout.Metrics metrics, float width, float height, Rect safe, bool inspectorVisible)
+        {
+            Assert.Greater(metrics.TopBarHeight, 0f);
+            Assert.Greater(metrics.StatusHeight, 0f);
+            Assert.Greater(metrics.RailWidth, 0f);
+            Assert.Greater(metrics.InspectorWidth, 0f);
+            Assert.Greater(metrics.RailButtonHeight, 0f);
+            Assert.Greater(metrics.TitleSize, 0);
+            Assert.Greater(metrics.InspectorLabelSize, 0);
+            Assert.Greater(metrics.InspectorValueSize, 0);
+            Assert.Greater(metrics.ZoomLabelSize, 0);
+            var scale = metrics.CanvasScale < 0.0001f ? 1f : metrics.CanvasScale;
+            var safeWidth = safe.width < 1f ? width : safe.width;
+            var safeHeight = safe.height < 1f ? height : safe.height;
+            Assert.LessOrEqual(metrics.VerticalChrome, safeHeight / scale + 0.5f);
+            Assert.LessOrEqual(metrics.HorizontalChrome(inspectorVisible), safeWidth / scale * 0.5f + 0.5f);
         }
 
         static void AssertFrameContains(MapScope scope, float aspect)

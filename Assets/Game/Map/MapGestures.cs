@@ -15,7 +15,12 @@ namespace LogistiCore.Map
     [RequireComponent(typeof(MapCameraRig))]
     public sealed class MapGestures : MonoBehaviour
     {
-        const float TapSlopPixels = 10f;
+        internal const float TapSlopPixels = 10f;
+
+        internal static bool IsTap(float travel)
+        {
+            return travel <= TapSlopPixels;
+        }
 
         MapCameraRig _rig;
         PointerEventData _pointer;
@@ -79,7 +84,7 @@ namespace LogistiCore.Map
 
             if (_lastTouchCount > 0)
             {
-                if (_lastTouchCount == 1 && !_touchBlocked && _touchTravel <= TapSlopPixels)
+                if (_lastTouchCount == 1 && !_touchBlocked && IsTap(_touchTravel))
                     SelectAt(_lastTouch);
 
                 _lastTouchCount = 0;
@@ -174,7 +179,7 @@ namespace LogistiCore.Map
 
             if (mouse.leftButton.wasReleasedThisFrame)
             {
-                if (_mouseDown && !_mouseBlocked && _mouseTravel <= TapSlopPixels)
+                if (_mouseDown && !_mouseBlocked && IsTap(_mouseTravel))
                     SelectAt(_mouseStart);
 
                 _mouseDown = false;

@@ -41,3 +41,15 @@ PROJECTION
 WGS84 longitude/latitude, Web Mercator, latitude clamped to ±85.05112878 degrees.
 Equirectangular texture coordinate: u = (longitude + 180) / 360, v = (latitude + 90) / 180, with v = 0 at the south.
 See MapProjection.
+
+REGIONAL RELIEF
+Name: Türkiye regional shaded relief, from the same Natural Earth SR_50M.tif 2.0.0.
+The GeoTIFF is not committed. Do not regenerate this image by upscaling SR_50M_4096.png.
+Generated file: Assets/Game/Map/Resources/MapReliefRegion.png
+SHA-256: ac9c14157f50b3d2516994a5108cdfcf643f88d8f79bb905700795961616266d
+Size: 1024 x 512 RGBA. One source sample per texel, 1/30 degree.
+Window edges: longitude 18.1666667 to 52.3000000, latitude 30.4333333 to 47.5000000.
+TIFF crop: column 5945, row 1275 of the 10800 x 5400 raster.
+Land, ocean, and Türkiye decisions come from the existing 4096 relief, so the overlay does not grow a coastline.
+Ocean texels are alpha 0. A 2.4 degree smoothstep feather sits inside the window edge.
+Hillshade uses the same navy and cyan ramps as the global bake.
