@@ -1,3 +1,4 @@
+import { validateLiveOpsCatalog } from "./liveOpsModel";
 import { validateMarketCatalog } from "./marketModel";
 import { Firestore, Transaction } from "firebase-admin/firestore";
 import { CommandError } from "./commands";
@@ -14,9 +15,11 @@ export async function readContractConfig(tx: Transaction, db: Firestore, state: 
   const logistics = await catalogReader(tx,db)(raw?.logisticsVersion);
   const config=validateContractConfig(raw,version,logistics,state.economy.config);
   const costs=config.schemaVersion>=2?validateCostCatalog((await tx.get(db.collection("v2OperatingCostCatalog").doc(config.costCatalogVersion!))).data(),config.costCatalogVersion!,logistics,state.economy.config):undefined;
-  const market=config.schemaVersion===4?validateMarketCatalog((await tx.get(db.collection("v2MarketCatalog").doc(config.marketVersion!))).data(),config.marketVersion!,logistics,state.economy.config,config.cargo.map(c=>c.id)):undefined;
+  const market=config.schemaVersion>=4?validateMarketCatalog((await tx.get(db.collection("v2MarketCatalog").doc(config.marketVersion!))).data(),config.marketVersion!,logistics,state.economy.config,config.cargo.map(c=>c.id)):undefined;
   if(market && config.marketHash!==digest(market))throw new CommandError("FAILED_PRECONDITION");
-  return { config, logistics, costs, market };
+  const liveOps=config.schemaVersion===5?validateLiveOpsCatalog((await tx.get(db.collection("v2LiveOpsCatalog").doc(config.liveOpsVersion!))).data(),config.liveOpsVersion!,state.economy.config,logistics,market!):undefined;
+  if(liveOps&&config.liveOpsHash!==digest(liveOps))throw new CommandError("FAILED_PRECONDITION");
+  return { config, logistics, costs, market, liveOps };
 }
 /** Point reads only, server-selected candidate set. Eligibility is not a reservation promise. */
 export async function requireContractEligibility(tx: Transaction, db: Firestore, state: CompanyState, terms: ContractTerms) {

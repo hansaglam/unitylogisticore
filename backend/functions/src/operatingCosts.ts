@@ -1,3 +1,4 @@
+import { liveOpsDto } from "./liveOpsModel";
 import { marketDto } from "./marketModel";
 import { readPinnedMarket } from "./market";
 import { DocumentData, Firestore, Transaction } from "firebase-admin/firestore";
@@ -59,6 +60,6 @@ export async function readPinnedCosts(tx:Transaction,db:Firestore,state:CompanyS
 }
 export function settlementDto(terms:ContractTerms) {
   const q=terms.settlement;
-  return q?{...(terms.market?{market:marketDto(terms.market)}:{}),settlement:{settlementVersion:terms.bankPolicy?3:2,policy:terms.bankPolicy?.policy??q.policy,grossReward:String(q.grossReward),fuelCost:String(q.fuelCost),driverCost:String(q.driverCost),
+  return q?{...(terms.liveOps?{liveOps:liveOpsDto(terms.liveOps)}:{}),...(terms.market?{market:marketDto(terms.market)}:{}),settlement:{settlementVersion:terms.bankPolicy?3:2,policy:terms.bankPolicy?.policy??q.policy,grossReward:String(q.grossReward),fuelCost:String(q.fuelCost),driverCost:String(q.driverCost),
     maintenanceCost:String(q.maintenanceCost),tollCost:String(q.tollCost),totalOperatingCosts:String(q.totalOperatingCosts),netReward:String(q.netReward),currency:terms.currency,scale:terms.scale}}:{};
 }

@@ -1,3 +1,4 @@
+import { readMyWorldEvents } from "./liveOps";
 import { readMyMarketState } from "./market";
 import { acquisitionCommand, readMyAcquisitionOffers } from "./commerce";
 import { bankCommand, readMyBankState } from "./bank";
@@ -23,6 +24,7 @@ initializeApp({
 });
 
 const localFirestore = createLocalFirestore();
+export const getMyWorldEvents = onCall({region:"us-central1",maxInstances:1},r=>readMyWorldEvents(localFirestore,r.auth,r.data));
 export const getMyMarketState = onCall({region:"us-central1",maxInstances:1},r=>readMyMarketState(localFirestore,r.auth,r.data));
 export const getMyBankState = onCall({ region: "us-central1", maxInstances: 1 }, r => readMyBankState(localFirestore,r.auth,r.data));
 export const quoteCompanyLoan = onCall({ region: "us-central1", maxInstances: 1 }, r => bankCommand(localFirestore,r.auth,r.data,"quoteCompanyLoan"));
