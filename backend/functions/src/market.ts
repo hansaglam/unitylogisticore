@@ -14,10 +14,10 @@ import { marketEpoch, marketSnapshot } from "./marketModel";
 /** Recompute only at the ORIGINAL pinned epoch. No current-market selector is read here. */
 export async function readPinnedMarket(tx:Transaction,db:Firestore,state:CompanyState,t:ContractTerms){
   assertLocalEnvironment(process.env,true);if(!t.market)return;
-  const {config,costs,market}=await readContractConfig(tx,db,state,t.configVersion);
-  if(config.schemaVersion!==4||!market||digest(config)!==t.configHash)invalid();
+  const {config,costs,market,liveOps}=await readContractConfig(tx,db,state,t.configVersion);
+  if(![4,5].includes(config.schemaVersion)||!market||digest(config)!==t.configHash)invalid();
   const slot=config.templates.findIndex(x=>x.id===t.templateId);if(slot<0)invalid();
-  if(digest(makeTerms(config,slot,t.candidateAssets,state.economy!.config,costs,market,t.market.snapshot.epoch))!==digest(t))invalid();
+  if(digest(makeTerms(config,slot,t.candidateAssets,state.economy!.config,costs,market,t.market.snapshot.epoch,liveOps,t.liveOps?.selectedAt))!==digest(t))invalid();
 }
 
 /** Server-owned selector is scoped to the canonical economy version, never client input.

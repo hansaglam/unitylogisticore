@@ -1,3 +1,4 @@
+import { eventStatus } from "./liveOpsModel";
 import { marketEpoch } from "./marketModel";
 import { DocumentData, FieldPath, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
 import { CommandError, executeCommand, parseCommandRequest } from "./commands";
@@ -20,7 +21,7 @@ export async function readPool(tx: Transaction, state: CompanyState, epoch: numb
   const marker = snapshot.data();
   exact(marker,"schemaVersion,companyId,epoch,epochDurationMs,offerTtlMs,configVersion,configHash,termsHashes,acceptedCount,maxAcceptedPerEpoch,createdAt");
   versionId(marker.configVersion);
-  if (![1,2,3,4].includes(marker.schemaVersion) || marker.companyId !== state.companyId || marker.epoch !== epoch ||
+  if (![1,2,3,4,5].includes(marker.schemaVersion) || marker.companyId !== state.companyId || marker.epoch !== epoch ||
       safe(marker.epochDurationMs,604800000)<1 || safe(marker.offerTtlMs,marker.epochDurationMs)<1 ||
       !Array.isArray(marker.termsHashes) || marker.termsHashes.length<1 || marker.termsHashes.length>5 ||
       safe(marker.maxAcceptedPerEpoch,marker.termsHashes.length)<1 || !(marker.createdAt instanceof Timestamp) ||
@@ -44,6 +45,7 @@ export function generateContractOffers(db: Firestore, auth: {uid:string}|undefin
   const version=versionId(plan.configVersion);const epoch=safe(plan.epoch);const assets=validateSelection(plan.assets);
   const states=new WeakMap<Transaction,CompanyState>();
   let pinnedMarketEpoch:number|undefined;
+  let pinnedEventState:string|undefined,pinnedEventTime:number|undefined;
   const key=parseCommandRequest(data).idempotencyKey;
   return executeCommand(db,auth,data,{
     name:"generateContractOffers",
@@ -59,7 +61,7 @@ export function generateContractOffers(db: Firestore, auth: {uid:string}|undefin
     },
     async apply(tx){
       const state=states.get(tx)!;
-      const {config,costs,market}=await readContractConfig(tx,db,state,version);
+      const {config,costs,market,liveOps}=await readContractConfig(tx,db,state,version);
       if((await tx.get(poolRef(state,epoch))).exists) invalid();
       const now=clockTime(clock); const expiry=epoch*config.epochDurationMs+config.offerTtlMs;
       if(epochFor(now,config.epochDurationMs)!==epoch || now>=expiry) throw new CommandError("OFFER_EXPIRED");
@@ -68,11 +70,17 @@ export function generateContractOffers(db: Firestore, auth: {uid:string}|undefin
         if(pinnedMarketEpoch!==undefined&&pinnedMarketEpoch!==currentMarketEpoch)invalid();
         pinnedMarketEpoch=currentMarketEpoch;
       }
-      const terms=config.templates.map((_,slot)=>makeTerms(config,slot,assets,state.economy!.config,costs,market,currentMarketEpoch));
+      if(pinnedEventState!==undefined&&!liveOps)invalid();
+      if(liveOps){
+        const eventState=digest({configHash:digest(config),catalogHash:digest(liveOps),states:liveOps.events.filter(e=>e.enabled).map(e=>({id:e.eventId,status:eventStatus(e,now)}))});
+        if(pinnedEventState!==undefined&&(pinnedEventState!==eventState||now<pinnedEventTime!))invalid();
+        pinnedEventState=eventState;pinnedEventTime??=now;
+      }
+      const terms=config.templates.map((_,slot)=>makeTerms(config,slot,assets,state.economy!.config,costs,market,currentMarketEpoch,liveOps,pinnedEventTime));
       const refs=terms.map((_,slot)=>state.companyRef.collection("contracts").doc(contractIdFor(state.companyId,epoch,slot)));
       if((await tx.getAll(...refs)).some(doc=>doc.exists)) invalid();
       for(const term of terms) await requireContractEligibility(tx,db,state,term);
-      const createdAt=Timestamp.fromMillis(now),expiresAt=Timestamp.fromMillis(expiry);
+      const createdAt=Timestamp.fromMillis(pinnedEventTime??now),expiresAt=Timestamp.fromMillis(expiry);
       for(let slot=0;slot<terms.length;slot++) tx.create(refs[slot]!,{schemaVersion:config.schemaVersion,companyId:state.companyId,contractId:refs[slot]!.id,
         status:"offered",epoch,slot,terms:terms[slot],termsHash:digest(terms[slot]),createdAt,expiresAt});
       tx.create(poolRef(state,epoch),{schemaVersion:config.schemaVersion,companyId:state.companyId,epoch,epochDurationMs:config.epochDurationMs,offerTtlMs:config.offerTtlMs,
@@ -92,8 +100,8 @@ export function acceptContractCommand(db:Firestore,auth:{uid:string}|undefined,d
       const contract=validateContract((await tx.get(ref)).data(),payload.contractId,state.companyId);
       const pool=await readPool(tx,state,contract.epoch);if(!pool) invalid();
       if(contract.status!=="offered") throw new CommandError("CONTRACT_NOT_OFFERED");
-      const {config,costs,market}=await readContractConfig(tx,db,state,contract.terms.configVersion);
-      if(digest(makeTerms(config,contract.slot,contract.terms.candidateAssets,state.economy!.config,costs,market,contract.terms.market?.snapshot.epoch))!==digest(contract.terms)) invalid();
+      const {config,costs,market,liveOps}=await readContractConfig(tx,db,state,contract.terms.configVersion);
+      if(digest(makeTerms(config,contract.slot,contract.terms.candidateAssets,state.economy!.config,costs,market,contract.terms.market?.snapshot.epoch,liveOps,contract.terms.liveOps?.selectedAt))!==digest(contract.terms)) invalid();
       await requireContractEligibility(tx,db,state,contract.terms);
       const now=clockTime(clock);
       if(now<contract.createdAt.toMillis() || expired(contract.status,contract.expiresAt.toMillis(),now)) throw new CommandError("OFFER_EXPIRED");

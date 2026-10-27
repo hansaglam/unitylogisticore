@@ -38,3 +38,7 @@ Claim mevcut tek transaction'da wallet, XP, ledger, journal, claim, equipment re
 V3'e göre generation/acceptance başına +1 market point read; ek contract write yok, mevcut bounded belgede snapshot alanları vardır. V4 pinned-cost doğrulamasında +4 config/logistics/cost/market point read; list item sayısı mevcut20 sınırında. Claim için bank/journal write sayısı değişmez. Bunlar implementation read tahminidir; retry/index/platform maliyeti ayrıca gelir.
 
 Sentetik fiyat salınımı gerçek supply/demand dengesi değildir. +15% gross, sabit costs nedeniyle neti daha yüksek oranda artırabilir. Offer arzı arttığında ikinci filo hızla para üretir; inflation ve 10–15 iş hedefi bütün koşullarda onaylanmış değildir. Sıfır arz/kârsız teklifler/minor-unit repayment rounding/wallet-XP caps soft-lock yaratabilir; bailout veya otomatik debt forgiveness yoktur. Production aktivasyonu, migration, retention ve gerçek veri toplama ayrı tasarım ve güvenlik onayı ister.
+
+## BACKEND-10 V5 eki
+
+V4 için reward==market.adjustedGrossReward kuralı aynen korunur. V5 ek liveOps snapshot ile market-only gross ve final gross'u ayırır: signed market+tek event bps toplamı aynı global envelope içinde clamp edilir, base üzerinden tek BigInt floor uygulanır. Cost quote final gross'u, settlement mevcut V3'ü kullanır. V5 pinned reader original event catalog/selectedAt kanıtını da doğrular; current event expiry fiyatı değiştirmez. Ayrıntı: [EVENT_PRICING_CONTRACT](EVENT_PRICING_CONTRACT.md).

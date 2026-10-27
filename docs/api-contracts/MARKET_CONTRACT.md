@@ -35,3 +35,7 @@ Firestore Rules default-deny değişmedi; market catalog ve selection için auth
 Ready state için yaklaşık 17 point read (foundation8, starter4, selector1, contract/logistics/cost/market4), 0 write, en çok80 pure koşul hesabı. Retry ve platform billing ayrıdır; ölçülmüş production maliyeti değildir. Snapshot retention/sürüm activation/gerçek talep toplama ve abuse-resistant aggregation ertelendi. Pinned catalog/config'ler aktif ve tarihsel işler için korunmalıdır.
 
 Fiyatlama: [DYNAMIC_PRICING_CONTRACT](DYNAMIC_PRICING_CONTRACT.md). Test ve güvenlik kararı: [BACKEND-09B_REPORT](../backend/BACKEND-09B_REPORT.md).
+
+## BACKEND-10 uyumluluk eki
+
+V5 contract config aynı server-owned selector üzerinden seçilebilir. getMyMarketState mevcut market-only alanlarını korur; event bonusu adjustmentBps'e karıştırılmaz. V5 config'in liveOps pin'i de doğrulanır; eksik/drift LiveOps catalog ret verir. V4 okuma17, V5 okuma yaklaşık18 point read;0write. Event bilgisi ayrı [getMyWorldEvents](LIVEOPS_CONTRACT.md) API'sindedir. V4 tarihsel kayıtlar değiştirilmez.
