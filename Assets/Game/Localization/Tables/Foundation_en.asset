@@ -90,6 +90,54 @@ MonoBehaviour:
     m_Localized: Deutsch
     m_Metadata:
       m_Items: []
+  - m_Id: 372236302
+    m_Localized: LOGISTICORE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236303
+    m_Localized: Operations Center
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236304
+    m_Localized: No live operations are connected.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236305
+    m_Localized: World Map
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236306
+    m_Localized: Home
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236307
+    m_Localized: Company
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236308
+    m_Localized: Company data is not connected yet.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236309
+    m_Localized: Company
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236310
+    m_Localized: Select a destination.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236311
+    m_Localized: Explore cities and the world map.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236312
+    m_Localized: Open the company overview.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236313
+    m_Localized: Not connected yet
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
