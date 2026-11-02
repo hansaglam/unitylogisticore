@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-Shared
   m_GUID: 49334d68517804ddd8f8c21a814e56fd
   m_SerializeEntries:
+  - m_GUID: 74dd57677b9304a4ca1a89a6d72bc128
+    m_Address: Assets/Game/Localization/Tables/Map Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8f124d292b7094c69a869f226a413670
     m_Address: Assets/Game/Localization/Tables/Foundation Shared Data.asset
     m_ReadOnly: 1
