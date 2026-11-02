@@ -327,3 +327,4 @@ test('v2 terms pin exact quote; schema1 hashes and missing-cost rejection remain
 
 await import('./market.unit.test.mjs');
 await import('./liveops.unit.test.mjs');
+await import('./liveops-admin.unit.test.mjs');
