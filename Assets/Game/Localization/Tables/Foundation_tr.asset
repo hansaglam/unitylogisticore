@@ -90,6 +90,54 @@ MonoBehaviour:
     m_Localized: Deutsch
     m_Metadata:
       m_Items: []
+  - m_Id: 372236302
+    m_Localized: LOGISTICORE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236303
+    m_Localized: Operasyon Merkezi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236304
+    m_Localized: "Canl\u0131 operasyon ba\u011Flant\u0131s\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236305
+    m_Localized: "D\xFCnya Haritas\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236306
+    m_Localized: Ana Sayfa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236307
+    m_Localized: "\u015Eirket"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236308
+    m_Localized: "\u015Eirket verisi hen\u00FCz ba\u011Fl\u0131 de\u011Fil."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236309
+    m_Localized: "\u015Eirket"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236310
+    m_Localized: "Bir hedef se\u00E7in."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236311
+    m_Localized: "\u015Eehirleri ve d\u00FCnya haritas\u0131n\u0131 ke\u015Ffet."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236312
+    m_Localized: "\u015Eirket \u00F6zetini a\u00E7\u0131n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236313
+    m_Localized: "Hen\u00FCz ba\u011Fl\u0131 de\u011Fil"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

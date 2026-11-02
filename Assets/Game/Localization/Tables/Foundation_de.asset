@@ -90,6 +90,54 @@ MonoBehaviour:
     m_Localized: Deutsch
     m_Metadata:
       m_Items: []
+  - m_Id: 372236302
+    m_Localized: LOGISTICORE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236303
+    m_Localized: Operationszentrum
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236304
+    m_Localized: Keine Live-Operationen verbunden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236305
+    m_Localized: Weltkarte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236306
+    m_Localized: Startseite
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236307
+    m_Localized: Unternehmen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236308
+    m_Localized: Unternehmensdaten sind noch nicht verbunden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236309
+    m_Localized: Unternehmen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236310
+    m_Localized: "Ziel ausw\u00E4hlen."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236311
+    m_Localized: "Entdecke St\u00E4dte und die Weltkarte."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236312
+    m_Localized: "\u00DCbersicht \u00F6ffnen."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236313
+    m_Localized: Noch nicht verbunden
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

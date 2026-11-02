@@ -172,6 +172,7 @@ PlayerSettings:
   applicationIdentifier:
     Android: com.DefaultCompany.urp_2d
     Standalone: com.DefaultCompany.2D-URP
+    iPhone: com.ethemsincar.logisticore--
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -419,7 +420,10 @@ PlayerSettings:
   m_BuildTargetGroupLightmapSettings: []
   m_BuildTargetGroupLoadStoreDebugModeSettings: []
   m_BuildTargetNormalMapEncoding: []
-  m_BuildTargetDefaultTextureCompressionFormat: []
+  m_BuildTargetDefaultTextureCompressionFormat:
+  - serializedVersion: 3
+    m_BuildTarget: iOS
+    m_Formats: 03000000
   playModeTestRunnerEnabled: 0
   runPlayModeTestAsEditModeTest: 0
   actionOnDotNetUnhandledException: 1

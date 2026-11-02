@@ -83,6 +83,54 @@ MonoBehaviour:
     m_Key: ui.language.de
     m_Metadata:
       m_Items: []
+  - m_Id: 372236302
+    m_Key: shell.brand
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236303
+    m_Key: shell.home.heading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236304
+    m_Key: shell.home.offline
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236305
+    m_Key: shell.action.world_map
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236306
+    m_Key: shell.action.home
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236307
+    m_Key: shell.company.heading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236308
+    m_Key: shell.company.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236309
+    m_Key: shell.action.company
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236310
+    m_Key: shell.home.support
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236311
+    m_Key: shell.home.map_caption
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236312
+    m_Key: shell.home.company_caption
+    m_Metadata:
+      m_Items: []
+  - m_Id: 372236313
+    m_Key: shell.company.status
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

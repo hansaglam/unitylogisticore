@@ -5,6 +5,7 @@
         "Unity.Localization",
         "Unity.ResourceManager",
         "UnityEngine.UI",
+        "Unity.InputSystem",
         "Firebase.Functions"
     ],
     "includePlatforms": [],
