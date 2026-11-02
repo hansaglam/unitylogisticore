@@ -10,7 +10,7 @@ namespace LogistiCore.Tests
     public sealed class MapHudShellTests
     {
         const string ScenePath = "Assets/Game/Scenes/WorldMapVerticalSlice.unity";
-        const string SceneSha = "c4f58b0ce718ff18835f6ee6b9232dfd57c71206efdc66990e1657dbdbef979b";
+        const string SceneSha = "e437dc5fbf47f9e7f55b7d76e347fdce63fe1c06bd4506ba931ecfff8bd678a0";
 
         static readonly Vector2[] Viewports =
         {
@@ -27,6 +27,14 @@ namespace LogistiCore.Tests
             Assert.AreEqual(SceneSha, Sha(ScenePath));
             var meta = File.ReadAllText(ScenePath + ".meta");
             StringAssert.Contains("guid: 8d5f07398f83c446f987c9b2827cff18", meta);
+            var scene = File.ReadAllText(ScenePath);
+            StringAssert.DoesNotContain("m_Name: TopBar", scene);
+            StringAssert.DoesNotContain("m_Name: CommandRail", scene);
+            StringAssert.DoesNotContain("m_Name: Inspector", scene);
+            StringAssert.DoesNotContain("\n  m_Name: Status\n", scene);
+            StringAssert.Contains("m_Name: City_izmir", scene);
+            StringAssert.Contains("m_Name: Ocean", scene);
+            StringAssert.Contains("m_Name: TurkeyCoast", scene);
         }
 
         [Test]

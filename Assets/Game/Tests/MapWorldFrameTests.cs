@@ -108,9 +108,23 @@ namespace LogistiCore.Tests
                 camera.aspect = aspect;
                 var rig = cameraObject.AddComponent<MapCameraRig>();
                 rig.FocusTurkey();
-                Assert.AreEqual(center.x, rig.TargetCenter.x, 0.02f);
-                Assert.AreEqual(center.y, rig.TargetCenter.y, 0.02f);
-                Assert.AreEqual(size, rig.TargetOrthographicSize, 0.02f);
+                MapFrames.WorldPresentation(out var worldMin, out var worldMax);
+                MapCameraRig.FitCitiesInside(
+                    center,
+                    size,
+                    aspect,
+                    Screen.width,
+                    Screen.height,
+                    Screen.safeArea,
+                    worldMin,
+                    worldMax,
+                    out var framedCenter,
+                    out var framedSize);
+                Assert.AreEqual(framedCenter.x, rig.TargetCenter.x, 0.02f);
+                Assert.AreEqual(framedCenter.y, rig.TargetCenter.y, 0.02f);
+                Assert.AreEqual(framedSize, rig.TargetOrthographicSize, 0.02f);
+                Assert.GreaterOrEqual(rig.TargetOrthographicSize, size - 0.02f);
+                Assert.LessOrEqual(rig.TargetOrthographicSize, MapFrames.MaximumOrthographicSize(aspect) + 0.02f);
                 Assert.AreEqual(size * 0.46f, MapFrames.MinimumOrthographicSize(aspect), 0.0001f);
             }
             finally

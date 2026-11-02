@@ -11,12 +11,16 @@ namespace LogistiCore.UI
 
     /// <summary>
     /// Requests a layout without locking the project to one orientation.
-    /// The world map should request landscape. Other main screens should request portrait.
+    /// Home and later main tabs request portrait. The world map requests landscape.
+    /// PlayerSettings already allow portrait and both landscapes. This does not write them.
     /// </summary>
     public static class ScreenLayouts
     {
+        public static ScreenLayoutMode Requested { get; private set; }
+
         public static void Apply(ScreenLayoutMode mode)
         {
+            Requested = mode;
             Screen.autorotateToPortraitUpsideDown = false;
 
             switch (mode)

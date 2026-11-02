@@ -12,7 +12,7 @@ namespace LogistiCore.Tests
     public sealed class MapMarkerLodTests
     {
         const string ScenePath = "Assets/Game/Scenes/WorldMapVerticalSlice.unity";
-        const string SceneSha256 = "c4f58b0ce718ff18835f6ee6b9232dfd57c71206efdc66990e1657dbdbef979b";
+        const string SceneSha256 = "e437dc5fbf47f9e7f55b7d76e347fdce63fe1c06bd4506ba931ecfff8bd678a0";
         const string ReliefSha256 = "ac9c14157f50b3d2516994a5108cdfcf643f88d8f79bb905700795961616266d";
 
         [Test]
@@ -209,11 +209,302 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void InitialTurkey_SelectsIzmirWithoutCoveringItWithTheRail()
+        {
+            Assert.AreEqual(34f, MapMarkerLod.AggregateScreenPixels);
+            Assert.AreEqual(22f, MapMarkerLod.AggregateHitRadius);
+            Assert.AreEqual(34f, MapMarkerLod.CoreScreenPixels);
+            Assert.AreEqual(18f, MapCameraRig.CityClearancePixels, 0.01f);
+            Assert.AreEqual(0.46f, MapFrames.ClosestRelativeToTurkeyFrame);
+            Assert.AreEqual(38.438096d, MapCities.All[0].Latitude, 0.0000001d);
+            Assert.AreEqual(27.149848d, MapCities.All[0].Longitude, 0.0000001d);
+            Assert.AreEqual("izmir", MapCities.All[0].Id);
+            Assert.AreEqual("ankara", MapCities.All[2].Id);
+            Assert.AreEqual("adana", MapCities.All[5].Id);
+
+            var viewports = new[]
+            {
+                new Viewport(2868f, 1320f, new Rect(186f, 60f, 2496f, 1200f)),
+                new Viewport(2868f, 1320f, new Rect(0f, 0f, 2868f, 1320f)),
+                new Viewport(844f, 390f, new Rect(0f, 0f, 844f, 390f)),
+                new Viewport(932f, 430f, new Rect(0f, 0f, 932f, 430f)),
+                new Viewport(960f, 540f, new Rect(0f, 0f, 960f, 540f)),
+                new Viewport(1280f, 720f, new Rect(0f, 0f, 1280f, 720f)),
+                new Viewport(1920f, 1080f, new Rect(0f, 0f, 1920f, 1080f))
+            };
+
+            for (var v = 0; v < viewports.Length; v++)
+                ExpectCitiesClearOfRail(viewports[v]);
+
+            var phone = viewports[0];
+            var metrics = MapHudLayout.Evaluate(phone.Width, phone.Height, phone.Safe, true);
+            foreach (var label in new[] { "Türkiye", "Türkei", "Sıfırla", "Zurück", "Reset", "Dünya", "Welt" })
+                Assert.IsTrue(MapHudLayout.FitsOneLine(label, metrics.RailLabelSize, metrics.RailTextWidth), label);
+
+            var harness = new Harness((int)phone.Width, (int)phone.Height, turkey: true);
+            try
+            {
+                harness.Frame((int)phone.Width, (int)phone.Height, turkey: true);
+                var camera = harness.Rig.GetComponent<Camera>();
+                var fitted = new Vector2(camera.transform.position.x, camera.transform.position.y);
+                var size = camera.orthographicSize;
+                var cleared = MapCameraRig.CenterClearOfRail(fitted, size, phone.Width, phone.Height, phone.Safe);
+                Assert.AreEqual(fitted.y, cleared.y, 0.0001f);
+                Assert.Less(cleared.x, fitted.x, "The camera moves west so İzmir draws to the right of the rail.");
+                camera.transform.position = new Vector3(cleared.x, cleared.y, MapCameraRig.CameraZ);
+                harness.Layer.ApplyViewport((int)phone.Width, (int)phone.Height, snap: true);
+
+                var buttons = MapCameraRig.RailButtons(phone.Width, phone.Height, phone.Safe);
+                Assert.AreEqual(5, buttons.Length);
+                var restore = buttons[4];
+                Assert.Greater(restore.width, 40f);
+                Assert.Greater(restore.height, 40f);
+                var izmir = harness.ScreenOf(0);
+                Assert.IsFalse(Contains(restore, izmir));
+                Assert.IsFalse(Contains(buttons[3], izmir), "Zoom out must not own İzmir’s tap.");
+                for (var i = 0; i < MapCities.All.Length; i++)
+                {
+                    var point = harness.ScreenOf(i);
+                    for (var b = 0; b < buttons.Length; b++)
+                        Assert.IsFalse(Contains(buttons[b], point), MapCities.All[i].Id);
+                }
+
+                var before = camera.transform.position;
+                var beforeSize = camera.orthographicSize;
+                Assert.IsTrue(harness.Layer.TrySelect(izmir, out var selected));
+                Assert.AreEqual("izmir", selected);
+                Assert.AreEqual(before, camera.transform.position);
+                Assert.AreEqual(beforeSize, camera.orthographicSize, 0.0001f);
+
+                harness.Layer.ClearSelection();
+                Assert.IsTrue(harness.Layer.TrySelect(harness.ScreenOf(2), out var ankara));
+                Assert.AreEqual("ankara", ankara);
+                Assert.IsTrue(harness.Layer.TrySelect(harness.ScreenOf(5), out var adana));
+                Assert.AreEqual("adana", adana);
+                Assert.AreEqual(beforeSize, camera.orthographicSize, 0.0001f);
+
+                var unshiftedUnits = MapMarkerLod.UnitsPerPixel(size, phone.Height);
+                var unshiftedIzmir = MapMarkerLod.ToScreen(
+                    MapProjection.Project(MapCities.All[0].Latitude, MapCities.All[0].Longitude),
+                    fitted,
+                    unshiftedUnits,
+                    phone.Width,
+                    phone.Height);
+                Assert.IsTrue(Contains(buttons[3], unshiftedIzmir), "The unshifted frame is the measured overlap.");
+            }
+            finally
+            {
+                harness.Dispose();
+            }
+
+            var rigObject = new GameObject("turkey-access-rig");
+            try
+            {
+                var rigCamera = rigObject.AddComponent<Camera>();
+                rigCamera.orthographic = true;
+                rigCamera.aspect = 1920f / 1080f;
+                var rig = rigObject.AddComponent<MapCameraRig>();
+                rig.ApplyImmediate(MapScope.World);
+                MapFrames.WorldPresentation(out var worldMin, out var worldMax);
+                MapViewMath.Fit(worldMin, worldMax, rigCamera.aspect, MapFrames.WorldFocusPadding, out var worldCenter, out var worldSize);
+                Assert.AreEqual(worldCenter.x, rigCamera.transform.position.x, 0.02f);
+                Assert.AreEqual(worldCenter.y, rigCamera.transform.position.y, 0.02f);
+                Assert.AreEqual(worldSize, rigCamera.orthographicSize, 0.02f);
+
+                rig.ApplyImmediate(MapScope.Turkey);
+                var panBefore = rigCamera.transform.position.x;
+                rig.PanScreenDelta(new Vector2(40f, 0f));
+                Assert.AreNotEqual(panBefore, rigCamera.transform.position.x);
+                var zoomBefore = rig.TargetOrthographicSize;
+                rig.ZoomAtScreen(new Vector2(10f, 10f), 1.25f);
+                Assert.Less(rig.TargetOrthographicSize, zoomBefore);
+                Assert.GreaterOrEqual(rig.TargetOrthographicSize, MapFrames.MinimumOrthographicSize(rigCamera.aspect) - 0.001f);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(rigObject);
+            }
+        }
+
+        static void ExpectCitiesClearOfRail(Viewport viewport)
+        {
+            var aspect = viewport.Width / viewport.Height;
+            MapFrames.Turkey(out var min, out var max);
+            MapViewMath.Fit(min, max, aspect, MapFrames.TurkeyFocusPadding, out var fitted, out var size);
+            var cleared = MapCameraRig.CenterClearOfRail(fitted, size, viewport.Width, viewport.Height, viewport.Safe);
+            Assert.AreEqual(fitted.y, cleared.y, 0.0001f);
+            var units = MapMarkerLod.UnitsPerPixel(size, viewport.Height);
+            var buttons = MapCameraRig.RailButtons(viewport.Width, viewport.Height, viewport.Safe);
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                var city = MapCities.All[i];
+                var world = MapProjection.Project(city.Latitude, city.Longitude);
+                var screen = MapMarkerLod.ToScreen(world, cleared, units, viewport.Width, viewport.Height);
+                Assert.Greater(screen.x, 0f, city.Id);
+                Assert.Less(screen.x, viewport.Width, city.Id);
+                Assert.Greater(screen.y, 0f, city.Id);
+                Assert.Less(screen.y, viewport.Height, city.Id);
+                for (var b = 0; b < buttons.Length; b++)
+                {
+                    Assert.IsFalse(Contains(buttons[b], screen), city.Id + " button " + b);
+                    var gap = buttons[b].xMax + MapCameraRig.CityClearancePixels - screen.x;
+                    var verticallyNear = screen.y >= buttons[b].yMin - MapCameraRig.CityClearancePixels
+                        && screen.y <= buttons[b].yMax + MapCameraRig.CityClearancePixels;
+                    if (verticallyNear)
+                        Assert.LessOrEqual(gap, 0.5f, city.Id);
+                }
+            }
+        }
+
+        static bool Contains(Rect rect, Vector2 point)
+        {
+            return point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax;
+        }
+
+        readonly struct Viewport
+        {
+            public readonly float Width;
+            public readonly float Height;
+            public readonly Rect Safe;
+
+            public Viewport(float width, float height, Rect safe)
+            {
+                Width = width;
+                Height = height;
+                Safe = safe;
+            }
+        }
+
+        [Test]
+        public void AggregateBadge_DrawsAtThirtyFourPixelsWithoutMovingOrResizingCities()
+        {
+            Assert.AreEqual(34f, MapMarkerLod.AggregateScreenPixels);
+            Assert.AreEqual(22f, MapMarkerLod.AggregateHitRadius);
+            Assert.AreEqual(34f, MapMarkerLod.CoreScreenPixels);
+            Assert.AreEqual(26f, MapMarkerLod.JoinPixels);
+            Assert.AreEqual(44f, MapMarkerLod.SplitPixels);
+            Assert.AreEqual(1.08f, MapMarkerLod.CountryFrameFactor);
+            Assert.AreEqual(48f, MapMarkerLod.MarkerHitPixels);
+            Assert.AreEqual(0.46f, MapFrames.ClosestRelativeToTurkeyFrame);
+
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Game/Map/Generated/MapMarker.png");
+            Assert.IsNotNull(sprite);
+            Assert.AreEqual(1f, sprite.rect.width / sprite.pixelsPerUnit, 0.001f);
+            Assert.AreEqual(1f, sprite.rect.height / sprite.pixelsPerUnit, 0.001f);
+            Assert.AreEqual(0.5f, sprite.pivot.x / sprite.rect.width, 0.01f);
+            Assert.AreEqual(0.5f, sprite.pivot.y / sprite.rect.height, 0.01f);
+
+            var harness = new Harness(844, 390, turkey: false);
+            try
+            {
+                ExpectAggregateDiameter(harness, 844, 390, sprite);
+                ExpectAggregateDiameter(harness, 1920, 1080, sprite);
+
+                harness.Frame(844, 390, turkey: false);
+                harness.UseCanvasScale(844, 390);
+                harness.Layer.ApplyViewport(844, 390, snap: true);
+                Assert.AreEqual(0, harness.Layer.IndividualCount);
+                Assert.AreEqual(1, harness.Layer.ActiveAggregateCount);
+                Assert.AreEqual(8, harness.Layer.LargestAggregateMembers);
+                Assert.AreEqual("8", harness.CountText.text);
+                AssertGlyphOnRing(harness);
+                Assert.IsTrue(harness.Layer.TryAggregateHitPoint(out var hit, out var members));
+                Assert.AreEqual(8, members);
+
+                var camera = harness.Rig.GetComponent<Camera>();
+                var sizeBefore = camera.orthographicSize;
+                var positionBefore = camera.transform.position;
+                Assert.IsFalse(harness.Layer.TrySelect(hit + new Vector2(23f, 0f), out _));
+                Assert.AreEqual(sizeBefore, camera.orthographicSize, 0.0001f);
+                Assert.AreEqual(positionBefore, camera.transform.position);
+                Assert.IsTrue(harness.Layer.TrySelect(hit + new Vector2(21f, 0f), out var aggregateCity));
+                Assert.IsNull(aggregateCity);
+                Assert.IsNull(harness.Layer.SelectedId);
+                Assert.AreEqual(MapScope.Turkey, harness.Rig.Scope);
+
+                harness.Frame(844, 390, turkey: true);
+                harness.UseCanvasScale(844, 390);
+                harness.Layer.ApplyViewport(844, 390, snap: true);
+                Assert.AreEqual(8, harness.Layer.IndividualCount);
+                Assert.AreEqual(0, harness.Layer.ActiveAggregateCount);
+                AssertCityCoreFollowsItsOwnPixels(harness, 1, 390);
+                var turkeySize = camera.orthographicSize;
+                var turkeyPosition = camera.transform.position;
+                Assert.IsTrue(harness.Layer.TrySelect(harness.ScreenOf(2), out var ankara));
+                Assert.AreEqual("ankara", ankara);
+                Assert.AreEqual("ankara", harness.Layer.SelectedId);
+                Assert.AreEqual(turkeySize, camera.orthographicSize, 0.0001f);
+                Assert.AreEqual(turkeyPosition, camera.transform.position);
+            }
+            finally
+            {
+                harness.Dispose();
+            }
+        }
+
+        static void ExpectAggregateDiameter(Harness harness, int width, int height, Sprite sprite)
+        {
+            harness.Frame(width, height, turkey: false);
+            harness.UseCanvasScale(width, height);
+            harness.Layer.ApplyViewport(width, height, snap: true);
+            var group = harness.Layer.transform.Find("CityGroup");
+            Assert.IsNotNull(group);
+            var camera = harness.Rig.GetComponent<Camera>();
+            var units = MapMarkerLod.UnitsPerPixel(camera.orthographicSize, height);
+            Assert.AreEqual(34f, group.localScale.x / units, 0.02f);
+            Assert.AreEqual(group.localScale.x, group.localScale.y, 0.0001f);
+
+            var sum = Vector2.zero;
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                var city = MapCities.All[i];
+                sum += MapProjection.Project(city.Latitude, city.Longitude);
+            }
+
+            var centroid = sum / MapCities.All.Length;
+            Assert.AreEqual(centroid.x, group.position.x, 0.001f);
+            Assert.AreEqual(centroid.y, group.position.y, 0.001f);
+
+            var icon = group.GetComponent<SpriteRenderer>();
+            Assert.IsNotNull(icon);
+            icon.sprite = sprite;
+            Assert.AreEqual(centroid.x, icon.bounds.center.x, 0.05f);
+            Assert.AreEqual(centroid.y, icon.bounds.center.y, 0.05f);
+            var painted = icon.bounds.size.x / units;
+            Assert.Greater(painted, 30f);
+            Assert.LessOrEqual(painted, 34.05f);
+        }
+
+        static void AssertCityCoreFollowsItsOwnPixels(Harness harness, int index, int height)
+        {
+            var nearest = float.MaxValue;
+            var origin = harness.ScreenOf(index);
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                if (i == index)
+                    continue;
+
+                var distance = Vector2.Distance(origin, harness.ScreenOf(i));
+                if (distance < nearest)
+                    nearest = distance;
+            }
+
+            var pixels = MapMarkerLod.CorePixels(nearest);
+            Assert.Less(pixels, MapMarkerLod.CoreScreenPixels);
+            var camera = harness.Rig.GetComponent<Camera>();
+            var expected = MapMarkerLod.ScaleForPixels(pixels, camera.orthographicSize, height);
+            var marker = harness.Cores[index].transform.parent;
+            Assert.AreEqual(expected, marker.localScale.x, 0.02f);
+            Assert.AreEqual(expected, marker.localScale.y, 0.02f);
+            Assert.AreNotEqual(MapMarkerLod.AggregateScreenPixels, pixels);
+        }
+
+        [Test]
         public void BadgeCount_SitsOnTheRingAtEveryWorldViewport()
         {
             Assert.AreEqual(26f, MapMarkerLod.JoinPixels);
             Assert.AreEqual(44f, MapMarkerLod.SplitPixels);
-            Assert.AreEqual(26f, MapMarkerLod.AggregateScreenPixels);
+            Assert.AreEqual(34f, MapMarkerLod.AggregateScreenPixels);
             Assert.AreEqual(22f, MapMarkerLod.AggregateHitRadius);
             Assert.AreEqual(0.46f, MapFrames.ClosestRelativeToTurkeyFrame);
 

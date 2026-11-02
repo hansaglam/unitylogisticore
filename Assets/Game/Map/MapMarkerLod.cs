@@ -19,7 +19,7 @@ namespace LogistiCore.Map
         public const float JoinPixels = 26f;
         public const float SplitPixels = 44f;
         public const float CountryFrameFactor = 1.08f;
-        public const float AggregateScreenPixels = 26f;
+        public const float AggregateScreenPixels = 34f;
         public const float AggregateHitRadius = 22f;
         public const float MarkerHitPixels = 48f;
 

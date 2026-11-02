@@ -110,6 +110,90 @@ MonoBehaviour:
     m_Localized: Trabzon
     m_Metadata:
       m_Items: []
+  - m_Id: 120578069
+    m_Localized: Keine Live-Operationen verbunden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578070
+    m_Localized: "Demn\u00E4chst"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578071
+    m_Localized: Flotte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578072
+    m_Localized: "Auftr\u00E4ge"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578073
+    m_Localized: Lager
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578074
+    m_Localized: Markt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578075
+    m_Localized: "Stra\u00DFe"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578076
+    m_Localized: Schiene
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578077
+    m_Localized: See
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578078
+    m_Localized: Luft
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578079
+    m_Localized: "Schlie\u00DFen"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578080
+    m_Localized: Dieser Bereich ist noch nicht verfügbar.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578081
+    m_Localized: KARTE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578082
+    m_Localized: Flotte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578083
+    m_Localized: Auftrag
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578084
+    m_Localized: Lager
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578085
+    m_Localized: Markt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578086
+    m_Localized: ROAD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578087
+    m_Localized: RAIL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578088
+    m_Localized: SEA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578089
+    m_Localized: AIR
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

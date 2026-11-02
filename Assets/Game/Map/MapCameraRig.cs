@@ -21,6 +21,9 @@ namespace LogistiCore.Map
         bool _userAdjusted;
         bool _framed;
         float _appliedAspect;
+        int _appliedWidth;
+        int _appliedHeight;
+        Rect _appliedSafe;
 
         public MapScope Scope => _scope;
         public bool UserAdjusted => _userAdjusted;
@@ -51,7 +54,10 @@ namespace LogistiCore.Map
                 return;
 
             var aspect = Aspect();
-            if (!_userAdjusted && Mathf.Abs(aspect - _appliedAspect) > 0.01f)
+            var safe = Screen.safeArea;
+            var turkeyScreenChanged = _scope == MapScope.Turkey
+                && (Screen.width != _appliedWidth || Screen.height != _appliedHeight || safe != _appliedSafe);
+            if (!_userAdjusted && (Mathf.Abs(aspect - _appliedAspect) > 0.01f || turkeyScreenChanged))
                 ApplyImmediate(_scope);
 
             if (!_moving)
@@ -152,6 +158,136 @@ namespace LogistiCore.Map
             ApplyFocus(scope, smooth: false);
         }
 
+        /// <summary>
+        /// Reapplies the current frame after the command shell changes the open area.
+        /// A pan or pinch sets <see cref="UserAdjusted"/> and this call leaves that view alone.
+        /// </summary>
+        public void ReframeForChrome()
+        {
+            if (_userAdjusted)
+                return;
+
+            ApplyImmediate(_scope);
+        }
+
+        /// <summary>
+        /// Keeps the Türkiye zoom floor and moves the opening frame only enough for the
+        /// eight city hit targets to land in the command shell's open map area.
+        /// Geographic coordinates are not changed. The size never goes below the
+        /// existing Türkiye fit, and it never goes past the world frame.
+        /// </summary>
+        public static void FitCitiesInside(
+            Vector2 fittedCenter,
+            float fittedSize,
+            float aspect,
+            float screenWidth,
+            float screenHeight,
+            Rect safeArea,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            out Vector2 center,
+            out float size)
+        {
+            center = fittedCenter;
+            size = fittedSize;
+            if (screenWidth < 1f || screenHeight < 1f || fittedSize < 0.0001f)
+                return;
+
+            var reserved = MapCommandLayout.Evaluate(screenWidth, screenHeight, safeArea, true);
+            var metrics = reserved.ContextOpen
+                ? reserved
+                : MapCommandLayout.Evaluate(screenWidth, screenHeight, safeArea, false);
+            var hole = Inset(metrics.Viewport, MapMarkerLod.MarkerHitPixels + CityClearancePixels);
+            if (hole.width < 24f || hole.height < 24f)
+                return;
+
+            var maxSize = MapFrames.MaximumOrthographicSize(aspect);
+            for (var step = 0; step < 32; step++)
+            {
+                var fit = ShiftInto(ref center, size, hole, screenWidth, screenHeight);
+                if (fit == CityFit.Inside)
+                    break;
+                if (fit == CityFit.Shifted)
+                    continue;
+                if (size >= maxSize - 0.001f)
+                    break;
+
+                size = Mathf.Min(maxSize, size * 1.05f);
+            }
+
+            center = MapViewMath.ClampCenter(center, size, aspect, worldMin, worldMax);
+        }
+
+        enum CityFit
+        {
+            Inside = 0,
+            Shifted = 1,
+            Overflow = 2
+        }
+
+        static CityFit ShiftInto(ref Vector2 center, float size, Rect hole, float screenWidth, float screenHeight)
+        {
+            var units = MapMarkerLod.UnitsPerPixel(size, screenHeight);
+            var west = 0f;
+            var east = 0f;
+            var south = 0f;
+            var north = 0f;
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                var city = MapCities.All[i];
+                var world = MapProjection.Project(city.Latitude, city.Longitude);
+                var screen = MapMarkerLod.ToScreen(world, center, units, screenWidth, screenHeight);
+                if (screen.x < hole.xMin)
+                    west = Mathf.Max(west, hole.xMin - screen.x);
+                else if (screen.x > hole.xMax)
+                    east = Mathf.Max(east, screen.x - hole.xMax);
+
+                if (screen.y < hole.yMin)
+                    south = Mathf.Max(south, hole.yMin - screen.y);
+                else if (screen.y > hole.yMax)
+                    north = Mathf.Max(north, screen.y - hole.yMax);
+            }
+
+            var overflow = (west > 0.5f && east > 0.5f) || (south > 0.5f && north > 0.5f);
+            var shifted = false;
+            if (west > 0.5f && east <= 0.5f)
+            {
+                center.x -= west * units;
+                shifted = true;
+            }
+            else if (east > 0.5f && west <= 0.5f)
+            {
+                center.x += east * units;
+                shifted = true;
+            }
+
+            if (south > 0.5f && north <= 0.5f)
+            {
+                center.y -= south * units;
+                shifted = true;
+            }
+            else if (north > 0.5f && south <= 0.5f)
+            {
+                center.y += north * units;
+                shifted = true;
+            }
+
+            if (overflow)
+                return CityFit.Overflow;
+            if (!shifted && west <= 0.5f && east <= 0.5f && south <= 0.5f && north <= 0.5f)
+                return CityFit.Inside;
+            return shifted ? CityFit.Shifted : CityFit.Overflow;
+        }
+
+        static Rect Inset(Rect rect, float padding)
+        {
+            rect.xMin += padding;
+            rect.yMin += padding;
+            rect.xMax -= padding;
+            rect.yMax -= padding;
+            return rect;
+        }
+
         void ApplyFocus(MapScope scope, bool smooth)
         {
             if (_camera == null)
@@ -165,12 +301,29 @@ namespace LogistiCore.Map
             MapViewMath.Fit(boundsMin, boundsMax, aspect, padding, out var center, out var size);
             size = MapViewMath.ClampSize(size, MapFrames.MinimumOrthographicSize(aspect), MapFrames.MaximumOrthographicSize(aspect));
             center = MapViewMath.ClampCenter(center, size, aspect, _worldMin, _worldMax);
+            if (scope == MapScope.Turkey)
+            {
+                FitCitiesInside(
+                    center,
+                    size,
+                    aspect,
+                    Screen.width,
+                    Screen.height,
+                    Screen.safeArea,
+                    _worldMin,
+                    _worldMax,
+                    out center,
+                    out size);
+            }
 
             var changed = _scope != scope;
             _scope = scope;
             _targetCenter = center;
             _targetSize = size;
             _appliedAspect = aspect;
+            _appliedWidth = Screen.width;
+            _appliedHeight = Screen.height;
+            _appliedSafe = Screen.safeArea;
             _framed = true;
 
             if (!smooth)
@@ -195,6 +348,80 @@ namespace LogistiCore.Map
             // and outside the camera.
             MapFrames.WorldPresentation(out _worldMin, out _worldMax);
             MapFrames.Turkey(out _turkeyMin, out _turkeyMax);
+        }
+
+        /// <summary>
+        /// Keeps the Türkiye orthographic size and moves the camera west only as far as
+        /// needed so a city marker is not drawn on a rail button. World framing is unchanged.
+        /// The rail panel itself does not receive touches; the buttons do.
+        /// </summary>
+        internal const float CityClearancePixels = 18f;
+
+        internal static Vector2 CenterClearOfRail(
+            Vector2 fittedCenter,
+            float orthographicSize,
+            float screenWidth,
+            float screenHeight,
+            Rect safeArea)
+        {
+            if (screenWidth < 1f || screenHeight < 1f || orthographicSize < 0.0001f)
+                return fittedCenter;
+
+            var safe = safeArea.width < 1f || safeArea.height < 1f
+                ? new Rect(0f, 0f, screenWidth, screenHeight)
+                : safeArea;
+            var buttons = RailButtons(screenWidth, screenHeight, safe);
+            var units = MapMarkerLod.UnitsPerPixel(orthographicSize, screenHeight);
+            var shift = 0f;
+            for (var c = 0; c < MapCities.All.Length; c++)
+            {
+                var city = MapCities.All[c];
+                var world = MapProjection.Project(city.Latitude, city.Longitude);
+                var screen = MapMarkerLod.ToScreen(world, fittedCenter, units, screenWidth, screenHeight);
+                for (var b = 0; b < buttons.Length; b++)
+                {
+                    var button = buttons[b];
+                    if (screen.y < button.yMin - CityClearancePixels || screen.y > button.yMax + CityClearancePixels)
+                        continue;
+
+                    var deficit = button.xMax + CityClearancePixels - screen.x;
+                    if (deficit > shift)
+                        shift = deficit;
+                }
+            }
+
+            if (shift <= 0f)
+                return fittedCenter;
+
+            return new Vector2(fittedCenter.x - shift * units, fittedCenter.y);
+        }
+
+        internal static Rect[] RailButtons(float screenWidth, float screenHeight, Rect safeArea)
+        {
+            var safe = safeArea.width < 1f || safeArea.height < 1f
+                ? new Rect(0f, 0f, screenWidth, screenHeight)
+                : safeArea;
+            var metrics = MapHudLayout.Evaluate(screenWidth, screenHeight, safe, true);
+            var scale = metrics.CanvasScale < 0.0001f ? 1f : metrics.CanvasScale;
+            var railX = safe.xMin;
+            var railY = safe.yMin + metrics.Gap * scale;
+            var railWidth = metrics.RailWidth * scale;
+            var railHeight = safe.height - (metrics.TopBarHeight + metrics.Gap) * scale;
+            var pad = metrics.RailPadding * scale;
+            var height = metrics.RailButtonHeight * scale;
+            var spacing = metrics.RailSpacing * scale;
+            var rects = new Rect[MapHudLayout.RailButtonCount];
+            var top = railY + railHeight - pad;
+            var x = railX + pad;
+            var width = railWidth - pad * 2f;
+            for (var i = 0; i < rects.Length; i++)
+            {
+                top -= height;
+                rects[i] = new Rect(x, top, width, height);
+                top -= spacing;
+            }
+
+            return rects;
         }
 
         float Aspect()

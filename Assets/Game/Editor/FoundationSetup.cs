@@ -415,6 +415,14 @@ namespace LogistiCore.EditorTools
                 SetEntry(germanTable, key, row.German, smart);
             }
 
+            for (var i = 0; i < ShellContent.Lines.Length; i++)
+            {
+                var line = ShellContent.Lines[i];
+                SetEntry(englishTable, line.Key, line.English, false);
+                SetEntry(turkishTable, line.Key, line.Turkish, false);
+                SetEntry(germanTable, line.Key, line.German, false);
+            }
+
             TryPreload(englishTable);
             TryPreload(turkishTable);
             TryPreload(germanTable);

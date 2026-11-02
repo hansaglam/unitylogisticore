@@ -107,6 +107,90 @@ MonoBehaviour:
     m_Key: cities.trabzon
     m_Metadata:
       m_Items: []
+  - m_Id: 120578069
+    m_Key: map.summary.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578070
+    m_Key: map.mode.soon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578071
+    m_Key: map.mode.fleet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578072
+    m_Key: map.mode.jobs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578073
+    m_Key: map.mode.warehouses
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578074
+    m_Key: map.mode.market
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578075
+    m_Key: map.mode.road
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578076
+    m_Key: map.mode.rail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578077
+    m_Key: map.mode.sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578078
+    m_Key: map.mode.air
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578079
+    m_Key: map.action.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578080
+    m_Key: map.context.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578081
+    m_Key: map.rail.map
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578082
+    m_Key: map.rail.fleet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578083
+    m_Key: map.rail.jobs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578084
+    m_Key: map.rail.warehouses
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578085
+    m_Key: map.rail.market
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578086
+    m_Key: map.rail.road
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578087
+    m_Key: map.rail.rail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578088
+    m_Key: map.rail.sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578089
+    m_Key: map.rail.air
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

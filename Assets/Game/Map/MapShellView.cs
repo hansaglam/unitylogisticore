@@ -7,6 +7,13 @@ using UnityEngine.UI;
 
 namespace LogistiCore.Map
 {
+    /// <summary>
+    /// Keeps the map camera and city markers in sync with localization.
+    /// The toolbar, header, inspector, and status chip are no longer shown.
+    /// <see cref="FocusWorld"/>, <see cref="FocusTurkey"/>, <see cref="ZoomIn"/>,
+    /// <see cref="ZoomOut"/>, and <see cref="Restore"/> remain the internal
+    /// mode and zoom API. Nothing in the map UI calls them.
+    /// </summary>
     [DisallowMultipleComponent]
     public sealed class MapShellView : MonoBehaviour
     {
@@ -100,6 +107,7 @@ namespace LogistiCore.Map
             if (!Application.isPlaying)
                 return;
 
+            RetireObsoleteHud();
             Subscribe();
             if (cameraRig != null)
                 cameraRig.ScopeChanged += OnPresentationChanged;
@@ -167,10 +175,31 @@ namespace LogistiCore.Map
 
         void LateUpdate()
         {
-            if (!Application.isPlaying)
+            if (!Application.isPlaying || !HasVisibleChrome())
                 return;
 
             ApplyCurrentScreen();
+        }
+
+        void RetireObsoleteHud()
+        {
+            for (var i = transform.childCount - 1; i >= 0; i--)
+            {
+                var child = transform.GetChild(i);
+                var name = child.name;
+                if (name != "TopBar" && name != "CommandRail" && name != "Inspector" && name != "Status")
+                    continue;
+
+                var graphics = child.GetComponentsInChildren<Graphic>(true);
+                for (var g = 0; g < graphics.Length; g++)
+                    graphics[g].raycastTarget = false;
+                Destroy(child.gameObject);
+            }
+        }
+
+        bool HasVisibleChrome()
+        {
+            return titleText != null || worldLabel != null || inspectorPanel != null || statusText != null;
         }
 
         internal void ApplyHudLayout(float screenWidth, float screenHeight, Rect safeArea)

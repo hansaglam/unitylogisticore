@@ -15,7 +15,7 @@ namespace LogistiCore.Tests
     public sealed class MapRibbonTests
     {
         const string ScenePath = "Assets/Game/Scenes/WorldMapVerticalSlice.unity";
-        const string SceneSha = "c4f58b0ce718ff18835f6ee6b9232dfd57c71206efdc66990e1657dbdbef979b";
+        const string SceneSha = "e437dc5fbf47f9e7f55b7d76e347fdce63fe1c06bd4506ba931ecfff8bd678a0";
         const string CoastSha = "7ff32b1602c96856d829f6e15d22e53e18990b42dd24dc442b3b3641af5e5d0b";
         const string TurkeyLineSha = "ac3379a85ed41f9d35d2d08ef3d483d6f4abb37818b514fed36b36759d8ba8cb";
         const string LandSha = "3fd92747aa7a3c45772e1377928d6a0b969311a85fa4e75a9efdcfba603be463";
@@ -297,7 +297,7 @@ namespace LogistiCore.Tests
             Assert.AreEqual(0.46f, MapFrames.ClosestRelativeToTurkeyFrame);
             Assert.AreEqual(26f, MapMarkerLod.JoinPixels);
             Assert.AreEqual(44f, MapMarkerLod.SplitPixels);
-            Assert.AreEqual(26f, MapMarkerLod.AggregateScreenPixels);
+            Assert.AreEqual(34f, MapMarkerLod.AggregateScreenPixels);
             MapFrames.World(out var min, out _);
             Assert.IsTrue(MapProjection.TryUnproject(min, out var south, out _));
             Assert.Less(south, -80d);

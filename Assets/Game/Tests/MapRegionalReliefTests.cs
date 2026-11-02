@@ -15,7 +15,7 @@ namespace LogistiCore.Tests
         const string ShaderPath = "Assets/Game/Map/MapRegionalRelief.shader";
         const string MaterialPath = "Assets/Game/Map/Resources/MapRegionalRelief.mat";
         const string ScenePath = "Assets/Game/Scenes/WorldMapVerticalSlice.unity";
-        const string SceneSha256 = "c4f58b0ce718ff18835f6ee6b9232dfd57c71206efdc66990e1657dbdbef979b";
+        const string SceneSha256 = "e437dc5fbf47f9e7f55b7d76e347fdce63fe1c06bd4506ba931ecfff8bd678a0";
 
         [Test]
         public void Bounds_CoverTurkeyWithPaddingOutsideTheFeather()

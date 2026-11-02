@@ -110,6 +110,90 @@ MonoBehaviour:
     m_Localized: Trabzon
     m_Metadata:
       m_Items: []
+  - m_Id: 120578069
+    m_Localized: No live operations are connected.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578070
+    m_Localized: Coming soon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578071
+    m_Localized: Fleet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578072
+    m_Localized: Jobs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578073
+    m_Localized: Warehouses
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578074
+    m_Localized: Market
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578075
+    m_Localized: Road
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578076
+    m_Localized: Rail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578077
+    m_Localized: Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578078
+    m_Localized: Air
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578079
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578080
+    m_Localized: This section is not available yet.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578081
+    m_Localized: MAP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578082
+    m_Localized: Fleet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578083
+    m_Localized: Jobs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578084
+    m_Localized: Depots
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578085
+    m_Localized: Market
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578086
+    m_Localized: ROAD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578087
+    m_Localized: RAIL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578088
+    m_Localized: SEA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578089
+    m_Localized: AIR
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
