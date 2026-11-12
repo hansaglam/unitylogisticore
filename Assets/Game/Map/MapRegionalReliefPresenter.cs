@@ -120,6 +120,7 @@ namespace LogistiCore.Map
             _relief = relief;
             _camera = camera;
             _runtime = runtime;
+            BindRegion(_runtime);
             _relief.sharedMaterial = _runtime;
             _applied = -1f;
             Apply();
@@ -179,6 +180,20 @@ namespace LogistiCore.Map
 
             _applied = weight;
             _runtime.SetFloat("_Detail", weight);
+        }
+
+        static void BindRegion(Material runtime)
+        {
+            runtime.SetVector("_RegionMin", MapRegionalRelief.RegionMinVector());
+            runtime.SetVector("_RegionMax", MapRegionalRelief.RegionMaxVector());
+            runtime.SetVector("_HaloMin", MapRegionalRelief.HaloMinVector());
+            runtime.SetVector("_HaloMax", MapRegionalRelief.HaloMaxVector());
+            var texture = Resources.Load<Texture2D>(MapRegionalRelief.TextureResource);
+            if (texture != null)
+                runtime.SetTexture("_RegionalTex", texture);
+            var halo = Resources.Load<Texture2D>(MapRegionalRelief.FallbackTextureResource);
+            if (halo != null)
+                runtime.SetTexture("_HaloTex", halo);
         }
 
         void ViewBounds(float aspect, out Vector2 min, out Vector2 max)

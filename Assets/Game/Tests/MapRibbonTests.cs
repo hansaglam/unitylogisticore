@@ -19,9 +19,9 @@ namespace LogistiCore.Tests
         const string CoastSha = "7ff32b1602c96856d829f6e15d22e53e18990b42dd24dc442b3b3641af5e5d0b";
         const string TurkeyLineSha = "ac3379a85ed41f9d35d2d08ef3d483d6f4abb37818b514fed36b36759d8ba8cb";
         const string LandSha = "3fd92747aa7a3c45772e1377928d6a0b969311a85fa4e75a9efdcfba603be463";
-        const string ReliefSha = "41d7f88993bab845c8345b40f23adfbf73e56b563db56b1ffff6d6109734a570";
-        const string RegionSha = "ac9c14157f50b3d2516994a5108cdfcf643f88d8f79bb905700795961616266d";
-        const string ReliefShaderSha = "bc70b0be5fac1a73aaa28c97cbde1e0d8cb4aad3831908e4e9950ef9869adc8c";
+        const string ReliefSha = "4fea8f86af213c7a6875b2e40b8ef1edaa0273a6bf97d30c4876da7e4934e1e7";
+        const string RegionSha = "803d2e945c4afef11b38ef1264896fd42d1c3dde80eedd852be6323188f2faa8";
+        const string ReliefShaderSha = "e201abb3effec643ec74b82e1aa19d596dacf207c84aaec03e1a0a59e00646ac";
         const double CapeLatitude = -55.784766;
         const double CapeLongitude = -67.325293;
 
@@ -318,15 +318,27 @@ namespace LogistiCore.Tests
             Assert.IsTrue(source.Contains("input.role > 0.5 && input.role < 1.5"));
             Assert.IsTrue(source.Contains("input.role > 1.5"));
             Assert.IsTrue(source.Contains("_TurkeyMul"));
+            Assert.IsTrue(source.Contains("_CoastMul"));
+            Assert.IsTrue(source.Contains("_BorderMul"));
             Assert.AreEqual(2f, MapRibbonStyle.TurkeyWidthPixels);
+            Assert.AreEqual(1.5f, MapRibbonStyle.CoastWidthPixels);
+            Assert.AreEqual(1.15f, MapRibbonStyle.BorderWidthPixels);
             Assert.AreEqual(104, MapRibbonStyle.Turkey.r);
             Assert.AreEqual(178, MapRibbonStyle.Turkey.g);
             Assert.AreEqual(196, MapRibbonStyle.Turkey.b);
-            Assert.Less(MapRibbonStyle.TurkeyPresentation.y, 0.9f);
-            Assert.Greater(MapRibbonStyle.TurkeyPresentation.w, 0.45f);
-            Assert.Less(MapRibbonStyle.TurkeyPresentation.w, 0.9f);
+            var turkey = MapRibbonStyle.Presented(MapRibbonRole.Turkey, 12.031f);
+            var border = MapRibbonStyle.Presented(MapRibbonRole.Border, 12.031f);
+            var coast = MapRibbonStyle.Presented(MapRibbonRole.Coast, 12.031f);
+            Assert.Greater(CyanExcess(turkey), CyanExcess(coast));
+            Assert.Greater(CyanExcess(coast), CyanExcess(border));
+            Assert.Greater(turkey.a, border.a);
+            Assert.Greater(coast.a, border.a);
+            Assert.Less(turkey.a, 0.95f);
+            Assert.Less(MapRibbonStyle.Presented(MapRibbonRole.Border, 223.928f).a, border.a);
             var presenter = File.ReadAllText("Assets/Game/Map/MapRibbonPresenter.cs");
             Assert.IsTrue(presenter.Contains("SetVector(\"_TurkeyMul\""));
+            Assert.IsTrue(presenter.Contains("SetVector(\"_CoastMul\""));
+            Assert.IsTrue(presenter.Contains("SetVector(\"_BorderMul\""));
             Assert.AreEqual(
                 "9a05e872c1cf618bb0d475261a6133dee917a1a44d80f32609a6b52e0b24340f",
                 Sha("Assets/Game/Map/Resources/MapRibbonTurkey.asset"));
@@ -432,6 +444,11 @@ namespace LogistiCore.Tests
             Measure(_model.Borders, ref longest);
             Measure(_model.Turkey, ref longest);
             Assert.Less(longest, 25f);
+        }
+
+        static float CyanExcess(Color color)
+        {
+            return color.g + color.b - color.r * 2f;
         }
 
         static void Measure(List<MapRibbonPolyline> lines, ref float longest)

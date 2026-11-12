@@ -34,11 +34,12 @@ namespace LogistiCore.EditorTools
         public const int GridColumns = 180;
         public const int GridRows = 90;
 
-        static readonly Color32 Ocean = new Color32(4, 12, 22, 255);
-        static readonly Color32 LandDark = new Color32(11, 22, 34, 255);
-        static readonly Color32 LandLight = new Color32(62, 90, 108, 255);
-        static readonly Color32 TurkeyDark = new Color32(14, 36, 52, 255);
-        static readonly Color32 TurkeyLight = new Color32(48, 92, 112, 255);
+        // Shade endpoints. Ocean stays. Other land is slate. Türkiye is a brighter cyan on the same relief.
+        public static readonly Color32 Ocean = new Color32(4, 12, 22, 255);
+        public static readonly Color32 LandDark = new Color32(22, 36, 48, 255);
+        public static readonly Color32 LandLight = new Color32(58, 82, 98, 255);
+        public static readonly Color32 TurkeyDark = new Color32(18, 44, 64, 255);
+        public static readonly Color32 TurkeyLight = new Color32(56, 108, 132, 255);
         static readonly Color32 Coast = new Color32(78, 128, 156, 255);
         static readonly Color32 TurkeyCoast = new Color32(140, 236, 255, 255);
         static List<Edge> _turkeyEdges;

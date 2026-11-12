@@ -53,3 +53,16 @@ TIFF crop: column 5945, row 1275 of the 10800 x 5400 raster.
 Land, ocean, and Türkiye decisions come from the existing 4096 relief, so the overlay does not grow a coastline.
 Ocean texels are alpha 0. A 2.4 degree smoothstep feather sits inside the window edge.
 Hillshade uses the same navy and cyan ramps as the global bake.
+This Natural Earth crop is retained as an unused fallback. Do not delete it.
+
+COPERNICUS REGIONAL RELIEF (ACTIVE)
+Approved MAP-02C-03B-04A-R1 variant A Balanced.
+Runtime file: Assets/Game/Map/Resources/MapReliefCopernicus.png
+Source file: $HOME/Documents/LogistiCore-DEM-Sources/MAP-02C-03B-04A-R1/outputs/turkey_terrain_balanced_2048x725.png
+SHA-256: c7dd32b19a119a298fe348320be4dd7f5dbb10f48825c0afe62ba25b9458ff12
+Size: 2048 x 725 RGBA. Geographic plate, not the old 1024 x 512 Natural Earth window.
+Window edges: longitude 25.269E to 45.217E, latitude 35.431N to 42.493N.
+Source: Copernicus DEM GLO-30 DSM (COP-DEM-GLO-30-F), AWS Open Data Cloud-Optimized GeoTIFF plus four DGED tiles.
+Licence: Copernicus DEM F-licence. Attribution required. CSCDA terms documentation check remains HOLD.
+Do not claim release/legal clearance is complete until CSCDA conditions are verified.
+Do not alter source alpha without a recorded approval. Istanbul/Bosphorus keeps the source mask.

@@ -4,8 +4,11 @@ Shader "LogistiCore/Map/RegionalRelief"
     {
         _MainTex ("Global Relief", 2D) = "white" {}
         _RegionalTex ("Regional Relief", 2D) = "black" {}
-        _RegionMin ("Region Min Lon Lat", Vector) = (18.166666, 30.433333, 0, 0)
-        _RegionMax ("Region Max Lon Lat", Vector) = (52.3, 47.5, 0, 0)
+        _HaloTex ("Regional Halo", 2D) = "black" {}
+        _RegionMin ("Region Min Lon Lat", Vector) = (25.269, 35.431, 0, 0)
+        _RegionMax ("Region Max Lon Lat", Vector) = (45.217, 42.493, 0, 0)
+        _HaloMin ("Halo Min Lon Lat", Vector) = (18.166666, 30.433333, 0, 0)
+        _HaloMax ("Halo Max Lon Lat", Vector) = (52.3, 47.5, 0, 0)
         _Detail ("Detail", Range(0, 1)) = 1
         [MaterialToggle] _ZWrite("ZWrite", Float) = 0
         [HideInInspector] _Color ("Tint", Color) = (1,1,1,1)
@@ -51,11 +54,15 @@ Shader "LogistiCore/Map/RegionalRelief"
 
             TEXTURE2D(_RegionalTex);
             SAMPLER(sampler_RegionalTex);
+            TEXTURE2D(_HaloTex);
+            SAMPLER(sampler_HaloTex);
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 float4 _RegionMin;
                 float4 _RegionMax;
+                float4 _HaloMin;
+                float4 _HaloMax;
                 float _Detail;
             CBUFFER_END
 
@@ -79,8 +86,14 @@ Shader "LogistiCore/Map/RegionalRelief"
                 float2 regionalUv = (float2(lon, lat) - _RegionMin.xy) / span;
                 float inside = step(0.0, regionalUv.x) * step(regionalUv.x, 1.0) * step(0.0, regionalUv.y) * step(regionalUv.y, 1.0);
                 half4 regional = SAMPLE_TEXTURE2D(_RegionalTex, sampler_RegionalTex, saturate(regionalUv));
-                half weight = regional.a * (half)_Detail * (half)inside;
-                global.rgb = lerp(global.rgb, regional.rgb, weight);
+                float2 haloSpan = max(_HaloMax.xy - _HaloMin.xy, float2(1e-4, 1e-4));
+                float2 haloUv = (float2(lon, lat) - _HaloMin.xy) / haloSpan;
+                float haloInside = step(0.0, haloUv.x) * step(haloUv.x, 1.0) * step(0.0, haloUv.y) * step(haloUv.y, 1.0);
+                half4 halo = SAMPLE_TEXTURE2D(_HaloTex, sampler_HaloTex, saturate(haloUv));
+                half copernicus = regional.a * (half)_Detail * (half)inside;
+                half haloWeight = halo.a * (half)_Detail * (half)haloInside * (1.0h - regional.a);
+                global.rgb = lerp(global.rgb, halo.rgb, haloWeight);
+                global.rgb = lerp(global.rgb, regional.rgb, copernicus);
                 return global;
             }
             ENDHLSL

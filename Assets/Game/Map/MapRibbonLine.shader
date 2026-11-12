@@ -9,7 +9,9 @@ Shader "LogistiCore/Map/RibbonLine"
         _BorderNear ("Border Fade Near", Float) = 28
         _BorderFar ("Border Fade Far", Float) = 110
         _BorderFloor ("Border Fade Floor", Float) = 0.16
-        _TurkeyMul ("Turkey Mul", Vector) = (0.82, 0.74, 0.76, 0.70)
+        _CoastMul ("Coast Mul", Vector) = (0.96, 0.90, 0.86, 0.94)
+        _BorderMul ("Border Mul", Vector) = (0.90, 0.84, 0.78, 0.72)
+        _TurkeyMul ("Turkey Mul", Vector) = (1.10, 1.16, 1.20, 0.88)
     }
 
     SubShader
@@ -45,6 +47,8 @@ Shader "LogistiCore/Map/RibbonLine"
                 float _BorderNear;
                 float _BorderFar;
                 float _BorderFloor;
+                float4 _CoastMul;
+                float4 _BorderMul;
                 float4 _TurkeyMul;
             CBUFFER_END
 
@@ -146,13 +150,13 @@ Shader "LogistiCore/Map/RibbonLine"
                 }
 
                 float3 gamma = input.color.rgb;
-                float alphaScale = 1;
-                // Role 2 is the Türkiye outline. The multiplier softens the baked cyan.
+                float4 tone = _CoastMul;
                 if (input.role > 1.5)
-                {
-                    gamma *= max(_TurkeyMul.rgb, float3(0, 0, 0));
-                    alphaScale = saturate(_TurkeyMul.a);
-                }
+                    tone = _TurkeyMul;
+                else if (input.role > 0.5)
+                    tone = _BorderMul;
+                gamma *= max(tone.rgb, float3(0, 0, 0));
+                float alphaScale = saturate(tone.a);
 
                 float3 rgb = pow(saturate(gamma), 2.2);
                 float alpha = input.color.a * alphaScale * (1 - feather) * fade;

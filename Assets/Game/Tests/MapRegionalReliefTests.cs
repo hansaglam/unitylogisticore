@@ -11,11 +11,14 @@ namespace LogistiCore.Tests
 {
     public sealed class MapRegionalReliefTests
     {
-        const string TexturePath = "Assets/Game/Map/Resources/MapReliefRegion.png";
+        const string TexturePath = "Assets/Game/Map/Resources/MapReliefCopernicus.png";
+        const string FallbackTexturePath = "Assets/Game/Map/Resources/MapReliefRegion.png";
         const string ShaderPath = "Assets/Game/Map/MapRegionalRelief.shader";
         const string MaterialPath = "Assets/Game/Map/Resources/MapRegionalRelief.mat";
         const string ScenePath = "Assets/Game/Scenes/WorldMapVerticalSlice.unity";
         const string SceneSha256 = "e437dc5fbf47f9e7f55b7d76e347fdce63fe1c06bd4506ba931ecfff8bd678a0";
+        const string CopernicusSha256 = "c7dd32b19a119a298fe348320be4dd7f5dbb10f48825c0afe62ba25b9458ff12";
+        const string FallbackSha256 = "803d2e945c4afef11b38ef1264896fd42d1c3dde80eedd852be6323188f2faa8";
 
         [Test]
         public void Bounds_CoverTurkeyWithPaddingOutsideTheFeather()
@@ -26,14 +29,14 @@ namespace LogistiCore.Tests
             Assert.Greater(MapRegionalRelief.MaxLatitude - MapFrames.TurkeyMaxLatitude, MapRegionalRelief.FeatherDegrees);
             Assert.IsTrue(MapRegionalRelief.Contains(MapFrames.TurkeyMinLatitude, MapFrames.TurkeyMinLongitude));
             Assert.IsTrue(MapRegionalRelief.Contains(MapFrames.TurkeyMaxLatitude, MapFrames.TurkeyMaxLongitude));
-            Assert.AreEqual(1d / 30d, MapRegionalRelief.DegreesPerPixel, 1e-12);
-            Assert.AreEqual(18.166666666666657d, MapRegionalRelief.MinLongitude, 1e-9);
-            Assert.AreEqual(52.3d, MapRegionalRelief.MaxLongitude, 1e-9);
-            Assert.AreEqual(30.43333333333333d, MapRegionalRelief.MinLatitude, 1e-9);
-            Assert.AreEqual(47.5d, MapRegionalRelief.MaxLatitude, 1e-9);
-            Assert.AreEqual(1024, MapRegionalRelief.Width);
-            Assert.AreEqual(512, MapRegionalRelief.Height);
-            Assert.AreEqual(0.5f, MapRegionalRelief.EdgeFeather(MapRegionalRelief.MaxLatitude - 1.2d, 35d), 0.001f);
+            Assert.AreEqual(25.269d, MapRegionalRelief.MinLongitude, 1e-9);
+            Assert.AreEqual(45.217d, MapRegionalRelief.MaxLongitude, 1e-9);
+            Assert.AreEqual(35.431d, MapRegionalRelief.MinLatitude, 1e-9);
+            Assert.AreEqual(42.493d, MapRegionalRelief.MaxLatitude, 1e-9);
+            Assert.AreEqual(2048, MapRegionalRelief.Width);
+            Assert.AreEqual(725, MapRegionalRelief.Height);
+            Assert.AreEqual(0.22f, MapRegionalRelief.FeatherDegrees, 0.0001f);
+            Assert.AreEqual(0.5f, MapRegionalRelief.EdgeFeather(MapRegionalRelief.MaxLatitude - 0.11d, 35d), 0.001f);
             Assert.AreEqual(0f, MapRegionalRelief.EdgeFeather(MapRegionalRelief.MinLatitude, 35d), 0.0001f);
             Assert.AreEqual(1f, MapRegionalRelief.EdgeFeather(39.929184d, 32.862446d), 0.0001f);
         }
@@ -42,12 +45,42 @@ namespace LogistiCore.Tests
         public void Uv_IncreasesNorthAndEastWithoutCrossingTheDateline()
         {
             Assert.IsTrue(MapRegionalRelief.TryUv(39.929184d, 32.862446d, out var ankara));
-            Assert.IsTrue(MapRegionalRelief.TryUv(36.0d, 32.862446d, out var south));
-            Assert.IsTrue(MapRegionalRelief.TryUv(39.929184d, 28.0d, out var west));
+            Assert.IsTrue(MapRegionalRelief.TryUv(36.891928d, 32.862446d, out var south));
+            Assert.IsTrue(MapRegionalRelief.TryUv(39.929184d, 27.149848d, out var west));
             Assert.Greater(ankara.y, south.y);
             Assert.Greater(ankara.x, west.x);
+            Assert.IsTrue(MapRegionalRelief.TryUv(MapRegionalRelief.MinLatitude, MapRegionalRelief.MinLongitude, out var southwest));
+            Assert.IsTrue(MapRegionalRelief.TryUv(MapRegionalRelief.MaxLatitude, MapRegionalRelief.MaxLongitude, out var northeast));
+            Assert.AreEqual(0f, southwest.x, 0.0001f);
+            Assert.AreEqual(0f, southwest.y, 0.0001f);
+            Assert.AreEqual(1f, northeast.x, 0.0001f);
+            Assert.AreEqual(1f, northeast.y, 0.0001f);
             Assert.IsFalse(MapRegionalRelief.TryUv(48.85d, 2.35d, out _));
             Assert.IsFalse(MapRegionalRelief.TryUv(0d, -30d, out _));
+            Assert.IsFalse(MapRegionalRelief.TryUv(39d, 18.2d, out _));
+        }
+
+        [Test]
+        public void Cities_SitInsideTheCopernicusPlate()
+        {
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                var city = MapCities.All[i];
+                Assert.IsTrue(MapRegionalRelief.Contains(city.Latitude, city.Longitude), city.Id);
+                Assert.IsTrue(MapRegionalRelief.TryUv(city.Latitude, city.Longitude, out var uv), city.Id);
+                Assert.Greater(uv.x, 0f, city.Id);
+                Assert.Less(uv.x, 1f, city.Id);
+                Assert.Greater(uv.y, 0f, city.Id);
+                Assert.Less(uv.y, 1f, city.Id);
+                Assert.AreEqual(1f, MapRegionalRelief.EdgeFeather(city.Latitude, city.Longitude), 0.0001f, city.Id);
+            }
+
+            Assert.IsTrue(MapRegionalRelief.TryUv(41.017602d, 28.974277d, out var istanbul));
+            Assert.IsTrue(MapRegionalRelief.TryUv(36.891928d, 30.698030d, out var antalya));
+            Assert.Greater(istanbul.y, antalya.y);
+            Assert.IsTrue(MapRegionalRelief.TryPixelCenter(41.017602d, 28.974277d, out var ix, out var iy));
+            Assert.AreEqual(380, ix);
+            Assert.AreEqual(151, iy);
         }
 
         [Test]
@@ -96,12 +129,8 @@ namespace LogistiCore.Tests
         [Test]
         public void Texture_MatchesTurkeyOceanAndLandSamples()
         {
-            using (var sha = SHA256.Create())
-            using (var stream = File.OpenRead(TexturePath))
-            {
-                var hash = System.BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
-                Assert.AreEqual("ac9c14157f50b3d2516994a5108cdfcf643f88d8f79bb905700795961616266d", hash);
-            }
+            Assert.AreEqual(CopernicusSha256, Sha256(TexturePath));
+            Assert.AreEqual(FallbackSha256, Sha256(FallbackTexturePath));
 
             var bytes = File.ReadAllBytes(TexturePath);
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
@@ -112,33 +141,41 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(MapRegionalRelief.Height, texture.height);
                 var pixels = texture.GetPixels32();
 
-                var ankara = Pixel(pixels, texture.width, texture.height, 440, 227);
-                var aegean = Pixel(pixels, texture.width, texture.height, 220, 269);
-                var blackSea = Pixel(pixels, texture.width, texture.height, 511, 153);
-                var southCoast = Pixel(pixels, texture.width, texture.height, 385, 344);
-                var athens = Pixel(pixels, texture.width, texture.height, 166, 285);
-                var pontic = Pixel(pixels, texture.width, texture.height, 639, 206);
-                var taurus = Pixel(pixels, texture.width, texture.height, 460, 308);
-                var northEdge = Pixel(pixels, texture.width, texture.height, 505, 1);
-                var southEdge = Pixel(pixels, texture.width, texture.height, 505, 510);
+                Assert.IsTrue(MapRegionalRelief.TryPixelCenter(39.929184d, 32.862446d, out var ax, out var ay));
+                Assert.IsTrue(MapRegionalRelief.TryPixelCenter(41.017602d, 28.974277d, out var ix, out var iy));
+                Assert.IsTrue(MapRegionalRelief.TryPixelCenter(41.8d, 32.0d, out var bx, out var by));
+                Assert.IsTrue(MapRegionalRelief.TryPixelCenter(36.0d, 30.5d, out var mx, out var my));
+                var ankara = Pixel(pixels, texture.width, texture.height, ax, ay);
+                var istanbul = Pixel(pixels, texture.width, texture.height, ix, iy);
+                var izmir = SampleCity(pixels, texture.width, texture.height, "izmir");
+                var bursa = SampleCity(pixels, texture.width, texture.height, "bursa");
+                var antalya = SampleCity(pixels, texture.width, texture.height, "antalya");
+                var adana = SampleCity(pixels, texture.width, texture.height, "adana");
+                var diyarbakir = SampleCity(pixels, texture.width, texture.height, "diyarbakir");
+                var trabzon = SampleCity(pixels, texture.width, texture.height, "trabzon");
+                var blackSea = Pixel(pixels, texture.width, texture.height, bx, by);
+                var mediterranean = Pixel(pixels, texture.width, texture.height, mx, my);
+                var northWest = Pixel(pixels, texture.width, texture.height, 0, 0);
+                var southEast = Pixel(pixels, texture.width, texture.height, texture.width - 1, texture.height - 1);
 
-                Assert.AreEqual(48, ankara.r);
-                Assert.AreEqual(92, ankara.g);
-                Assert.AreEqual(112, ankara.b);
+                Assert.AreEqual(46, ankara.r);
+                Assert.AreEqual(74, ankara.g);
+                Assert.AreEqual(95, ankara.b);
                 Assert.AreEqual(255, ankara.a);
-                Assert.AreEqual(0, aegean.a);
-                Assert.AreEqual(4, aegean.r);
-                Assert.AreEqual(12, aegean.g);
-                Assert.AreEqual(22, aegean.b);
+                Assert.AreEqual(81, istanbul.a);
+                Assert.AreEqual(255, izmir.a);
+                Assert.AreEqual(255, bursa.a);
+                Assert.AreEqual(255, antalya.a);
+                Assert.AreEqual(255, adana.a);
+                Assert.AreEqual(255, diyarbakir.a);
+                Assert.AreEqual(255, trabzon.a);
                 Assert.AreEqual(0, blackSea.a);
-                Assert.AreEqual(0, southCoast.a);
-                Assert.AreEqual(255, athens.a);
-                Assert.AreEqual(72, athens.g);
-                Assert.GreaterOrEqual(Mathf.Abs(taurus.g - pontic.g), 12);
-                Assert.AreEqual(0, northEdge.a);
-                Assert.AreEqual(0, southEdge.a);
+                Assert.AreEqual(0, mediterranean.a);
+                Assert.AreEqual(0, northWest.a);
+                Assert.AreEqual(0, southEast.a);
                 Assert.AreEqual(0, pixels[0].a);
                 Assert.AreEqual(0, pixels[texture.width - 1].a);
+                Assert.Greater(diyarbakir.g, izmir.g);
             }
             finally
             {
@@ -157,9 +194,17 @@ namespace LogistiCore.Tests
             Assert.AreEqual(TextureWrapMode.Clamp, importer.wrapMode);
             var imported = AssetDatabase.LoadAssetAtPath<Texture2D>(TexturePath);
             Assert.IsNotNull(imported);
-            Assert.AreEqual(1024, imported.width);
-            Assert.AreEqual(512, imported.height);
+            Assert.AreEqual(2048, imported.width);
+            Assert.AreEqual(725, imported.height);
             Assert.IsFalse(imported.isReadable);
+            var ios = importer.GetPlatformTextureSettings("iPhone");
+            var android = importer.GetPlatformTextureSettings("Android");
+            Assert.IsTrue(ios.overridden);
+            Assert.IsTrue(android.overridden);
+            Assert.AreEqual(TextureImporterFormat.ASTC_6x6, ios.format);
+            Assert.AreEqual(TextureImporterFormat.ASTC_6x6, android.format);
+            Assert.AreEqual(2048, ios.maxTextureSize);
+            Assert.AreEqual(2048, android.maxTextureSize);
 
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
             Assert.IsNotNull(shader);
@@ -171,7 +216,28 @@ namespace LogistiCore.Tests
             Assert.AreEqual(shader, material.shader);
             Assert.AreEqual(MapGeographyBaker.ReliefTexturePath, AssetDatabase.GetAssetPath(material.GetTexture("_MainTex")));
             Assert.AreEqual(TexturePath, AssetDatabase.GetAssetPath(material.GetTexture("_RegionalTex")));
+            Assert.AreEqual(FallbackTexturePath, AssetDatabase.GetAssetPath(material.GetTexture("_HaloTex")));
+            Assert.AreNotEqual(FallbackTexturePath, AssetDatabase.GetAssetPath(material.GetTexture("_RegionalTex")));
             Assert.Greater(material.GetFloat("_Detail"), 0.5f);
+            var regionMin = material.GetVector("_RegionMin");
+            var regionMax = material.GetVector("_RegionMax");
+            Assert.AreEqual((float)MapRegionalRelief.MinLongitude, regionMin.x, 0.0001f);
+            Assert.AreEqual((float)MapRegionalRelief.MinLatitude, regionMin.y, 0.0001f);
+            Assert.AreEqual((float)MapRegionalRelief.MaxLongitude, regionMax.x, 0.0001f);
+            Assert.AreEqual((float)MapRegionalRelief.MaxLatitude, regionMax.y, 0.0001f);
+            Assert.AreEqual((float)MapRegionalRelief.HaloMinLongitude, material.GetVector("_HaloMin").x, 0.0001f);
+            Assert.AreEqual((float)MapRegionalRelief.HaloMaxLatitude, material.GetVector("_HaloMax").y, 0.0001f);
+        }
+
+        [Test]
+        public void Halo_CoversEasternNeighborsTheCopernicusPlateLeavesToGlobal()
+        {
+            Assert.IsFalse(MapRegionalRelief.Contains(39.0d, 46.0d));
+            Assert.IsTrue(MapRegionalRelief.HaloContains(39.0d, 46.0d));
+            Assert.IsTrue(MapRegionalRelief.HaloContains(38.5d, 44.9d));
+            Assert.IsTrue(MapRegionalRelief.Contains(39.929184d, 32.862446d));
+            Assert.Greater(MapRegionalRelief.HaloMaxLongitude, MapRegionalRelief.MaxLongitude);
+            Assert.Less(MapRegionalRelief.HaloMinLongitude, MapRegionalRelief.MinLongitude);
         }
 
         [Test]
@@ -262,6 +328,11 @@ namespace LogistiCore.Tests
                 Assert.AreEqual("LogistiCore/Map/RegionalRelief", relief.sharedMaterial.shader.name);
                 Assert.AreNotEqual(original, relief.sharedMaterial);
                 Assert.AreEqual(original, presenter.OriginalMaterial);
+                Assert.AreEqual(TexturePath, AssetDatabase.GetAssetPath(presenter.RuntimeMaterial.GetTexture("_RegionalTex")));
+                Assert.AreEqual(FallbackTexturePath, AssetDatabase.GetAssetPath(presenter.RuntimeMaterial.GetTexture("_HaloTex")));
+                Assert.AreEqual((float)MapRegionalRelief.MinLongitude, presenter.RuntimeMaterial.GetVector("_RegionMin").x, 0.0001f);
+                Assert.AreEqual((float)MapRegionalRelief.MaxLatitude, presenter.RuntimeMaterial.GetVector("_RegionMax").y, 0.0001f);
+                Assert.AreEqual((float)MapRegionalRelief.HaloMinLongitude, presenter.RuntimeMaterial.GetVector("_HaloMin").x, 0.0001f);
                 Assert.AreEqual("Universal Render Pipeline/2D/Sprite-Unlit-Default", original.shader.name);
 
                 const float aspect = 16f / 9f;
@@ -382,6 +453,13 @@ namespace LogistiCore.Tests
             {
                 return System.BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
             }
+        }
+
+        static Color32 SampleCity(Color32[] pixels, int width, int height, string id)
+        {
+            Assert.IsTrue(MapCities.TryGet(id, out var city));
+            Assert.IsTrue(MapRegionalRelief.TryPixelCenter(city.Latitude, city.Longitude, out var x, out var yFromNorth));
+            return Pixel(pixels, width, height, x, yFromNorth);
         }
 
         static Color32 Pixel(Color32[] pixels, int width, int height, int x, int yFromNorth)

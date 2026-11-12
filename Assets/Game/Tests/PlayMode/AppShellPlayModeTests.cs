@@ -54,10 +54,12 @@ namespace LogistiCore.Tests
                     Assert.AreEqual(1, CountInActiveScene<MapCommandShell>());
                     Assert.AreEqual(0, CountInActiveScene<MapHomeReturn>());
                     Assert.IsTrue(back.gameObject.activeInHierarchy);
-                    Assert.IsNotNull(back.HomeButton);
+                    Assert.IsNull(back.HomeButton);
+                    Assert.IsNotNull(back.RegionButton);
+                    Assert.IsFalse(back.RegionMenuOpen);
                     Assert.AreEqual(MapCommandShell.PanelState.Closed, back.State);
                     Assert.IsFalse(back.ContextOpen);
-                    Assert.IsTrue(back.HomeButton.interactable);
+                    Assert.IsTrue(back.RegionButton.interactable);
 
                     if (i == 0)
                     {
@@ -65,29 +67,31 @@ namespace LogistiCore.Tests
                         Assert.IsTrue(back.gameObject.activeInHierarchy);
                         back.Apply(2868f, 1320f, new Rect(186f, 60f, 2496f, 1200f));
                         Assert.Greater(back.Viewport.width, 400f);
-                        Assert.IsTrue(back.HomeButton.interactable);
-                        Assert.GreaterOrEqual(back.HomeButton.GetComponent<RectTransform>().rect.height, 28f);
+                        Assert.IsTrue(back.RegionButton.interactable);
+                        Assert.GreaterOrEqual(back.RegionButton.GetComponent<RectTransform>().rect.height, 28f);
                     }
-
-                    yield return WaitForLabel(back.HomeButton, "Home", "Ana Sayfa", "Startseite");
-                    var homeLabel = back.HomeButton.transform.Find("Label").GetComponent<Text>();
-                    var homeMark = back.HomeButton.transform.Find("Mark").GetComponent<Text>();
-                    Assert.AreEqual(0f, homeLabel.color.a, 0.001f);
-                    Assert.LessOrEqual(homeLabel.rectTransform.rect.width, 1f);
-                    Assert.AreEqual("\u2190", homeMark.text);
-                    Assert.Greater(homeMark.color.a, 0.5f);
                     if (i == 0)
                     {
-                        Button mapRow = null;
+                        Button fleetRow = null;
                         var rows = back.GetComponentsInChildren<Button>(true);
                         for (var r = 0; r < rows.Length; r++)
                         {
-                            if (rows[r].name == "CurrentMode")
-                                mapRow = rows[r];
+                            if (rows[r].name == "Mode0")
+                                fleetRow = rows[r];
+                            Assert.AreNotEqual("CurrentMode", rows[r].name);
                         }
 
-                        Assert.IsNotNull(mapRow);
-                        yield return WaitForLabel(mapRow, "MAP", "HARİTA", "KARTE");
+                        Assert.IsNotNull(fleetRow);
+                        var page = false;
+                        var named = back.GetComponentsInChildren<Transform>(true);
+                        for (var n = 0; n < named.Length; n++)
+                        {
+                            if (named[n].name == "Page")
+                                page = true;
+                        }
+
+                        Assert.IsFalse(page);
+                        yield return WaitForLabel(fleetRow, "Fleet", "Filo", "Flotte");
                         back.ShowModule(0);
                         yield return null;
                         Assert.AreEqual(MapCommandShell.PanelState.Module, back.State);
@@ -100,15 +104,17 @@ namespace LogistiCore.Tests
 
                         Assert.That(
                             back.ModuleBody,
-                            Is.EqualTo("This section is not available yet.")
-                                .Or.EqualTo("Bu bölüm henüz kullanıma hazır değil.")
-                                .Or.EqualTo("Dieser Bereich ist noch nicht verfügbar."));
+                            Is.EqualTo("No live fleet data connection.")
+                                .Or.EqualTo("Canlı filo verisi bağlantısı yok.")
+                                .Or.EqualTo("Keine Live-Fuhrparkverbindung."));
+                        Assert.IsTrue(back.ManagementOpen);
+                        Assert.AreEqual(MapModule.Fleet, back.ActiveModule);
                         back.CloseContext();
                         Assert.AreEqual(MapCommandShell.PanelState.Closed, back.State);
                         Assert.IsFalse(back.ContextOpen);
                     }
 
-                    back.HomeButton.onClick.Invoke();
+                    back.OpenHome();
                     yield return null;
                     yield return null;
 
@@ -197,6 +203,268 @@ namespace LogistiCore.Tests
             {
                 Application.logMessageReceived -= OnLog;
             }
+        }
+
+        [UnityTest]
+        public IEnumerator RegionNavigation_RendersLocalesAndFocusesEveryPreset()
+        {
+            ReleaseEventSystems();
+            yield return SceneManager.LoadSceneAsync(AppNavigation.MapSceneName, LoadSceneMode.Single);
+            yield return null;
+            yield return null;
+
+            var shell = FindInActiveScene<MapCommandShell>();
+            var rig = FindInActiveScene<MapCameraRig>();
+            var markers = FindInActiveScene<MapMarkerLayer>();
+            Assert.IsNotNull(shell);
+            Assert.IsNotNull(rig);
+            Assert.IsNotNull(markers);
+            Assert.AreEqual(1, EnabledEventSystems());
+
+            var ready = 0f;
+            while (!LogistiCore.Localization.LocaleService.IsReady && ready < 8f)
+            {
+                ready += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            Assert.IsTrue(LogistiCore.Localization.LocaleService.IsReady, "LocaleService did not initialize in Play Mode.");
+            Assert.IsNotNull(FindSceneText("Logisti"));
+            Assert.IsNotNull(FindSceneText("Core"));
+
+            var locales = new[] { "tr", "en", "de" };
+            var names = new[]
+            {
+                new[] { "Dünya", "Türkiye", "Avrupa", "Asya", "Afrika", "Kuzey Amerika", "Güney Amerika", "Okyanusya" },
+                new[] { "World", "Turkey", "Europe", "Asia", "Africa", "North America", "South America", "Oceania" },
+                new[] { "Welt", "Türkei", "Europa", "Asien", "Afrika", "Nordamerika", "Südamerika", "Ozeanien" }
+            };
+            var france = new[] { "Fransa", "France", "Frankreich" };
+            var istanbul = new[] { "İstanbul", "Istanbul", "Istanbul" };
+            for (var locale = 0; locale < locales.Length; locale++)
+            {
+                Assert.IsTrue(LogistiCore.Localization.LocaleService.TrySelect(locales[locale]), locales[locale]);
+                yield return null;
+                yield return null;
+                shell.ToggleRegionMenu();
+                Assert.IsTrue(shell.RegionMenuOpen, locales[locale]);
+                for (var i = 0; i < 8; i++)
+                {
+                    var row = FindNamed(shell.transform, "Region" + i);
+                    var label = FindNamed(row, "Name").GetComponent<Text>();
+                    var waited = 0f;
+                    while (label.text != names[locale][i] && waited < 4f)
+                    {
+                        waited += Time.unscaledDeltaTime;
+                        yield return null;
+                    }
+
+                    Assert.AreEqual(names[locale][i], label.text, locales[locale] + " row " + i);
+                }
+
+                shell.ToggleRegionMenu();
+                Assert.IsFalse(shell.RegionMenuOpen);
+                var rail = FindInActiveScene<MapCommandShell>().RegionButton;
+                Assert.IsNotNull(rail);
+                var fleet = FindNamed(shell.transform, "Mode0");
+                yield return WaitForLabel(fleet.GetComponent<Button>(), "Fleet", "Filo", "Flotte");
+            }
+
+            Assert.IsTrue(LogistiCore.Localization.LocaleService.TrySelect("en"));
+            yield return null;
+            var europeCenter = Vector2.zero;
+            var europeSize = 0f;
+            for (var i = 0; i < 8; i++)
+            {
+                var started = Time.realtimeSinceStartup;
+                Assert.IsTrue(shell.SelectRegion(i), "region " + i);
+                Assert.IsFalse(shell.RegionMenuOpen);
+                Assert.AreEqual((MapScope)i, rig.Scope);
+                Assert.AreEqual(i, shell.RegionIndex);
+                if (i == 0)
+                {
+                    var posed = new Vector2(rig.transform.position.x, rig.transform.position.y);
+                    Assert.Greater((posed - rig.TargetCenter).sqrMagnitude, 1f, "World selection snapped.");
+                }
+
+                yield return WaitForFrame(rig);
+                Assert.Less(Time.realtimeSinceStartup - started, 3f, "region " + i + " stalled");
+                var chip = FindNamed(FindNamed(shell.transform, "RegionChip"), "Name");
+                Assert.AreEqual(names[1][i], chip.GetComponent<Text>().text, "chip " + i);
+                if (i == 2)
+                {
+                    europeCenter = rig.TargetCenter;
+                    europeSize = rig.TargetOrthographicSize;
+                    var seen = 0f;
+                    var country = FindSceneText(france[1]);
+                    while (country == null && seen < 3f)
+                    {
+                        seen += Time.unscaledDeltaTime;
+                        country = FindSceneText(france[1]);
+                        if (country == null)
+                            country = FindSceneText("Germany");
+                        yield return null;
+                    }
+
+                    Assert.IsNotNull(country, "No country name was drawn at the Europe frame.");
+                }
+
+                if (i == 1)
+                {
+                    var seen = 0f;
+                    var city = FindSceneText(istanbul[1]);
+                    while (city == null && seen < 3f)
+                    {
+                        seen += Time.unscaledDeltaTime;
+                        city = FindSceneText(istanbul[1]);
+                        if (city == null)
+                            city = FindSceneText("Ankara");
+                        yield return null;
+                    }
+
+                    Assert.IsNotNull(city, "No Turkish city name was drawn at the Turkey frame.");
+                }
+            }
+
+            Assert.IsTrue(shell.SelectRegion(2));
+            yield return WaitForFrame(rig);
+            rig.PanScreenDelta(new Vector2(80f, -30f));
+            Assert.IsTrue(rig.UserAdjusted);
+            Assert.AreEqual(2, shell.RegionIndex);
+            var panned = rig.TargetCenter;
+            rig.ZoomAtScreen(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f), 1.15f);
+            Assert.IsTrue(shell.SelectRegion(2));
+            Assert.AreEqual(europeCenter, rig.TargetCenter);
+            Assert.AreEqual(europeSize, rig.TargetOrthographicSize, 0.01f);
+            Assert.AreNotEqual(panned, rig.TargetCenter);
+            Assert.IsFalse(rig.UserAdjusted);
+
+            Assert.IsTrue(shell.SelectRegion(7));
+            var flightStart = new Vector2(rig.transform.position.x, rig.transform.position.y);
+            Assert.Greater((flightStart - rig.TargetCenter).sqrMagnitude, 1f, "Oceania selection snapped.");
+            yield return null;
+            rig.PanScreenDelta(new Vector2(24f, -12f));
+            var cancelled = new Vector2(rig.transform.position.x, rig.transform.position.y);
+            Assert.IsTrue(rig.UserAdjusted);
+            yield return null;
+            var stayed = new Vector2(rig.transform.position.x, rig.transform.position.y);
+            Assert.AreEqual(cancelled.x, stayed.x, 0.001f, "Pan did not cancel the region flight.");
+            Assert.AreEqual(cancelled.y, stayed.y, 0.001f, "Pan did not cancel the region flight.");
+            Assert.IsTrue(shell.SelectRegion(5));
+            yield return null;
+            rig.ZoomAtScreen(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f), 1.12f);
+            var pinched = new Vector2(rig.transform.position.x, rig.transform.position.y);
+            Assert.IsTrue(rig.UserAdjusted);
+            yield return null;
+            var heldPinch = new Vector2(rig.transform.position.x, rig.transform.position.y);
+            Assert.AreEqual(pinched.x, heldPinch.x, 0.001f, "Pinch did not cancel the region flight.");
+            Assert.AreEqual(pinched.y, heldPinch.y, 0.001f, "Pinch did not cancel the region flight.");
+            Assert.IsTrue(shell.SelectRegion(2));
+            Assert.AreEqual(2, shell.RegionIndex);
+
+            var fleetButton = FindNamed(shell.transform, "Mode0").GetComponent<Button>();
+            fleetButton.onClick.Invoke();
+            yield return null;
+            Assert.AreEqual(MapCommandShell.PanelState.Module, shell.State);
+            Assert.AreEqual(2, shell.RegionIndex, "Opening the fleet panel moved the region.");
+            var close = FindNamed(shell.transform, "Close").GetComponent<Button>();
+            close.onClick.Invoke();
+            yield return null;
+            Assert.AreEqual(MapCommandShell.PanelState.Closed, shell.State);
+            Assert.AreEqual(MapScope.Europe, rig.Scope);
+
+            Assert.IsTrue(shell.SelectRegion(1));
+            yield return WaitForFrame(rig);
+            Assert.IsTrue(MapCities.TryGet("ankara", out var ankara));
+            var projected = MapProjection.Project(ankara.Latitude, ankara.Longitude);
+            var camera = rig.GetComponent<Camera>();
+            var units = MapMarkerLod.UnitsPerPixel(camera.orthographicSize, Screen.height);
+            var point = MapMarkerLod.ToScreen(
+                projected,
+                new Vector2(rig.transform.position.x, rig.transform.position.y),
+                units,
+                Screen.width,
+                Screen.height);
+            Assert.IsTrue(markers.TrySelect(point, out var selected));
+            Assert.AreEqual("ankara", selected);
+            yield return null;
+            Assert.AreEqual(MapCommandShell.PanelState.City, shell.State);
+            Assert.AreEqual(1, shell.RegionIndex);
+            close = FindNamed(shell.transform, "Close").GetComponent<Button>();
+            close.onClick.Invoke();
+            yield return null;
+            Assert.AreEqual(MapCommandShell.PanelState.Closed, shell.State);
+            Assert.AreEqual(1, EnabledEventSystems());
+            Assert.IsTrue(shell.RegionButton.interactable);
+        }
+
+
+        static IEnumerator WaitForFrame(MapCameraRig rig)
+        {
+            var camera = rig.GetComponent<Camera>();
+            var waited = 0f;
+            while (waited < 3f)
+            {
+                var center = new Vector2(rig.transform.position.x, rig.transform.position.y);
+                if ((center - rig.TargetCenter).sqrMagnitude < 0.01f
+                    && Mathf.Abs(camera.orthographicSize - rig.TargetOrthographicSize) < 0.05f)
+                    yield break;
+
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
+        static Transform FindNamed(Transform root, string name)
+        {
+            if (root == null)
+                return null;
+            if (root.name == name)
+                return root;
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var found = FindNamed(root.GetChild(i), name);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
+        }
+
+        static Transform FindSceneText(string value)
+        {
+            var scene = SceneManager.GetActiveScene();
+            var roots = scene.GetRootGameObjects();
+            for (var i = 0; i < roots.Length; i++)
+            {
+                var found = FindTextObject(roots[i].transform, value);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
+        }
+
+        static Transform FindText(Transform root, string value)
+        {
+            return FindTextObject(root, value);
+        }
+
+        static Transform FindTextObject(Transform root, string value)
+        {
+            if (root == null)
+                return null;
+            var text = root.GetComponent<Text>();
+            if (text != null && text.text == value && text.gameObject.activeInHierarchy)
+                return root;
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var found = FindTextObject(root.GetChild(i), value);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
         }
 
         void OnLog(string condition, string stackTrace, LogType type)

@@ -222,6 +222,8 @@ namespace LogistiCore.Map
             material.SetFloat("_BorderNear", MapRibbonStyle.BorderFadeNear);
             material.SetFloat("_BorderFar", MapRibbonStyle.BorderFadeFar);
             material.SetFloat("_BorderFloor", MapRibbonStyle.BorderFadeFloor);
+            material.SetVector("_CoastMul", MapRibbonStyle.CoastPresentation);
+            material.SetVector("_BorderMul", MapRibbonStyle.BorderPresentation);
             material.SetVector("_TurkeyMul", MapRibbonStyle.TurkeyPresentation);
         }
 

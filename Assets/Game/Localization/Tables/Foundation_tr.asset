@@ -115,7 +115,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 372236308
-    m_Localized: "\u015Eirket verisi hen\u00FCz ba\u011Fl\u0131 de\u011Fil."
+    m_Localized: "\u015Eirket verisi hen\xFCz ba\u011Fl\u0131 de\u011Fil."
     m_Metadata:
       m_Items: []
   - m_Id: 372236309
@@ -123,19 +123,19 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 372236310
-    m_Localized: "Bir hedef se\u00E7in."
+    m_Localized: "Bir hedef se\xE7in."
     m_Metadata:
       m_Items: []
   - m_Id: 372236311
-    m_Localized: "\u015Eehirleri ve d\u00FCnya haritas\u0131n\u0131 ke\u015Ffet."
+    m_Localized: "\u015Eehirleri ve d\xFCnya haritas\u0131n\u0131 ke\u015Ffet."
     m_Metadata:
       m_Items: []
   - m_Id: 372236312
-    m_Localized: "\u015Eirket \u00F6zetini a\u00E7\u0131n."
+    m_Localized: "\u015Eirket \xF6zetini a\xE7\u0131n."
     m_Metadata:
       m_Items: []
   - m_Id: 372236313
-    m_Localized: "Hen\u00FCz ba\u011Fl\u0131 de\u011Fil"
+    m_Localized: "Hen\xFCz ba\u011Fl\u0131 de\u011Fil"
     m_Metadata:
       m_Items: []
   references:

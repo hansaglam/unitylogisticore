@@ -41,7 +41,8 @@ namespace LogistiCore.Tests
                 Assert.IsNull(canvas.worldCamera);
                 Assert.AreEqual(1, Count<Camera>(scene));
                 Assert.AreEqual(1, Count<EventSystem>(scene));
-                Assert.IsNotNull(shell.HomeButton);
+                Assert.IsNull(shell.HomeButton);
+                Assert.IsNotNull(shell.RegionButton);
 
                 shell.Apply(2868f, 1320f, new Rect(186f, 60f, 2496f, 1200f));
                 Assert.AreEqual(RenderMode.ScreenSpaceOverlay, canvas.renderMode);
@@ -142,17 +143,31 @@ namespace LogistiCore.Tests
                 var world = marker.transform.position;
                 var screen = MapMarkerLod.ToScreen(new Vector2(world.x, world.y), center, units, width, height);
                 var text = plate.GetComponentInChildren<Text>(true);
-                var halfY = (text.fontSize + 8f) * scale * 0.5f;
-                var expected = screen + new Vector2(0f, 16f + halfY + 6f);
+                var half = new Vector2(
+                    plate.sizeDelta.x * scale * 0.5f,
+                    (text.fontSize + 10f) * scale * 0.5f);
                 var visual = RectTransformUtility.WorldToScreenPoint(null, plate.position);
-                var dx = visual.x - expected.x;
-                var dy = visual.y - expected.y;
+                var matched = false;
+                var dx = 0f;
+                var dy = 0f;
+                for (var side = 0; side < 4; side++)
+                {
+                    var expected = MapMarkerLayer.PlateAnchor(screen, half, side);
+                    dx = visual.x - expected.x;
+                    dy = visual.y - expected.y;
+                    if (Mathf.Abs(dx) <= 4f && Mathf.Abs(dy) <= 4f)
+                    {
+                        matched = true;
+                        break;
+                    }
+                }
+
                 report.Append(marker.CityId)
                     .Append(" dx=").Append(dx.ToString("0.0"))
                     .Append(" dy=").Append(dy.ToString("0.0"))
                     .Append(" font=").Append(text.fontSize)
                     .Append('\n');
-                if (Mathf.Abs(dx) > 3f || Mathf.Abs(dy) > 3f)
+                if (!matched || Vector2.Distance(visual, screen) > 220f)
                     report.Append("MISS\n");
             }
 

@@ -59,6 +59,21 @@ namespace LogistiCore.EditorTools
                 EditorSceneManager.OpenScene(ScenePath);
         }
 
+        public static void BatchEnsureLocalization()
+        {
+            try
+            {
+                EnsureLocalization();
+                AssetDatabase.SaveAssets();
+                EditorApplication.Exit(0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
         public static void EnsureLocalization()
         {
             FoundationSetup.EnsureLocalization();
@@ -90,6 +105,41 @@ namespace LogistiCore.EditorTools
                 SetEntry(englishTable, key, row.English);
                 SetEntry(turkishTable, key, row.Turkish);
                 SetEntry(germanTable, key, row.German);
+            }
+
+            TryPreload(englishTable);
+            TryPreload(turkishTable);
+            TryPreload(germanTable);
+            EnsureOpsLocalization();
+        }
+
+        public static void EnsureOpsLocalization()
+        {
+            FoundationSetup.EnsureLocalization();
+            var english = LocalizationEditorSettings.GetLocale(LocaleCodes.English);
+            var turkish = LocalizationEditorSettings.GetLocale(LocaleCodes.Turkish);
+            var german = LocalizationEditorSettings.GetLocale(LocaleCodes.German);
+            if (english == null || turkish == null || german == null)
+                throw new InvalidOperationException("Ops strings need the English, Turkish, and German locales.");
+
+            var collection = LocalizationEditorSettings.GetStringTableCollection(OpsContent.Table);
+            if (collection == null)
+            {
+                if (!AssetDatabase.IsValidFolder(TablesFolder))
+                    throw new InvalidOperationException("Localization tables folder is missing.");
+
+                collection = LocalizationEditorSettings.CreateStringTableCollection(OpsContent.Table, TablesFolder);
+            }
+
+            var englishTable = RequireTable(collection, english);
+            var turkishTable = RequireTable(collection, turkish);
+            var germanTable = RequireTable(collection, german);
+            for (var i = 0; i < OpsContent.Lines.Length; i++)
+            {
+                var line = OpsContent.Lines[i];
+                SetEntry(englishTable, line.Key, line.English);
+                SetEntry(turkishTable, line.Key, line.Turkish);
+                SetEntry(germanTable, line.Key, line.German);
             }
 
             TryPreload(englishTable);
@@ -841,6 +891,12 @@ namespace LogistiCore.EditorTools
                 { MapContent.Title, Row("Map", "Harita", "Karte") },
                 { MapContent.ViewWorld, Row("World", "Dünya", "Welt") },
                 { MapContent.ViewTurkey, Row("Turkey", "Türkiye", "Türkei") },
+                { MapContent.ViewEurope, Row("Europe", "Avrupa", "Europa") },
+                { MapContent.ViewAsia, Row("Asia", "Asya", "Asien") },
+                { MapContent.ViewAfrica, Row("Africa", "Afrika", "Afrika") },
+                { MapContent.ViewNorthAmerica, Row("North America", "Kuzey Amerika", "Nordamerika") },
+                { MapContent.ViewSouthAmerica, Row("South America", "Güney Amerika", "Südamerika") },
+                { MapContent.ViewOceania, Row("Oceania", "Okyanusya", "Ozeanien") },
                 { MapContent.FocusWorld, Row("World", "Dünya", "Welt") },
                 { MapContent.FocusTurkey, Row("Turkey", "Türkiye", "Türkei") },
                 { MapContent.ZoomIn, Row("+", "+", "+") },
@@ -856,24 +912,25 @@ namespace LogistiCore.EditorTools
                 { MapContent.InspectorCoordinates, Row("Coordinates", "Koordinatlar", "Koordinaten") },
                 { MapContent.SelectCity, Row("Select a city", "Bir şehir seçin", "Stadt auswählen") },
                 { MapContent.SummaryUnconnected, Row("No live operations are connected.", "Canlı operasyon bağlantısı yok.", "Keine Live-Operationen verbunden.") },
-                { MapContent.ModeSoon, Row("Coming soon", "Yakında", "Demnächst") },
+                { MapContent.ModeSoon, Row("COMING SOON", "YAKINDA", "DEMNÄCHST") },
+                { MapContent.SoonBody, Row("This transport mode is not available yet.", "Bu taşımacılık modu henüz kullanıma açık değil.", "Dieser Transportmodus ist noch nicht verfügbar.") },
                 { MapContent.ModeFleet, Row("Fleet", "Filo", "Flotte") },
                 { MapContent.ModeJobs, Row("Jobs", "İşler", "Aufträge") },
                 { MapContent.ModeWarehouses, Row("Warehouses", "Depolar", "Lager") },
                 { MapContent.ModeMarket, Row("Market", "Pazar", "Markt") },
-                { MapContent.ModeRoad, Row("Road", "Kara", "Straße") },
+                { MapContent.ModeRoad, Row("Road", "Karayolu", "Straße") },
                 { MapContent.ModeRail, Row("Rail", "Demiryolu", "Schiene") },
-                { MapContent.ModeSea, Row("Sea", "Deniz", "See") },
-                { MapContent.ModeAir, Row("Air", "Hava", "Luft") },
+                { MapContent.ModeSea, Row("Sea", "Denizyolu", "See") },
+                { MapContent.ModeAir, Row("Air", "Havayolu", "Luft") },
                 { MapContent.RailMap, Row("MAP", "HARİTA", "KARTE") },
                 { MapContent.RailFleet, Row("Fleet", "Filo", "Flotte") },
                 { MapContent.RailJobs, Row("Jobs", "İşler", "Auftrag") },
                 { MapContent.RailWarehouses, Row("Depots", "Depolar", "Lager") },
                 { MapContent.RailMarket, Row("Market", "Pazar", "Markt") },
-                { MapContent.RailRoad, Row("ROAD", "ROAD", "ROAD") },
-                { MapContent.RailRail, Row("RAIL", "RAIL", "RAIL") },
-                { MapContent.RailSea, Row("SEA", "SEA", "SEA") },
-                { MapContent.RailAir, Row("AIR", "AIR", "AIR") },
+                { MapContent.RailRoad, Row("Road", "Karayolu", "Straße") },
+                { MapContent.RailRail, Row("Rail", "Demiryolu", "Schiene") },
+                { MapContent.RailSea, Row("Sea", "Denizyolu", "See") },
+                { MapContent.RailAir, Row("Air", "Havayolu", "Luft") },
                 { "cities.izmir", Row("Izmir", "İzmir", "Izmir") },
                 { "cities.istanbul", Row("Istanbul", "İstanbul", "Istanbul") },
                 { "cities.ankara", Row("Ankara", "Ankara", "Ankara") },
@@ -881,7 +938,28 @@ namespace LogistiCore.EditorTools
                 { "cities.antalya", Row("Antalya", "Antalya", "Antalya") },
                 { "cities.adana", Row("Adana", "Adana", "Adana") },
                 { "cities.diyarbakir", Row("Diyarbakir", "Diyarbakır", "Diyarbakir") },
-                { "cities.trabzon", Row("Trabzon", "Trabzon", "Trabzon") }
+                { "cities.trabzon", Row("Trabzon", "Trabzon", "Trabzon") },
+                { MapContent.WaterBlackSea, Row("Black Sea", "Karadeniz", "Schwarzes Meer") },
+                { MapContent.WaterAegean, Row("Aegean Sea", "Ege Denizi", "Ägäisches Meer") },
+                { MapContent.WaterMediterranean, Row("Mediterranean Sea", "Akdeniz", "Mittelmeer") },
+                { MapContent.WaterMarmara, Row("Sea of Marmara", "Marmara Denizi", "Marmarameer") },
+                { MapContent.WaterCaspian, Row("Caspian Sea", "Hazar Denizi", "Kaspisches Meer") },
+                { MapContent.WaterAdriatic, Row("Adriatic Sea", "Adriyatik Denizi", "Adria") },
+                { MapContent.WaterRedSea, Row("Red Sea", "Kızıldeniz", "Rotes Meer") },
+                { MapContent.WaterNorthSea, Row("North Sea", "Kuzey Denizi", "Nordsee") },
+                { MapContent.WaterBaltic, Row("Baltic Sea", "Baltık Denizi", "Ostsee") },
+                { MapContent.WaterArabian, Row("Arabian Sea", "Arap Denizi", "Arabisches Meer") },
+                { MapContent.WaterSouthChina, Row("South China Sea", "Güney Çin Denizi", "Südchinesisches Meer") },
+                { MapContent.WaterJapan, Row("Sea of Japan", "Japon Denizi", "Japanisches Meer") },
+                { MapContent.WaterCaribbean, Row("Caribbean Sea", "Karayip Denizi", "Karibisches Meer") },
+                { MapContent.WaterBering, Row("Bering Sea", "Bering Denizi", "Beringmeer") },
+                { MapContent.WaterCoral, Row("Coral Sea", "Mercan Denizi", "Korallenmeer") },
+                { MapContent.WaterTasman, Row("Tasman Sea", "Tasman Denizi", "Tasmansee") },
+                { MapContent.OceanAtlantic, Row("Atlantic Ocean", "Atlas Okyanusu", "Atlantischer Ozean") },
+                { MapContent.OceanPacific, Row("Pacific Ocean", "Büyük Okyanus", "Pazifischer Ozean") },
+                { MapContent.OceanIndian, Row("Indian Ocean", "Hint Okyanusu", "Indischer Ozean") },
+                { MapContent.OceanArctic, Row("Arctic Ocean", "Arktik Okyanusu", "Arktischer Ozean") },
+                { MapContent.OceanSouthern, Row("Southern Ocean", "Güney Okyanusu", "Südlicher Ozean") }
             };
         }
 

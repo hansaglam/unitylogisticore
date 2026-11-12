@@ -115,7 +115,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578070
-    m_Localized: "Yak\u0131nda"
+    m_Localized: Yakında
     m_Metadata:
       m_Items: []
   - m_Id: 120578071
@@ -135,7 +135,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578075
-    m_Localized: Kara
+    m_Localized: Karayolu
     m_Metadata:
       m_Items: []
   - m_Id: 120578076
@@ -143,11 +143,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578077
-    m_Localized: Deniz
+    m_Localized: Denizyolu
     m_Metadata:
       m_Items: []
   - m_Id: 120578078
-    m_Localized: Hava
+    m_Localized: Havayolu
     m_Metadata:
       m_Items: []
   - m_Id: 120578079
@@ -155,11 +155,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578080
-    m_Localized: Bu bölüm henüz kullanıma hazır değil.
+    m_Localized: "Bu b\xF6l\xFCm hen\xFCz kullan\u0131ma haz\u0131r de\u011Fil."
     m_Metadata:
       m_Items: []
   - m_Id: 120578081
-    m_Localized: HARİTA
+    m_Localized: "HAR\u0130TA"
     m_Metadata:
       m_Items: []
   - m_Id: 120578082
@@ -167,7 +167,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578083
-    m_Localized: İşler
+    m_Localized: "\u0130\u015Fler"
     m_Metadata:
       m_Items: []
   - m_Id: 120578084
@@ -179,19 +179,132 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578086
-    m_Localized: ROAD
+    m_Localized: Karayolu
     m_Metadata:
       m_Items: []
   - m_Id: 120578087
-    m_Localized: RAIL
+    m_Localized: Demiryolu
     m_Metadata:
       m_Items: []
   - m_Id: 120578088
-    m_Localized: SEA
+    m_Localized: Denizyolu
     m_Metadata:
       m_Items: []
   - m_Id: 120578089
-    m_Localized: AIR
+    m_Localized: Havayolu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578090
+    m_Localized: Avrupa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578091
+    m_Localized: Asya
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578092
+    m_Localized: Afrika
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578093
+    m_Localized: Kuzey Amerika
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578094
+    m_Localized: "G\xFCney Amerika"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578095
+    m_Localized: Okyanusya
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578096
+    m_Localized: Karadeniz
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578097
+    m_Localized: Ege Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578098
+    m_Localized: Akdeniz
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578099
+    m_Localized: Marmara Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578100
+    m_Localized: Hazar Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578101
+    m_Localized: Adriyatik Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578102
+    m_Localized: "K\u0131z\u0131ldeniz"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578103
+    m_Localized: Kuzey Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578104
+    m_Localized: "Balt\u0131k Denizi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578105
+    m_Localized: Arap Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578106
+    m_Localized: "G\xFCney \xC7in Denizi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578107
+    m_Localized: Japon Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578108
+    m_Localized: Karayip Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578109
+    m_Localized: Bering Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578110
+    m_Localized: Mercan Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578111
+    m_Localized: Tasman Denizi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578112
+    m_Localized: Atlas Okyanusu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578113
+    m_Localized: "B\xFCy\xFCk Okyanus"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578114
+    m_Localized: Hint Okyanusu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578115
+    m_Localized: Arktik Okyanusu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578116
+    m_Localized: "G\xFCney Okyanusu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578117
+    m_Localized: "Bu ta\u015F\u0131mac\u0131l\u0131k modu hen\xFCz kullan\u0131ma
+      a\xE7\u0131k de\u011Fil."
     m_Metadata:
       m_Items: []
   references:

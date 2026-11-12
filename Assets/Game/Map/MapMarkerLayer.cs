@@ -44,6 +44,10 @@ namespace LogistiCore.Map
         float[] _fittedWidth;
         string[] _fittedText;
         Image[] _plates;
+        Outline[] _accents;
+        int[] _labelSide;
+        MapCommandShell _shell;
+        bool _shellSearched;
 
         public string SelectedId => _selectedId;
         public int MarkerCount => markers == null ? 0 : markers.Length;
@@ -632,7 +636,17 @@ namespace LogistiCore.Map
 
         internal const float LabelScreenPixels = 14f;
         internal const float SelectedLabelScreenPixels = 16f;
+        internal const float LabelClearRadius = 21f;
+        internal const float LabelMarkerGap = 6f;
+        internal const float LabelStackComfort = 10f;
 
+        /// <summary>
+        /// Canvas font size for a city plate. At the 1920×1080 reference and below,
+        /// this stays on the authored 16/17 canvas floor so short landscapes keep
+        /// about 14 screen pixels. Above that reference the old 14-pixel cap left a
+        /// 3x framebuffer near 22 physical pixels. The size then grows with the
+        /// square of the canvas scale, and is capped so the plate does not become huge.
+        /// </summary>
         internal static int LabelFontSize(float canvasScale, bool selected)
         {
             var scale = canvasScale < 0.05f ? 1f : canvasScale;
@@ -643,7 +657,52 @@ namespace LogistiCore.Map
                 size = floor;
             if (size > 48)
                 size = 48;
+
+            if (scale > 1.02f)
+            {
+                var grown = Mathf.RoundToInt(floor * scale * scale);
+                if (grown > size)
+                    size = grown;
+                var cap = selected ? 46 : 42;
+                if (size > cap)
+                    size = cap;
+            }
+
             return size;
+        }
+
+        internal static Rect LabelViewport(float width, float height, Rect safe, bool contextOpen)
+        {
+            var widthFits = safe.width >= width * 0.82f && safe.width <= width + 1.5f;
+            var heightFits = safe.height >= height * 0.8f && safe.height <= height + 1.5f;
+            var inside = safe.xMin >= -1f && safe.yMin >= -1f && safe.xMax <= width + 1.5f && safe.yMax <= height + 1.5f;
+            if (!widthFits || !heightFits || !inside)
+                safe = new Rect(0f, 0f, Mathf.Max(1f, width), Mathf.Max(1f, height));
+
+            return MapCommandLayout.Evaluate(width, height, safe, contextOpen).Viewport;
+        }
+
+        internal static Vector2 PlateAnchor(Vector2 marker, Vector2 half, int side)
+        {
+            if (side == 1)
+                return new Vector2(marker.x + half.x + LabelClearRadius + LabelMarkerGap, marker.y);
+            if (side == 2)
+                return new Vector2(marker.x - half.x - LabelClearRadius - LabelMarkerGap, marker.y);
+            if (side == 3)
+                return new Vector2(marker.x, marker.y - half.y - LabelClearRadius - LabelMarkerGap);
+            return new Vector2(marker.x, marker.y + 16f + half.y + 6f);
+        }
+
+        internal bool TryLabelCenter(int index, out Vector2 screen)
+        {
+            if (_labelOpen == null || index < 0 || index >= _labelOpen.Length || !_labelOpen[index])
+            {
+                screen = default;
+                return false;
+            }
+
+            screen = _labelCenter[index];
+            return true;
         }
 
         internal static float GlowVisualScale(float authoredScale, bool selected)
@@ -664,59 +723,19 @@ namespace LogistiCore.Map
             if (scale < 0.05f)
                 scale = 1f;
             EnsureLabelCache();
+            RefreshPlates();
+            var viewport = LabelViewport(width, height, Screen.safeArea, ContextOpen());
+            if (_canvas == null && labelRoot != null)
+                _canvas = labelRoot.GetComponentInParent<Canvas>();
+            var eventCamera = _canvas != null && _canvas.renderMode == RenderMode.ScreenSpaceCamera
+                ? _canvas.worldCamera
+                : null;
 
             for (var i = 0; i < labels.Length; i++)
-            {
                 _labelOpen[i] = false;
-                var label = labels[i];
-                if (label == null)
-                    continue;
 
-                var show = countryVisible && i < count && markers[i] != null && _individual[i] && ShowsLabel(i, count);
-                if (!show)
-                {
-                    SetLabelVisible(label, false);
-                    continue;
-                }
-
-                var selected = markers[i].CityId == _selectedId;
-                var fontSize = LabelFontSize(scale, selected);
-                var plateWidth = FitLabel(i, label, fontSize, selected);
-                var half = new Vector2(plateWidth * scale * 0.5f, (fontSize + 8f) * scale * 0.5f);
-                var center = _screen[i];
-                center.y += 16f + half.y + 6f;
-                if (!KeepOnScreen(ref center, half, width, height, selected))
-                {
-                    SetLabelVisible(label, false);
-                    continue;
-                }
-
-                _labelOpen[i] = true;
-                _labelCenter[i] = center;
-                _labelHalf[i] = half;
-                label.color = selected
-                    ? new Color(0.94f, 0.98f, 1f, 1f)
-                    : new Color(0.90f, 0.95f, 0.98f, 0.96f);
-            }
-
-            for (var i = 0; i < labels.Length; i++)
-            {
-                if (!_labelOpen[i] || markers[i] == null || markers[i].CityId == _selectedId)
-                    continue;
-
-                for (var j = 0; j < labels.Length; j++)
-                {
-                    if (i == j || !_labelOpen[j] || !LabelOverlaps(i, j))
-                        continue;
-
-                    var otherSelected = markers[j] != null && markers[j].CityId == _selectedId;
-                    if (otherSelected || j < i)
-                    {
-                        _labelOpen[i] = false;
-                        break;
-                    }
-                }
-            }
+            PlaceOne(count, scale, viewport, countryVisible, selectedOnly: true);
+            PlaceOne(count, scale, viewport, countryVisible, selectedOnly: false);
 
             for (var i = 0; i < labels.Length; i++)
             {
@@ -728,7 +747,7 @@ namespace LogistiCore.Map
                 if (!_labelOpen[i] || labelRoot == null)
                     continue;
 
-                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(labelRoot, _labelCenter[i], null, out var local))
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(labelRoot, _labelCenter[i], eventCamera, out var local))
                 {
                     var plate = label.rectTransform.parent as RectTransform;
                     if (plate != null && plate != labelRoot)
@@ -737,6 +756,186 @@ namespace LogistiCore.Map
                         label.rectTransform.anchoredPosition = local;
                 }
             }
+        }
+
+        void PlaceOne(int count, float scale, Rect viewport, bool countryVisible, bool selectedOnly)
+        {
+            for (var i = 0; i < labels.Length; i++)
+            {
+                var label = labels[i];
+                if (label == null || i >= count || markers[i] == null)
+                    continue;
+
+                var selected = markers[i].CityId == _selectedId;
+                if (selected != selectedOnly)
+                    continue;
+                if (!countryVisible || !_individual[i] || !ShowsLabel(i, count))
+                    continue;
+
+                var fontSize = LabelFontSize(scale, selected);
+                var plateWidth = FitLabel(i, label, fontSize, selected);
+                var half = new Vector2(plateWidth * scale * 0.5f, (fontSize + 10f) * scale * 0.5f);
+                label.color = selected
+                    ? new Color(0.82f, 0.97f, 1f, 1f)
+                    : new Color(0.96f, 0.98f, 1f, 1f);
+
+                var held = _labelSide != null && i < _labelSide.Length ? _labelSide[i] : -1;
+                var placed = false;
+                var center = _screen[i];
+                var above = PlateAnchor(_screen[i], half, 0);
+                var aboveClear = PlateClear(i, above, half, viewport);
+                var aboveStacked = aboveClear && StackedAgainstNeighbor(i, above, half);
+                if (held >= 0 && held < 4)
+                {
+                    var heldCenter = PlateAnchor(_screen[i], half, held);
+                    var heldStacked = held == 0 && StackedAgainstNeighbor(i, heldCenter, half);
+                    if (!heldStacked && PlateClear(i, heldCenter, half, viewport))
+                    {
+                        center = heldCenter;
+                        placed = true;
+                    }
+                }
+
+                if (!placed && aboveClear && !aboveStacked)
+                {
+                    center = above;
+                    held = 0;
+                    placed = true;
+                }
+
+                if (!placed && Inside(above, half, viewport))
+                {
+                    for (var side = 1; side < 4; side++)
+                    {
+                        var candidate = PlateAnchor(_screen[i], half, side);
+                        if (!PlateClear(i, candidate, half, viewport))
+                            continue;
+                        center = candidate;
+                        held = side;
+                        placed = true;
+                        break;
+                    }
+                }
+
+                if (!placed && aboveClear)
+                {
+                    center = above;
+                    held = 0;
+                    placed = true;
+                }
+
+                if (!placed && selected)
+                {
+                    center = PlateAnchor(_screen[i], half, 0);
+                    center.x = Mathf.Clamp(center.x, viewport.xMin + half.x, viewport.xMax - half.x);
+                    center.y = Mathf.Clamp(center.y, viewport.yMin + half.y, viewport.yMax - half.y);
+                    held = 0;
+                    placed = true;
+                }
+
+                if (!placed)
+                {
+                    if (_labelSide != null && i < _labelSide.Length)
+                        _labelSide[i] = -1;
+                    continue;
+                }
+
+                if (_labelSide != null && i < _labelSide.Length)
+                    _labelSide[i] = held;
+                _labelOpen[i] = true;
+                _labelCenter[i] = center;
+                _labelHalf[i] = half;
+            }
+        }
+
+        static bool Inside(Vector2 center, Vector2 half, Rect viewport)
+        {
+            return center.x - half.x >= viewport.xMin && center.y - half.y >= viewport.yMin &&
+                   center.x + half.x <= viewport.xMax && center.y + half.y <= viewport.yMax;
+        }
+
+        bool PlateClear(int index, Vector2 center, Vector2 half, Rect viewport)
+        {
+            var plate = new Rect(center.x - half.x, center.y - half.y, half.x * 2f, half.y * 2f);
+            if (plate.xMin < viewport.xMin || plate.yMin < viewport.yMin || plate.xMax > viewport.xMax || plate.yMax > viewport.yMax)
+                return false;
+
+            var limit = _screen == null ? 0 : _screen.Length;
+            for (var i = 0; i < limit; i++)
+            {
+                if (i == index || _individual == null || !_individual[i])
+                    continue;
+                if (RectHitsCircle(plate, _screen[i], LabelClearRadius))
+                    return false;
+            }
+
+            if (_labelOpen == null)
+                return true;
+
+            for (var i = 0; i < _labelOpen.Length; i++)
+            {
+                if (!_labelOpen[i])
+                    continue;
+                var delta = center - _labelCenter[i];
+                if (Mathf.Abs(delta.x) < half.x + _labelHalf[i].x + 6f &&
+                    Mathf.Abs(delta.y) < half.y + _labelHalf[i].y + 4f)
+                    return false;
+            }
+
+            return true;
+        }
+
+        bool StackedAgainstNeighbor(int index, Vector2 center, Vector2 half)
+        {
+            var plateTop = center.y + half.y;
+            var plateBottom = center.y - half.y;
+            var comfort = half.y + half.y + LabelStackComfort;
+            var limit = _screen == null ? 0 : _screen.Length;
+            for (var i = 0; i < limit; i++)
+            {
+                if (i == index || _individual == null || !_individual[i])
+                    continue;
+
+                var marker = _screen[i];
+                if (marker.x < center.x - half.x - 12f || marker.x > center.x + half.x + 12f)
+                    continue;
+
+                var gap = marker.y > plateTop ? marker.y - plateTop : (marker.y < plateBottom ? plateBottom - marker.y : 0f);
+                if (gap < comfort)
+                    return true;
+            }
+
+            return false;
+        }
+
+        static bool RectHitsCircle(Rect rect, Vector2 center, float radius)
+        {
+            var x = center.x < rect.xMin ? rect.xMin : (center.x > rect.xMax ? rect.xMax : center.x);
+            var y = center.y < rect.yMin ? rect.yMin : (center.y > rect.yMax ? rect.yMax : center.y);
+            var dx = center.x - x;
+            var dy = center.y - y;
+            return dx * dx + dy * dy < radius * radius;
+        }
+
+        bool ContextOpen()
+        {
+            var shell = Shell();
+            return shell != null && shell.ContextOpen;
+        }
+
+        MapCommandShell Shell()
+        {
+            if (_shell != null || _shellSearched)
+                return _shell;
+
+            if (labelRoot == null)
+                return null;
+
+            _shellSearched = true;
+            var canvas = labelRoot.GetComponentInParent<Canvas>();
+            if (canvas != null)
+                _shell = canvas.GetComponentInChildren<MapCommandShell>(true);
+            return _shell;
         }
 
         void EnsureLabelCache()
@@ -754,11 +953,32 @@ namespace LogistiCore.Map
             _fittedWidth = new float[count];
             _fittedText = new string[count];
             _plates = new Image[count];
+            _accents = new Outline[count];
+            _labelSide = new int[count];
             for (var i = 0; i < count; i++)
+                _labelSide[i] = -1;
+        }
+
+        void RefreshPlates()
+        {
+            if (labels == null || _plates == null)
+                return;
+
+            for (var i = 0; i < labels.Length && i < _plates.Length; i++)
             {
-                if (labels[i] == null || labels[i].transform.parent == null)
+                if (_plates[i] == null && labels[i] != null && labels[i].transform.parent != null)
+                    _plates[i] = labels[i].transform.parent.GetComponent<Image>();
+                if (_plates[i] == null || _accents == null || i >= _accents.Length || _accents[i] != null)
                     continue;
-                _plates[i] = labels[i].transform.parent.GetComponent<Image>();
+
+                _accents[i] = _plates[i].GetComponent<Outline>();
+                if (_accents[i] != null)
+                    continue;
+
+                _accents[i] = _plates[i].gameObject.AddComponent<Outline>();
+                _accents[i].hideFlags = HideFlags.DontSave;
+                _accents[i].useGraphicAlpha = true;
+                _accents[i].effectDistance = new Vector2(1f, -1f);
             }
         }
 
@@ -767,19 +987,19 @@ namespace LogistiCore.Map
             label.fontStyle = FontStyle.Bold;
             label.resizeTextForBestFit = false;
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
-            label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
             label.alignment = TextAnchor.MiddleCenter;
+            label.raycastTarget = false;
             if (label.fontSize != fontSize)
                 label.fontSize = fontSize;
-
-            var width = MeasuredLabelWidth(index, label) + 16f;
-            var minimum = fontSize * 2.2f;
-            var maximum = fontSize * 11f;
+            var width = MeasuredLabelWidth(index, label) + 20f;
+            var minimum = fontSize * 2.4f;
+            var maximum = fontSize * 12f;
             if (width < minimum)
                 width = minimum;
             if (width > maximum)
                 width = maximum;
-            var height = fontSize + 8f;
+            var height = fontSize + 10f;
             var plate = label.rectTransform.parent as RectTransform;
             if (plate != null && plate != labelRoot)
             {
@@ -790,9 +1010,16 @@ namespace LogistiCore.Map
 
             if (_plates != null && index < _plates.Length && _plates[index] != null)
             {
-                var plateColor = new Color(0.012f, 0.028f, 0.05f, selected ? 0.70f : 0.56f);
+                _plates[index].raycastTarget = false;
+                var plateColor = selected ? MapHudPalette.ButtonActive : MapHudPalette.Card;
                 if (_plates[index].color != plateColor)
                     _plates[index].color = plateColor;
+                if (_accents != null && index < _accents.Length && _accents[index] != null)
+                {
+                    var edge = selected ? MapHudPalette.Accent : MapHudPalette.Rule;
+                    if (_accents[index].effectColor != edge)
+                        _accents[index].effectColor = edge;
+                }
             }
 
             return width;
@@ -817,38 +1044,6 @@ namespace LogistiCore.Map
             return width;
         }
 
-        static bool KeepOnScreen(ref Vector2 center, Vector2 half, float width, float height, bool selected)
-        {
-            var minX = 6f + half.x;
-            var maxX = width - 6f - half.x;
-            var minY = 6f + half.y;
-            var maxY = height - 6f - half.y;
-            if (maxX < minX)
-                maxX = minX;
-            if (maxY < minY)
-                maxY = minY;
-
-            var rail = width * 0.09f;
-            var header = height - height * 0.1f;
-            var inChrome = center.x < rail || center.y > header;
-            var outside = center.x < minX || center.x > maxX || center.y < minY || center.y > maxY || inChrome;
-            if (!outside)
-                return true;
-            if (!selected)
-                return false;
-
-            center.x = Mathf.Clamp(center.x, Mathf.Max(minX, rail), maxX);
-            center.y = Mathf.Clamp(center.y, minY, Mathf.Min(maxY, header));
-            return true;
-        }
-
-        bool LabelOverlaps(int a, int b)
-        {
-            var delta = _labelCenter[a] - _labelCenter[b];
-            return Mathf.Abs(delta.x) < _labelHalf[a].x + _labelHalf[b].x + 6f &&
-                   Mathf.Abs(delta.y) < _labelHalf[a].y + _labelHalf[b].y + 4f;
-        }
-
         bool ShowsLabel(int index, int count)
         {
             if (markers[index].CityId == _selectedId)
@@ -859,13 +1054,11 @@ namespace LogistiCore.Map
                 if (i == index || !_individual[i])
                     continue;
 
-                var distance = Vector2.Distance(_screen[index], _screen[i]);
-                if (distance >= 72f)
+                if (markers[i] == null || markers[i].CityId != _selectedId)
                     continue;
 
-                if (markers[i] != null && markers[i].CityId == _selectedId)
-                    return false;
-                if (i < index)
+                var distance = Vector2.Distance(_screen[index], _screen[i]);
+                if (distance < 72f)
                     return false;
             }
 

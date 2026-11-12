@@ -38,7 +38,7 @@ LOCAL callable us-central1/maxInstances1. Request:
 ```json
 {"protocolVersion":1,"idempotencyKey":"synthetic_start_001","payload":{"contractId":"<id>","truckId":"starter_truck","driverId":"starter_driver"}}
 ```
-Optional trailerId yalnız accepted candidate setinde varsa kabul edilir; bu faz alternatif equipment seçmez. Payload exactly contractId/truckId/driverId/[trailerId]; extra UID/company/time/price/state alanları hata.
+Optional trailerId yalnız accepted candidate setinde varsa kabul edilir; bu faz alternatif equipment seçmez. Payload exactly contractId/truckId/driverId/[trailerId]; extra UID/company/time/price/state/candidateAssets alanları hata. `getMyContracts` may list the bound candidate document IDs; start still compares `digest(startSelection(payload))` to canonical `terms.candidateAssets`.
 
 Transaction: foundation → accepted contract + readPool integrity → deterministic delivery yokluğu → selected set birebir accepted candidates → actual current v2 capabilities/capacity/availability ve starter readiness → pinned delivery rules/economy → prepareAssignment reserve → trusted clock → apply assignment + create delivery + contract in_progress + receipt. Ekonomi yazısı yok. Bir truck veya driver aynı anda iki delivery'ye atanamaz; acceptance araç garantisi değildir. Expired original offer timestamp accepted işi iptal etmez.
 

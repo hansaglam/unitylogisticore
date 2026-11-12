@@ -1,0 +1,591 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Ops_tr
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: 8d145d43c69c84e61a50f556354c2ad7, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 481288192
+    m_Localized: Filo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871104
+    m_Localized: "\u0130\u015Fler"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871105
+    m_Localized: Depolar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871106
+    m_Localized: Pazar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871107
+    m_Localized: "Canl\u0131 filo verisi ba\u011Flant\u0131s\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871108
+    m_Localized: "Canl\u0131 s\xF6zle\u015Fme ba\u011Flant\u0131s\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871109
+    m_Localized: "Canl\u0131 depo ba\u011Flant\u0131s\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871110
+    m_Localized: "Canl\u0131 pazar ba\u011Flant\u0131s\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871111
+    m_Localized: "Geni\u015Flet"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871112
+    m_Localized: Daralt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871113
+    m_Localized: "Mod\xFCller"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799841447936
+    m_Localized: "Operasyonlar kontrol ediliyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030848
+    m_Localized: "Operasyonlar y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030849
+    m_Localized: Aktif operasyon yok.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030850
+    m_Localized: Bir aktif operasyon.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030851
+    m_Localized: Birden fazla aktif operasyon.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131269828608
+    m_Localized: "Filo y\xFCkleniyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411520
+    m_Localized: "Bu filoda ara\xE7 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411521
+    m_Localized: "Filo verisi y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411522
+    m_Localized: "Sahip olunan kamyon ve s\xFCr\xFCc\xFCler listeleniyor."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411523
+    m_Localized: "M\xFCsait"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411524
+    m_Localized: "G\xF6revde"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411525
+    m_Localized: "Hizmet d\u0131\u015F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411526
+    m_Localized: Bilinmiyor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411527
+    m_Localized: Kamyon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411528
+    m_Localized: "S\xFCr\xFCc\xFC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411529
+    m_Localized: Dorse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411530
+    m_Localized: "\u015Eu an g\xF6revde"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411531
+    m_Localized: "Aktif g\xF6rev yok"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411532
+    m_Localized: Kapasite
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411533
+    m_Localized: Konum bilinmiyor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411534
+    m_Localized: "Kay\u0131tl\u0131 \u015Fehir konumu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411535
+    m_Localized: "Bildirilen ara\xE7 konumu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411536
+    m_Localized: "\u015Eehri g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411537
+    m_Localized: "Konumu g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411538
+    m_Localized: Filo listesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619353362432
+    m_Localized: "S\xF6zle\u015Fmeler y\xFCkleniyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619361751040
+    m_Localized: "Bu \xF6zette s\xF6zle\u015Fme yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945344
+    m_Localized: "S\xF6zle\u015Fme verisi y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945345
+    m_Localized: "S\xF6zle\u015Fme \xF6zeti y\xFCklendi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945346
+    m_Localized: "Bu kategoride s\xF6zle\u015Fme yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945347
+    m_Localized: "A\xE7\u0131k"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945348
+    m_Localized: Aktif
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945349
+    m_Localized: "Ge\xE7mi\u015F"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945350
+    m_Localized: Teklif
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945351
+    m_Localized: Kabul
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945352
+    m_Localized: Devam ediyor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945353
+    m_Localized: "Tamamland\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945354
+    m_Localized: "Ba\u015Far\u0131s\u0131z"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945355
+    m_Localized: Bilinmeyen durum
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945356
+    m_Localized: "Teklif s\xFCresi doldu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945357
+    m_Localized: "Y\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945358
+    m_Localized: "\xD6d\xFCl"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945359
+    m_Localized: "Atanan ara\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945360
+    m_Localized: Gereksinimler
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945361
+    m_Localized: Teslimat aktif
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945362
+    m_Localized: "Teslimat tamamland\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945363
+    m_Localized: "Kalk\u0131\u015F bilinmiyor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945364
+    m_Localized: "Var\u0131\u015F bilinmiyor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945365
+    m_Localized: "Kalk\u0131\u015F\u0131 g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945366
+    m_Localized: "Var\u0131\u015F\u0131 g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945367
+    m_Localized: "S\xF6zle\u015Fme listesi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836864446464
+    m_Localized: "Depolar y\xFCkleniyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029376
+    m_Localized: "Bu \xF6zette sahip olunan depo yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029377
+    m_Localized: "Depo verisi y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029378
+    m_Localized: "Depo \xF6zeti y\xFCklendi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029379
+    m_Localized: "\xC7al\u0131\u015F\u0131r"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029380
+    m_Localized: "Hizmet d\u0131\u015F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029381
+    m_Localized: Bilinmeyen durum
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029382
+    m_Localized: Sahip olunan depo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029383
+    m_Localized: Kapasite
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029384
+    m_Localized: "Kullan\u0131lan kapasite yok"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029385
+    m_Localized: Konum
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029386
+    m_Localized: "\u015Eehir bilinmiyor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029387
+    m_Localized: Seviye
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029388
+    m_Localized: "T\xFCr"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029389
+    m_Localized: "\u015Eehri g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029390
+    m_Localized: "Konumu g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029391
+    m_Localized: Depo listesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877472370688
+    m_Localized: "Pazar y\xFCkleniyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759296
+    m_Localized: "Bu \xF6zette pazar ko\u015Fulu yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759297
+    m_Localized: "Pazar verisi y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759298
+    m_Localized: "Pazar \xF6zeti y\xFCklendi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759299
+    m_Localized: "T\xFCm y\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759300
+    m_Localized: "Pazar ko\u015Fulu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759301
+    m_Localized: "Y\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759302
+    m_Localized: Konum
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759303
+    m_Localized: "\u015Eehir bilinmiyor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759304
+    m_Localized: Ayar bps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759305
+    m_Localized: Talep indeksi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759306
+    m_Localized: Arz indeksi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759307
+    m_Localized: "Fiyat bu \xF6zette yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759308
+    m_Localized: "\u015Eehri g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759309
+    m_Localized: "Ko\u015Ful listesi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 218111008563200
+    m_Localized: "\xD6d\xFCl bu \xF6zette yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174224199680
+    m_Localized: Karayolu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782592
+    m_Localized: "Canl\u0131 teslimat ba\u011Flant\u0131s\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782593
+    m_Localized: "Teslimatlar y\xFCkleniyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782594
+    m_Localized: "Aktif karayolu teslimat\u0131 yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782595
+    m_Localized: "Teslimat verisi y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782596
+    m_Localized: "Aktif karayolu teslimatlar\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782597
+    m_Localized: Aktif
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782598
+    m_Localized: Bilinmeyen teslimat durumu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782599
+    m_Localized: Kamyon bilinmiyor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782600
+    m_Localized: "Var\u0131\u015F zaman\u0131 yok"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782601
+    m_Localized: "Kalk\u0131\u015F\u0131 g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782602
+    m_Localized: "Var\u0131\u015F\u0131 g\xF6ster"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782603
+    m_Localized: Teslimat listesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782604
+    m_Localized: "Bilinmeyen y\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782605
+    m_Localized: "Genel Y\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782606
+    m_Localized: Durum
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782607
+    m_Localized: "Detay\u0131 kapat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066934575104
+    m_Localized: Kabul Et
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158016
+    m_Localized: "S\xF6zle\u015Fme kabul ediliyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158017
+    m_Localized: "Kabul sonucu do\u011Frulanmad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158018
+    m_Localized: "Bu s\xF6zle\u015Fme \u015Fu an kabul edilemez."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158019
+    m_Localized: "Kabul i\xE7in oturum gerekli."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158020
+    m_Localized: Kabul izni yok.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158021
+    m_Localized: "Bu kabul iste\u011Fi ge\xE7erli de\u011Fil."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158022
+    m_Localized: "Bu kabul iste\u011Fi zaten var."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158023
+    m_Localized: "Bu teklif art\u0131k ge\xE7erli de\u011Fil."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158024
+    m_Localized: "Bu s\xF6zle\u015Fme kabul edilemez."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158025
+    m_Localized: "Filo bu s\xF6zle\u015Fme i\xE7in uygun de\u011Fil."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158026
+    m_Localized: "\u015Eu an ba\u015Fka s\xF6zle\u015Fme kabul edilemez."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947660675604480
+    m_Localized: Ekipman
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400896
+    m_Localized: "M\xFCsait"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400897
+    m_Localized: "M\xFCsait de\u011Fil"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400898
+    m_Localized: Bu filoda yok
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400899
+    m_Localized: "G\xF6revde"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400900
+    m_Localized: "T\xFCr uyu\u015Fmuyor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400901
+    m_Localized: "Se\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400902
+    m_Localized: "Se\xE7ildi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855767979220992
+    m_Localized: Seviye
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301376
+    m_Localized: XP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301377
+    m_Localized: "\u0130tibar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301378
+    m_Localized: "Kullan\u0131lam\u0131yor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301379
+    m_Localized: "Y\xFCkleniyor\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301380
+    m_Localized: Bildirimler
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301381
+    m_Localized: Mesajlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301382
+    m_Localized: Ayarlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301383
+    m_Localized: "Oyun zaman\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301384
+    m_Localized: Hava
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

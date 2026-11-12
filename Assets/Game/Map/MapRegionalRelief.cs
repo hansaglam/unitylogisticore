@@ -5,22 +5,27 @@ namespace LogistiCore.Map
 {
     /// <summary>
     /// Geographic registration for the Türkiye regional relief.
-    /// The window is an exact crop of Natural Earth SR_50M, 30 samples per degree.
+    /// Runtime texture: Copernicus DEM GLO-30 mosaic, 2048 x 725, linear lon/lat plate.
     /// Texture v = 0 is south. The global land mesh UV stays equirectangular.
+    /// MapReliefRegion.png remains in Resources as an unused fallback.
     /// </summary>
     public static class MapRegionalRelief
     {
-        public const int Width = 1024;
-        public const int Height = 512;
-        public const int SourceColumn = 5945;
-        public const int SourceRow = 1275;
-        public const double DegreesPerPixel = 1d / 30d;
-        public const float FeatherDegrees = 2.4f;
+        public const int Width = 2048;
+        public const int Height = 725;
+        public const string TextureResource = "MapReliefCopernicus";
+        public const string FallbackTextureResource = "MapReliefRegion";
+        public const float FeatherDegrees = 0.22f;
 
-        public const double MinLongitude = -180d + SourceColumn * DegreesPerPixel;
-        public const double MaxLongitude = -180d + (SourceColumn + Width) * DegreesPerPixel;
-        public const double MaxLatitude = 90d - SourceRow * DegreesPerPixel;
-        public const double MinLatitude = 90d - (SourceRow + Height) * DegreesPerPixel;
+        public const double MinLongitude = 25.269d;
+        public const double MaxLongitude = 45.217d;
+        public const double MinLatitude = 35.431d;
+        public const double MaxLatitude = 42.493d;
+
+        public const double HaloMinLongitude = 18.166666666666657d;
+        public const double HaloMaxLongitude = 52.3d;
+        public const double HaloMinLatitude = 30.43333333333333d;
+        public const double HaloMaxLatitude = 47.5d;
 
         public static bool Contains(double latitude, double longitude)
         {
@@ -38,6 +43,45 @@ namespace LogistiCore.Map
             var v = (latitude - MinLatitude) / (MaxLatitude - MinLatitude);
             uv = new Vector2((float)u, (float)v);
             return true;
+        }
+
+        public static bool TryPixelCenter(double latitude, double longitude, out int x, out int yFromNorth)
+        {
+            x = 0;
+            yFromNorth = 0;
+            if (!TryUv(latitude, longitude, out var uv))
+                return false;
+
+            x = Mathf.Clamp(Mathf.RoundToInt(uv.x * (Width - 1)), 0, Width - 1);
+            var yFromSouth = Mathf.Clamp(Mathf.RoundToInt(uv.y * (Height - 1)), 0, Height - 1);
+            yFromNorth = Height - 1 - yFromSouth;
+            return true;
+        }
+
+        public static Vector4 RegionMinVector()
+        {
+            return new Vector4((float)MinLongitude, (float)MinLatitude, 0f, 0f);
+        }
+
+        public static Vector4 RegionMaxVector()
+        {
+            return new Vector4((float)MaxLongitude, (float)MaxLatitude, 0f, 0f);
+        }
+
+        public static Vector4 HaloMinVector()
+        {
+            return new Vector4((float)HaloMinLongitude, (float)HaloMinLatitude, 0f, 0f);
+        }
+
+        public static Vector4 HaloMaxVector()
+        {
+            return new Vector4((float)HaloMaxLongitude, (float)HaloMaxLatitude, 0f, 0f);
+        }
+
+        public static bool HaloContains(double latitude, double longitude)
+        {
+            return longitude >= HaloMinLongitude && longitude <= HaloMaxLongitude &&
+                   latitude >= HaloMinLatitude && latitude <= HaloMaxLatitude;
         }
 
         public static float EdgeFeather(double latitude, double longitude)

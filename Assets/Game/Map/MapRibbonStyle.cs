@@ -40,10 +40,12 @@ namespace LogistiCore.Map
         public static readonly Color32 Turkey = new Color32(104, 178, 196, 215);
 
         /// <summary>
-        /// Multiplies the baked Türkiye vertex color before it is linearized.
-        /// Coastlines and borders do not use it. Width and geometry stay as baked.
+        /// Multiplies the baked vertex color before it is linearized.
+        /// Geometry and the baked widths stay on the ribbon meshes.
         /// </summary>
-        public static readonly Vector4 TurkeyPresentation = new Vector4(0.82f, 0.74f, 0.76f, 0.70f);
+        public static readonly Vector4 CoastPresentation = new Vector4(0.96f, 0.90f, 0.86f, 0.94f);
+        public static readonly Vector4 BorderPresentation = new Vector4(0.90f, 0.84f, 0.78f, 0.72f);
+        public static readonly Vector4 TurkeyPresentation = new Vector4(1.10f, 1.16f, 1.20f, 0.88f);
 
         public static float Width(MapRibbonRole role)
         {
@@ -61,6 +63,31 @@ namespace LogistiCore.Map
             if (role == MapRibbonRole.Border)
                 return Border;
             return Coast;
+        }
+
+        public static Vector4 Presentation(MapRibbonRole role)
+        {
+            if (role == MapRibbonRole.Turkey)
+                return TurkeyPresentation;
+            if (role == MapRibbonRole.Border)
+                return BorderPresentation;
+            return CoastPresentation;
+        }
+
+        /// <summary>
+        /// Baked vertex color times the role multiplier. International borders also
+        /// take the camera fade. This is the color the ribbon shader draws.
+        /// </summary>
+        public static Color Presented(MapRibbonRole role, float orthographicSize)
+        {
+            var baked = (Color)Color(role);
+            var mul = Presentation(role);
+            var fade = role == MapRibbonRole.Border ? BorderFade(orthographicSize) : 1f;
+            return new Color(
+                Mathf.Clamp01(baked.r * mul.x),
+                Mathf.Clamp01(baked.g * mul.y),
+                Mathf.Clamp01(baked.b * mul.z),
+                Mathf.Clamp01(baked.a * mul.w * fade));
         }
 
         /// <summary>

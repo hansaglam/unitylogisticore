@@ -10,6 +10,8 @@ namespace LogistiCore.Tests
         public static void Run()
         {
             var api = ScriptableObject.CreateInstance<TestRunnerApi>();
+            // Live emulator tests are [Explicit] + gated. This menu runs the default
+            // Edit Mode suite and must not mint Auth users or company data.
             var settings = new ExecutionSettings(new Filter
             {
                 testMode = TestMode.EditMode,

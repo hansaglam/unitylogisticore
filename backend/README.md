@@ -122,7 +122,7 @@ Aynı `npm run validate` ile tüm testler çalışır. Bağımlılıklar/lockfil
 
 ## BACKEND-06 — local contract foundation
 
-Internal epoch-bound generator en çok 5 deterministik company offer'ı marker/receipt ile atomik oluşturur. Public generator/refresh yoktur. `acceptContract` strict contractId intent ile ownership/config/eligibility/server expiry/quota doğrular; wallet/XP veya fleet reservation değişmez. `getMyContracts` read-only, max20 document-ID pagination; status filter henüz yoktur. Logistics catalog v2 capabilities destekler, v1 davranışı korunur. Gerçek route/economy/katalog aktivasyonu kapalıdır. [CONTRACT_CONTRACT](../docs/api-contracts/CONTRACT_CONTRACT.md), [BACKEND-06_REPORT](../docs/backend/BACKEND-06_REPORT.md). Aynı npm run validate ve sabit dependencies; BACKEND-07 başlatılmaz.
+Internal epoch-bound generator en çok 5 deterministik company offer'ı marker/receipt ile atomik oluşturur. Public generator/refresh yoktur. `acceptContract` strict contractId intent ile ownership/config/eligibility/server expiry/quota doğrular; wallet/XP veya fleet reservation değişmez. `getMyContracts` read-only, max20 document-ID pagination; status filter henüz yoktur. DTO additive `candidateAssets` ({assetId,kind} from canonical terms; hashes/GPS yok); startDelivery digest authority değişmez. Logistics catalog v2 capabilities destekler, v1 davranışı korunur. Gerçek route/economy/katalog aktivasyonu kapalıdır. [CONTRACT_CONTRACT](../docs/api-contracts/CONTRACT_CONTRACT.md), [BACKEND-06_REPORT](../docs/backend/BACKEND-06_REPORT.md). Aynı npm run validate ve sabit dependencies; BACKEND-07 başlatılmaz.
 
 ## BACKEND-07 — local authoritative deliveries
 

@@ -1,0 +1,591 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Ops_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 8d145d43c69c84e61a50f556354c2ad7, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 481288192
+    m_Localized: Fleet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871104
+    m_Localized: Jobs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871105
+    m_Localized: Warehouses
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871106
+    m_Localized: Market
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871107
+    m_Localized: No live fleet data connection.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871108
+    m_Localized: No live contracts connection.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871109
+    m_Localized: No live warehouse connection.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871110
+    m_Localized: No live market connection.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871111
+    m_Localized: Expand
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871112
+    m_Localized: Compact
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871113
+    m_Localized: Modules
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799841447936
+    m_Localized: "Checking operations\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030848
+    m_Localized: Operations could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030849
+    m_Localized: No active operations.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030850
+    m_Localized: One active operation.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030851
+    m_Localized: Several active operations.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131269828608
+    m_Localized: "Loading fleet\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411520
+    m_Localized: No vehicles in this fleet.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411521
+    m_Localized: Fleet data could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411522
+    m_Localized: Owned trucks and drivers are listed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411523
+    m_Localized: Available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411524
+    m_Localized: On assignment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411525
+    m_Localized: Out of service
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411526
+    m_Localized: Unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411527
+    m_Localized: Truck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411528
+    m_Localized: Driver
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411529
+    m_Localized: Trailer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411530
+    m_Localized: Currently assigned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411531
+    m_Localized: No current assignment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411532
+    m_Localized: Capacity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411533
+    m_Localized: Location unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411534
+    m_Localized: City location on file
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411535
+    m_Localized: Reported vehicle position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411536
+    m_Localized: Show city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411537
+    m_Localized: Show position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411538
+    m_Localized: Fleet list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619353362432
+    m_Localized: "Loading contracts\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619361751040
+    m_Localized: No contracts in this snapshot.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945344
+    m_Localized: Contract data could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945345
+    m_Localized: Contract snapshot loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945346
+    m_Localized: No contracts in this category.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945347
+    m_Localized: Available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945348
+    m_Localized: Active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945349
+    m_Localized: History
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945350
+    m_Localized: Offered
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945351
+    m_Localized: Accepted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945352
+    m_Localized: In progress
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945353
+    m_Localized: Completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945354
+    m_Localized: Failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945355
+    m_Localized: Unknown status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945356
+    m_Localized: Offer expired
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945357
+    m_Localized: Cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945358
+    m_Localized: Reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945359
+    m_Localized: Assigned vehicle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945360
+    m_Localized: Requirements
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945361
+    m_Localized: Delivery active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945362
+    m_Localized: Delivery completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945363
+    m_Localized: Origin unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945364
+    m_Localized: Destination unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945365
+    m_Localized: Show origin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945366
+    m_Localized: Show destination
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945367
+    m_Localized: Contract list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836864446464
+    m_Localized: "Loading warehouses\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029376
+    m_Localized: No owned warehouses in this snapshot.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029377
+    m_Localized: Warehouse data could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029378
+    m_Localized: Warehouse snapshot loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029379
+    m_Localized: Operational
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029380
+    m_Localized: Out of service
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029381
+    m_Localized: Unknown status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029382
+    m_Localized: Owned warehouse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029383
+    m_Localized: Capacity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029384
+    m_Localized: Used capacity unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029385
+    m_Localized: Location
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029386
+    m_Localized: City unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029387
+    m_Localized: Level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029388
+    m_Localized: Type
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029389
+    m_Localized: Show city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029390
+    m_Localized: Show position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029391
+    m_Localized: Warehouse list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877472370688
+    m_Localized: "Loading market\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759296
+    m_Localized: No market conditions in this snapshot.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759297
+    m_Localized: Market data could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759298
+    m_Localized: Market snapshot loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759299
+    m_Localized: All cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759300
+    m_Localized: Market condition
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759301
+    m_Localized: Cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759302
+    m_Localized: Location
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759303
+    m_Localized: City unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759304
+    m_Localized: Adjustment bps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759305
+    m_Localized: Demand index
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759306
+    m_Localized: Supply index
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759307
+    m_Localized: Price is not in this snapshot.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759308
+    m_Localized: Show city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759309
+    m_Localized: Condition list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 218111008563200
+    m_Localized: Reward is not in this snapshot.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174224199680
+    m_Localized: Road
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782592
+    m_Localized: No live delivery connection.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782593
+    m_Localized: "Loading deliveries\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782594
+    m_Localized: No active road deliveries.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782595
+    m_Localized: Delivery data could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782596
+    m_Localized: Active road deliveries.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782597
+    m_Localized: Active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782598
+    m_Localized: Unknown delivery status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782599
+    m_Localized: Truck unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782600
+    m_Localized: Arrival time not provided
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782601
+    m_Localized: Show origin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782602
+    m_Localized: Show destination
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782603
+    m_Localized: Delivery list
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782604
+    m_Localized: Unknown cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782605
+    m_Localized: General Freight
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782606
+    m_Localized: Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782607
+    m_Localized: Close details
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066934575104
+    m_Localized: Accept
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158016
+    m_Localized: "Accepting contract\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158017
+    m_Localized: Acceptance result is not confirmed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158018
+    m_Localized: This contract cannot be accepted now.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158019
+    m_Localized: Sign in is required to accept.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158020
+    m_Localized: Acceptance is not allowed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158021
+    m_Localized: This accept request is not valid.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158022
+    m_Localized: This accept request already exists.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158023
+    m_Localized: This offer is no longer available.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158024
+    m_Localized: This contract cannot be accepted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158025
+    m_Localized: Fleet is not eligible for this contract.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158026
+    m_Localized: No more contracts can be accepted now.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947660675604480
+    m_Localized: Equipment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400896
+    m_Localized: Available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400897
+    m_Localized: Unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400898
+    m_Localized: Not in this fleet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400899
+    m_Localized: On assignment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400900
+    m_Localized: Type mismatch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400901
+    m_Localized: Select
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400902
+    m_Localized: Selected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855767979220992
+    m_Localized: Level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301376
+    m_Localized: XP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301377
+    m_Localized: Reputation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301378
+    m_Localized: Unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301379
+    m_Localized: "Loading\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301380
+    m_Localized: Notifications
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301381
+    m_Localized: Messages
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301382
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301383
+    m_Localized: Game time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301384
+    m_Localized: Weather
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

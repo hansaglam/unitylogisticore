@@ -115,7 +115,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578070
-    m_Localized: "Demn\u00E4chst"
+    m_Localized: "DEMN\xC4CHST"
     m_Metadata:
       m_Items: []
   - m_Id: 120578071
@@ -123,7 +123,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578072
-    m_Localized: "Auftr\u00E4ge"
+    m_Localized: "Auftr\xE4ge"
     m_Metadata:
       m_Items: []
   - m_Id: 120578073
@@ -135,7 +135,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578075
-    m_Localized: "Stra\u00DFe"
+    m_Localized: "Stra\xDFe"
     m_Metadata:
       m_Items: []
   - m_Id: 120578076
@@ -151,11 +151,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578079
-    m_Localized: "Schlie\u00DFen"
+    m_Localized: "Schlie\xDFen"
     m_Metadata:
       m_Items: []
   - m_Id: 120578080
-    m_Localized: Dieser Bereich ist noch nicht verfügbar.
+    m_Localized: "Dieser Bereich ist noch nicht verf\xFCgbar."
     m_Metadata:
       m_Items: []
   - m_Id: 120578081
@@ -179,19 +179,131 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578086
-    m_Localized: ROAD
+    m_Localized: "Stra\xDFe"
     m_Metadata:
       m_Items: []
   - m_Id: 120578087
-    m_Localized: RAIL
+    m_Localized: Schiene
     m_Metadata:
       m_Items: []
   - m_Id: 120578088
-    m_Localized: SEA
+    m_Localized: See
     m_Metadata:
       m_Items: []
   - m_Id: 120578089
-    m_Localized: AIR
+    m_Localized: Luft
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578090
+    m_Localized: Europa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578091
+    m_Localized: Asien
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578092
+    m_Localized: Afrika
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578093
+    m_Localized: Nordamerika
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578094
+    m_Localized: "S\xFCdamerika"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578095
+    m_Localized: Ozeanien
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578096
+    m_Localized: Schwarzes Meer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578097
+    m_Localized: "\xC4g\xE4isches Meer"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578098
+    m_Localized: Mittelmeer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578099
+    m_Localized: Marmarameer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578100
+    m_Localized: Kaspisches Meer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578101
+    m_Localized: Adria
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578102
+    m_Localized: Rotes Meer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578103
+    m_Localized: Nordsee
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578104
+    m_Localized: Ostsee
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578105
+    m_Localized: Arabisches Meer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578106
+    m_Localized: "S\xFCdchinesisches Meer"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578107
+    m_Localized: Japanisches Meer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578108
+    m_Localized: Karibisches Meer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578109
+    m_Localized: Beringmeer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578110
+    m_Localized: Korallenmeer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578111
+    m_Localized: Tasmansee
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578112
+    m_Localized: Atlantischer Ozean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578113
+    m_Localized: Pazifischer Ozean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578114
+    m_Localized: Indischer Ozean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578115
+    m_Localized: Arktischer Ozean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578116
+    m_Localized: "S\xFCdlicher Ozean"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578117
+    m_Localized: "Dieser Transportmodus ist noch nicht verf\xFCgbar."
     m_Metadata:
       m_Items: []
   references:

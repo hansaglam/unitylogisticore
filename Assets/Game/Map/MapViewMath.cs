@@ -20,6 +20,209 @@ namespace LogistiCore.Map
                 orthographicSize = 0.0001f;
         }
 
+        /// <summary>
+        /// Fits a projected region into the open map rectangle. The camera still
+        /// covers the whole screen; the center shifts so the region lands in
+        /// <paramref name="viewport"/> rather than under the header, rail, or panel.
+        /// </summary>
+        public static void FitInViewport(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            float aspect,
+            float padding,
+            Rect viewport,
+            float screenWidth,
+            float screenHeight,
+            out Vector2 center,
+            out float orthographicSize)
+        {
+            Fit(boundsMin, boundsMax, aspect, padding, out center, out orthographicSize);
+            if (screenWidth < 1f || screenHeight < 1f || viewport.width < 24f || viewport.height < 24f)
+                return;
+
+            if (padding < 1f)
+                padding = 1f;
+            if (aspect < 0.05f)
+                aspect = 1f;
+
+            var spanX = Mathf.Max(0.0001f, boundsMax.x - boundsMin.x) * padding;
+            var spanY = Mathf.Max(0.0001f, boundsMax.y - boundsMin.y) * padding;
+            var widthFraction = Mathf.Clamp(viewport.width / screenWidth, 0.05f, 1f);
+            var heightFraction = Mathf.Clamp(viewport.height / screenHeight, 0.05f, 1f);
+            var sizeForHeight = spanY * 0.5f / heightFraction;
+            var sizeForWidth = spanX * 0.5f / (widthFraction * aspect);
+            orthographicSize = sizeForHeight > sizeForWidth ? sizeForHeight : sizeForWidth;
+            if (orthographicSize < 0.0001f)
+                orthographicSize = 0.0001f;
+
+            var nx = (viewport.xMin + viewport.xMax) * 0.5f / screenWidth;
+            var ny = (viewport.yMin + viewport.yMax) * 0.5f / screenHeight;
+            var focus = (boundsMin + boundsMax) * 0.5f;
+            center = new Vector2(
+                focus.x - (nx - 0.5f) * 2f * orthographicSize * aspect,
+                focus.y - (ny - 0.5f) * 2f * orthographicSize);
+        }
+
+        /// <summary>
+        /// Contains a presentation window, then, when a wide viewport would
+        /// otherwise zoom out to the window's height, stops at
+        /// <paramref name="widthBias"/> times the width fit.
+        /// </summary>
+        public static void FitFocus(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            float aspect,
+            float padding,
+            Rect viewport,
+            float screenWidth,
+            float screenHeight,
+            float widthBias,
+            out Vector2 center,
+            out float orthographicSize)
+        {
+            FitInViewport(
+                boundsMin,
+                boundsMax,
+                aspect,
+                padding,
+                viewport,
+                screenWidth,
+                screenHeight,
+                out center,
+                out orthographicSize);
+            if (widthBias <= 1f || screenWidth < 1f || screenHeight < 1f || viewport.width < 24f || viewport.height < 24f)
+                return;
+
+            if (aspect < 0.05f)
+                aspect = 1f;
+            if (padding < 1f)
+                padding = 1f;
+            var spanX = Mathf.Max(0.0001f, boundsMax.x - boundsMin.x) * padding;
+            var widthFraction = Mathf.Clamp(viewport.width / screenWidth, 0.05f, 1f);
+            var capped = spanX * 0.5f / (widthFraction * aspect) * widthBias;
+            if (orthographicSize <= capped)
+                return;
+
+            orthographicSize = capped;
+            var nx = (viewport.xMin + viewport.xMax) * 0.5f / screenWidth;
+            var ny = (viewport.yMin + viewport.yMax) * 0.5f / screenHeight;
+            var focus = (boundsMin + boundsMax) * 0.5f;
+            center = new Vector2(
+                focus.x - (nx - 0.5f) * 2f * orthographicSize * aspect,
+                focus.y - (ny - 0.5f) * 2f * orthographicSize);
+        }
+
+        /// <summary>
+        /// Fits a region, then, when the world-edge clamp crops it, tries smaller
+        /// orthographic sizes down to the other axis. It never zooms out past the
+        /// single-axis fit: a near-world zoom would raise a coverage percentage
+        /// while turning a continent into a thumbnail. A candidate is kept only
+        /// when it does not give back coverage already achieved on either axis.
+        /// </summary>
+        public static void FitClamped(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            float aspect,
+            float padding,
+            Rect viewport,
+            float screenWidth,
+            float screenHeight,
+            float minSize,
+            float maxSize,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            out Vector2 center,
+            out float orthographicSize)
+        {
+            FitInViewport(
+                boundsMin,
+                boundsMax,
+                aspect,
+                padding,
+                viewport,
+                screenWidth,
+                screenHeight,
+                out center,
+                out var fitted);
+            fitted = ClampSize(fitted, minSize, maxSize);
+            center = ClampCenter(center, fitted, aspect, worldMin, worldMax);
+            orthographicSize = fitted;
+            if (screenWidth < 1f || screenHeight < 1f || viewport.width < 24f || viewport.height < 24f)
+                return;
+
+            var fittedCover = ViewportSpan(boundsMin, boundsMax, center, fitted, aspect, viewport, screenWidth, screenHeight);
+            if (fittedCover.x >= 0.995f && fittedCover.y >= 0.995f)
+                return;
+
+            if (aspect < 0.05f)
+                aspect = 1f;
+            if (padding < 1f)
+                padding = 1f;
+            var spanX = Mathf.Max(0.0001f, boundsMax.x - boundsMin.x) * padding;
+            var spanY = Mathf.Max(0.0001f, boundsMax.y - boundsMin.y) * padding;
+            var widthFraction = Mathf.Clamp(viewport.width / screenWidth, 0.05f, 1f);
+            var heightFraction = Mathf.Clamp(viewport.height / screenHeight, 0.05f, 1f);
+            var sizeForWidth = ClampSize(spanX * 0.5f / (widthFraction * aspect), minSize, maxSize);
+            var sizeForHeight = ClampSize(spanY * 0.5f / heightFraction, minSize, maxSize);
+            var lo = sizeForWidth < sizeForHeight ? sizeForWidth : sizeForHeight;
+            var hi = fitted;
+            if (lo > hi)
+            {
+                var swap = lo;
+                lo = hi;
+                hi = swap;
+            }
+
+            var bestScore = Mathf.Min(fittedCover.x, fittedCover.y);
+            var bestSum = fittedCover.x + fittedCover.y;
+            var focus = (boundsMin + boundsMax) * 0.5f;
+            var nx = (viewport.xMin + viewport.xMax) * 0.5f / screenWidth;
+            var ny = (viewport.yMin + viewport.yMax) * 0.5f / screenHeight;
+            const int steps = 48;
+            for (var i = 0; i <= steps; i++)
+            {
+                var candidate = lo + (hi - lo) * (i / (float)steps);
+                var shifted = new Vector2(
+                    focus.x - (nx - 0.5f) * 2f * candidate * aspect,
+                    focus.y - (ny - 0.5f) * 2f * candidate);
+                shifted = ClampCenter(shifted, candidate, aspect, worldMin, worldMax);
+                var got = ViewportSpan(boundsMin, boundsMax, shifted, candidate, aspect, viewport, screenWidth, screenHeight);
+                if (got.x < fittedCover.x - 0.005f || got.y < fittedCover.y - 0.005f)
+                    continue;
+
+                var score = Mathf.Min(got.x, got.y);
+                var sum = got.x + got.y;
+                if (score > bestScore + 0.0005f || (Mathf.Abs(score - bestScore) <= 0.0005f && sum > bestSum + 0.0005f))
+                {
+                    bestScore = score;
+                    bestSum = sum;
+                    center = shifted;
+                    orthographicSize = candidate;
+                }
+            }
+        }
+
+        public static Vector2 ViewportSpan(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            Vector2 center,
+            float orthographicSize,
+            float aspect,
+            Rect viewport,
+            float screenWidth,
+            float screenHeight)
+        {
+            var west = ScreenToWorld(new Vector2(viewport.xMin, viewport.center.y), center, orthographicSize, aspect, screenWidth, screenHeight).x;
+            var east = ScreenToWorld(new Vector2(viewport.xMax, viewport.center.y), center, orthographicSize, aspect, screenWidth, screenHeight).x;
+            var south = ScreenToWorld(new Vector2(viewport.center.x, viewport.yMin), center, orthographicSize, aspect, screenWidth, screenHeight).y;
+            var north = ScreenToWorld(new Vector2(viewport.center.x, viewport.yMax), center, orthographicSize, aspect, screenWidth, screenHeight).y;
+            var spanX = Mathf.Max(0.0001f, boundsMax.x - boundsMin.x);
+            var spanY = Mathf.Max(0.0001f, boundsMax.y - boundsMin.y);
+            return new Vector2(
+                Mathf.Max(0f, Mathf.Min(boundsMax.x, east) - Mathf.Max(boundsMin.x, west)) / spanX,
+                Mathf.Max(0f, Mathf.Min(boundsMax.y, north) - Mathf.Max(boundsMin.y, south)) / spanY);
+        }
+
         public static float ClampSize(float size, float min, float max)
         {
             if (min > max)

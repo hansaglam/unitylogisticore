@@ -191,6 +191,118 @@ MonoBehaviour:
     m_Key: map.rail.air
     m_Metadata:
       m_Items: []
+  - m_Id: 120578090
+    m_Key: map.view.europe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578091
+    m_Key: map.view.asia
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578092
+    m_Key: map.view.africa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578093
+    m_Key: map.view.north_america
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578094
+    m_Key: map.view.south_america
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578095
+    m_Key: map.view.oceania
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578096
+    m_Key: map.water.black_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578097
+    m_Key: map.water.aegean_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578098
+    m_Key: map.water.mediterranean_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578099
+    m_Key: map.water.marmara_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578100
+    m_Key: map.water.caspian_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578101
+    m_Key: map.water.adriatic_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578102
+    m_Key: map.water.red_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578103
+    m_Key: map.water.north_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578104
+    m_Key: map.water.baltic_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578105
+    m_Key: map.water.arabian_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578106
+    m_Key: map.water.south_china_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578107
+    m_Key: map.water.japan_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578108
+    m_Key: map.water.caribbean_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578109
+    m_Key: map.water.bering_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578110
+    m_Key: map.water.coral_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578111
+    m_Key: map.water.tasman_sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578112
+    m_Key: map.ocean.atlantic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578113
+    m_Key: map.ocean.pacific
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578114
+    m_Key: map.ocean.indian
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578115
+    m_Key: map.ocean.arctic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578116
+    m_Key: map.ocean.southern
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578117
+    m_Key: map.soon.body
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

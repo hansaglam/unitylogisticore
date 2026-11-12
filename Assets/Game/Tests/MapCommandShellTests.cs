@@ -151,7 +151,7 @@ namespace LogistiCore.Tests
             Assert.AreEqual("Flotte", Value(collection, "de", MapContent.ModeFleet));
             Assert.AreEqual("Aufträge", Value(collection, "de", MapContent.ModeJobs));
             Assert.AreEqual("Straße", Value(collection, "de", MapContent.ModeRoad));
-            Assert.AreEqual("Demnächst", Value(collection, "de", MapContent.ModeSoon));
+            Assert.AreEqual("DEMNÄCHST", Value(collection, "de", MapContent.ModeSoon));
             Assert.AreEqual("This section is not available yet.", Value(collection, "en", MapContent.ModuleUnavailable));
             Assert.AreEqual("Bu bölüm henüz kullanıma hazır değil.", Value(collection, "tr", MapContent.ModuleUnavailable));
             Assert.AreEqual("Dieser Bereich ist noch nicht verfügbar.", Value(collection, "de", MapContent.ModuleUnavailable));
@@ -161,11 +161,12 @@ namespace LogistiCore.Tests
             Assert.AreEqual("Depolar", Value(collection, "tr", MapContent.RailWarehouses));
             Assert.AreEqual("Depots", Value(collection, "en", MapContent.RailWarehouses));
             Assert.AreEqual("Warehouses", Value(collection, "en", MapContent.ModeWarehouses));
-            Assert.AreEqual("Kara", Value(collection, "tr", MapContent.ModeRoad));
-            Assert.AreEqual("ROAD", Value(collection, "tr", MapContent.RailRoad));
-            Assert.AreEqual("RAIL", Value(collection, "en", MapContent.RailRail));
-            Assert.AreEqual("SEA", Value(collection, "de", MapContent.RailSea));
-            Assert.AreEqual("AIR", Value(collection, "tr", MapContent.RailAir));
+            Assert.AreEqual("Karayolu", Value(collection, "tr", MapContent.ModeRoad));
+            Assert.AreEqual("Karayolu", Value(collection, "tr", MapContent.RailRoad));
+            Assert.AreEqual("Rail", Value(collection, "en", MapContent.RailRail));
+            Assert.AreEqual("See", Value(collection, "de", MapContent.RailSea));
+            Assert.AreEqual("Havayolu", Value(collection, "tr", MapContent.RailAir));
+            Assert.AreEqual("Bu taşımacılık modu henüz kullanıma açık değil.", Value(collection, "tr", MapContent.SoonBody));
             Assert.AreEqual("Close", Value(collection, "en", MapContent.Close));
             Assert.AreEqual("Kapat", Value(collection, "tr", MapContent.Close));
             Assert.AreEqual("Schließen", Value(collection, "de", MapContent.Close));
@@ -193,10 +194,14 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(1f, GraphicAlpha(shell.transform, "ModuleRail"), 0.001f);
                 Assert.AreEqual(1f, GraphicAlpha(shell.transform, "ContextPanel"), 0.001f);
                 Assert.AreEqual(1f, GraphicAlpha(shell.transform, "SummaryBar"), 0.001f);
-                Assert.IsNotNull(Find(shell.transform, "BrandMark"));
+                Assert.IsNull(Find(shell.transform, "BrandMark"));
+                Assert.AreEqual(1, CountNamed(shell.transform, "RegionChip"));
+                Assert.AreEqual("Logisti", Find(shell.transform, "Brand").GetComponent<Text>().text);
+                Assert.AreEqual("Core", Find(shell.transform, "BrandCore").GetComponent<Text>().text);
                 Assert.IsNotNull(Find(shell.transform, "Icon"));
                 Assert.IsNull(Find(shell.transform, "Motif"));
-                Assert.IsNull(Find(shell.transform, "Soon"));
+                for (var mode = 0; mode < 8; mode++)
+                    Assert.IsNull(Find(shell.transform, "Mode" + mode).Find("Soon"), "Mode" + mode);
                 AssertRailColumn(shell, 1920f, 1080f, new Rect(0f, 0f, 1920f, 1080f));
                 Assert.IsNotNull(Find(shell.transform, "CommandHeader"));
                 Assert.IsNotNull(Find(shell.transform, "ModuleRail"));
@@ -206,8 +211,12 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(1, Count<EventSystem>(scene));
                 Assert.IsNull(Find(shell.transform, "Collapse"));
                 Assert.AreEqual(MapCommandShell.PanelState.Closed, shell.State);
+                Assert.IsNull(Find(shell.transform, "CurrentMode"));
+                Assert.IsNull(Find(shell.transform, "Page"));
+                Assert.IsFalse(SurfaceRaised(shell, "Mode0"));
                 Assert.IsFalse(shell.CloseButton.gameObject.activeInHierarchy);
-                Assert.AreEqual(0, shell.HomeButton.onClick.GetPersistentEventCount());
+                Assert.IsNull(shell.HomeButton);
+                Assert.IsNull(Find(shell.transform, "Home"));
                 var future = Find(shell.transform, "FutureModes");
                 Assert.IsNotNull(future);
                 Assert.AreEqual(MapContent.FutureModes.Length, future.GetComponentsInChildren<Button>(true).Length);
@@ -220,25 +229,7 @@ namespace LogistiCore.Tests
                         continue;
 
                     var name = graphics[i].gameObject.name;
-                    Assert.That(
-                        name,
-                        Is.EqualTo("CommandHeader")
-                            .Or.EqualTo("ModuleRail")
-                            .Or.EqualTo("RailViewport")
-                            .Or.EqualTo("ContextPanel")
-                            .Or.EqualTo("SummaryBar")
-                            .Or.EqualTo("Home")
-                            .Or.EqualTo("Close")
-                            .Or.EqualTo("CurrentMode")
-                            .Or.EqualTo("Mode0")
-                            .Or.EqualTo("Mode1")
-                            .Or.EqualTo("Mode2")
-                            .Or.EqualTo("Mode3")
-                            .Or.EqualTo("Mode4")
-                            .Or.EqualTo("Mode5")
-                            .Or.EqualTo("Mode6")
-                            .Or.EqualTo("Mode7"),
-                        name);
+                    Assert.IsTrue(AllowedRaycast(name), name);
                 }
 
                 Assert.IsFalse(Find(shell.transform, "LeftBleed").GetComponent<Image>().raycastTarget);
@@ -255,15 +246,23 @@ namespace LogistiCore.Tests
                 Assert.Less(shell.Viewport.width, closedWidth);
                 shell.ShowModule(0);
                 Assert.AreEqual(MapCommandShell.PanelState.Module, shell.State);
+                Assert.IsTrue(shell.ManagementOpen);
+                Assert.AreEqual(MapModule.Fleet, shell.ActiveModule);
+                Assert.AreEqual("izmir", shell.ShownCity);
                 Assert.IsFalse(shell.CoordinatesVisible);
+                Assert.IsFalse(shell.ContextOpen);
+                Assert.AreEqual(closedWidth, shell.Viewport.width, 0.5f);
                 Assert.AreEqual(SurfaceRaised(shell, "Mode0"), true);
                 Assert.IsFalse(SurfaceRaised(shell, "Mode1"));
                 shell.ShowModule(3);
+                Assert.AreEqual(MapModule.Market, shell.ActiveModule);
                 Assert.IsFalse(SurfaceRaised(shell, "Mode0"));
                 Assert.IsTrue(SurfaceRaised(shell, "Mode3"));
                 shell.ShowMapContext();
                 Assert.AreEqual(MapCommandShell.PanelState.Module, shell.State);
-                Assert.IsTrue(SurfaceRaised(shell, "CurrentMode"));
+                Assert.IsFalse(shell.ManagementOpen);
+                Assert.IsNull(Find(shell.transform, "CurrentMode"));
+                Assert.IsFalse(SurfaceRaised(shell, "Mode0"));
                 Assert.IsFalse(SurfaceRaised(shell, "Mode3"));
                 shell.CloseContext();
                 Assert.AreEqual(MapCommandShell.PanelState.Closed, shell.State);
@@ -273,14 +272,12 @@ namespace LogistiCore.Tests
                 shell.ShowCity("trabzon");
                 StringAssert.Contains("40", shell.CoordinateText);
 
-                var homeRect = shell.HomeButton.GetComponent<RectTransform>();
-                var homeLabel = homeRect.Find("Label").GetComponent<Text>();
-                var homeMark = homeRect.Find("Mark").GetComponent<Text>();
-                Assert.AreEqual(0f, homeLabel.color.a, 0.001f);
-                Assert.LessOrEqual(homeLabel.rectTransform.rect.width, 1f);
-                Assert.AreEqual("\u2190", homeMark.text);
-                Assert.Greater(homeMark.color.a, 0.5f);
-                Assert.IsFalse(homeMark.raycastTarget);
+                Assert.IsFalse(shell.RegionMenuOpen);
+                shell.ToggleRegionMenu();
+                Assert.IsTrue(shell.RegionMenuOpen);
+                shell.ToggleRegionMenu();
+                Assert.IsFalse(shell.RegionMenuOpen);
+                Assert.IsFalse(Find(shell.transform, "RegionMenu").gameObject.activeInHierarchy);
 
                 var phone = new Rect(186f, 60f, 2496f, 1200f);
                 shell.Apply(2868f, 1320f, phone);
@@ -306,25 +303,40 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(0f, 186f + phoneRail.anchoredPosition.x * phoneScale, 1f);
                 AssertRailColumn(shell, 2868f, 1320f, phone);
                 Assert.IsTrue(phoneRail.GetComponent<ScrollRect>().vertical);
-                var phoneIcon = Find(shell.transform, "CurrentMode").Find("Icon") as RectTransform;
-                var phoneLabel = Find(shell.transform, "CurrentMode").Find("Label").GetComponent<Text>();
+                var phoneContent = Find(phoneRail, "RailContent") as RectTransform;
+                var phoneViewport = Find(phoneRail, "RailViewport") as RectTransform;
+                Assert.Greater(phoneContent.sizeDelta.y, phoneViewport.sizeDelta.y + 1f);
+                var phoneIcon = Find(shell.transform, "Mode0").Find("Icon") as RectTransform;
+                var phoneLabel = Find(shell.transform, "Mode0").Find("Label").GetComponent<Text>();
                 Assert.Greater(phoneIcon.sizeDelta.x * phoneScale, 36f);
                 Assert.Greater(phoneLabel.fontSize * phoneScale, 15f);
+                var phoneMode0 = Find(shell.transform, "Mode0") as RectTransform;
+                var phoneModeLabel = phoneMode0.Find("Label") as RectTransform;
+                Assert.Greater(phoneIcon.position.y, phoneModeLabel.position.y);
+                Assert.Less(
+                    phoneIcon.position.y - phoneModeLabel.position.y,
+                    phoneMode0.sizeDelta.y * phoneScale * 0.72f);
                 var safeSlice = shell.RailRect.width - phone.xMin;
                 Assert.Less(safeSlice, MapCommandLayout.TextWidth(MapCommandLayout.LongestMode, MapCommandLayout.Evaluate(2868f, 1320f, phone, true).FontPixels));
                 Assert.LessOrEqual(safeSlice, MapCommandLayout.RailContentPixels(MapCommandLayout.Evaluate(2868f, 1320f, phone, true).FontPixels) + 0.6f);
                 Assert.AreEqual(2868f, 186f + (phoneContext.anchoredPosition.x + phoneContext.sizeDelta.x) * phoneScale, 1f);
                 var brand = Find(shell.transform, "Brand") as RectTransform;
+                var brandCore = Find(shell.transform, "BrandCore") as RectTransform;
                 Assert.GreaterOrEqual(phoneHeader.anchoredPosition.x * phoneScale + 186f + brand.anchoredPosition.x * phoneScale, phone.xMin - 0.5f);
-                var phoneHome = shell.HomeButton.GetComponent<RectTransform>();
-                var homeLeft = 186f + (phoneHeader.anchoredPosition.x + phoneHome.anchoredPosition.x) * phoneScale;
-                var homeRight = homeLeft + phoneHome.sizeDelta.x * phoneScale;
-                var homeBottom = 60f + (phoneHeader.anchoredPosition.y + phoneHome.anchoredPosition.y) * phoneScale;
-                var homeTop = homeBottom + phoneHome.sizeDelta.y * phoneScale;
-                Assert.GreaterOrEqual(homeLeft, phone.xMin - 0.5f);
-                Assert.LessOrEqual(homeRight, phone.xMax + 0.5f);
-                Assert.GreaterOrEqual(homeBottom, phone.yMin - 0.5f);
-                Assert.LessOrEqual(homeTop, phone.yMax + 0.5f);
+                Assert.AreEqual(brand.anchoredPosition.y, brandCore.anchoredPosition.y, 0.05f);
+                Assert.AreEqual(brand.GetComponent<Text>().fontSize, brandCore.GetComponent<Text>().fontSize);
+                var phoneChip = Find(shell.transform, "RegionChip") as RectTransform;
+                var coreRight = 186f + (phoneHeader.anchoredPosition.x + brandCore.anchoredPosition.x + brandCore.sizeDelta.x) * phoneScale;
+                var chipLeft = 186f + (phoneHeader.anchoredPosition.x + phoneChip.anchoredPosition.x) * phoneScale;
+                Assert.Greater(chipLeft, coreRight + 0.5f);
+                var chipRight = chipLeft + phoneChip.sizeDelta.x * phoneScale;
+                var chipBottom = 60f + (phoneHeader.anchoredPosition.y + phoneChip.anchoredPosition.y) * phoneScale;
+                var chipTop = chipBottom + phoneChip.rect.height * phoneScale;
+                Assert.GreaterOrEqual(chipLeft, phone.xMin - 0.5f);
+                Assert.LessOrEqual(chipRight, phone.xMax + 0.5f);
+                Assert.GreaterOrEqual(chipBottom, phone.yMin - 0.5f);
+                Assert.LessOrEqual(chipTop, phone.yMax + 0.5f);
+                Assert.GreaterOrEqual(phoneChip.rect.height * phoneScale, 40f);
                 var close = shell.CloseButton.GetComponent<RectTransform>();
                 var closeRight = 186f + (phoneContext.anchoredPosition.x + phoneContext.sizeDelta.x + close.anchoredPosition.x) * phoneScale;
                 Assert.LessOrEqual(closeRight, phone.xMax + 0.5f);
@@ -340,10 +352,10 @@ namespace LogistiCore.Tests
                 StringAssert.Contains("40", shell.CoordinateText);
                 var compact = new Rect(32f, 16f, 868f, 398f);
                 shell.Apply(932f, 430f, compact);
-                Assert.IsFalse(shell.FutureModesVisible);
+                Assert.IsTrue(shell.FutureModesVisible);
                 var rail = Find(shell.transform, "ModuleRail") as RectTransform;
                 var scale = MapHudLayout.CanvasScale(932f, 430f);
-                Assert.Less(rail.sizeDelta.y * scale, shell.RailRect.height * 0.5f);
+                Assert.AreEqual(shell.RailRect.height, rail.sizeDelta.y * scale, 1.5f);
                 var leftBleed = Find(shell.transform, "LeftBleed") as RectTransform;
                 var rightBleed = Find(shell.transform, "RightBleed") as RectTransform;
                 Assert.IsFalse(leftBleed.GetComponent<UnityEngine.UI.Image>().raycastTarget);
@@ -351,7 +363,7 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(0f, 32f + leftBleed.anchoredPosition.x * scale, 1f);
                 Assert.AreEqual(32f, leftBleed.sizeDelta.x * scale, 1f);
                 Assert.AreEqual(932f, 32f + (rightBleed.anchoredPosition.x + rightBleed.sizeDelta.x) * scale, 1f);
-                Assert.Greater(leftBleed.sizeDelta.y * scale, rail.sizeDelta.y * scale);
+                Assert.GreaterOrEqual(leftBleed.sizeDelta.y * scale, rail.sizeDelta.y * scale - 0.5f);
                 AssertRailColumn(shell, 932f, 430f, compact);
                 Assert.AreEqual("izmir", MapCities.All[0].Id);
                 Assert.AreEqual(38.438096d, MapCities.All[0].Latitude, 0.0000001d);
@@ -370,7 +382,7 @@ namespace LogistiCore.Tests
         {
             var scale = MapHudLayout.CanvasScale(width, height);
             var metrics = MapCommandLayout.Evaluate(width, height, safe, true);
-            var touch = MapCommandLayout.RailTouchPixels(metrics.FontPixels);
+            var touch = MapCommandLayout.RailRowPixels(metrics.FontPixels, width, height);
             var iconPixels = MapCommandLayout.RailIconPixels(metrics.FontPixels) / scale;
             var labelPixels = MapCommandLayout.RailLabelPixels(metrics.FontPixels) / scale;
             var rail = Find(shell.transform, "ModuleRail") as RectTransform;
@@ -383,7 +395,7 @@ namespace LogistiCore.Tests
             Assert.IsTrue(viewport.GetComponent<Image>().raycastTarget);
             Assert.IsFalse(scroll.horizontal);
             Assert.AreEqual(content.sizeDelta.y > viewport.sizeDelta.y + 1f, scroll.vertical);
-            var names = new[] { "CurrentMode", "Mode0", "Mode1", "Mode2", "Mode3", "Mode4", "Mode5", "Mode6", "Mode7" };
+            var names = new[] { "Mode0", "Mode1", "Mode2", "Mode3", "Mode4", "Mode5", "Mode6", "Mode7" };
             var icons = new Sprite[names.Length];
             RectTransform previous = null;
             for (var i = 0; i < names.Length; i++)
@@ -396,14 +408,16 @@ namespace LogistiCore.Tests
                 Assert.IsNotNull(label);
                 var iconImage = icon.GetComponent<Image>();
                 Assert.IsFalse(iconImage.raycastTarget);
-                Assert.AreEqual(iconPixels, icon.sizeDelta.x, 0.75f, names[i]);
+                var expectedIcon = MapModuleIds.IsTransport(i) ? iconPixels * 0.62f : iconPixels;
+                Assert.AreEqual(expectedIcon, icon.sizeDelta.x, 0.75f, names[i]);
                 Assert.AreEqual(icon.sizeDelta.x, icon.sizeDelta.y, 0.05f, names[i]);
-                Assert.AreEqual(MapRailIcons.Get(i), iconImage.sprite);
+                Assert.AreEqual(MapRailIcons.Get(i + 1), iconImage.sprite);
                 icons[i] = iconImage.sprite;
                 var text = label.GetComponent<Text>();
                 Assert.AreEqual(TextAnchor.MiddleCenter, text.alignment);
                 Assert.AreEqual(VerticalWrapMode.Overflow, text.verticalOverflow);
-                Assert.GreaterOrEqual(text.fontSize, labelPixels - 1.1f, names[i]);
+                if (!MapModuleIds.IsTransport(i))
+                    Assert.GreaterOrEqual(text.fontSize, labelPixels - 1.1f, names[i]);
                 Assert.Greater(icon.position.y, label.position.y, names[i]);
                 if (!row.gameObject.activeInHierarchy)
                     continue;
@@ -432,7 +446,45 @@ namespace LogistiCore.Tests
                     Assert.AreNotSame(icons[i], icons[j]);
             }
 
-            Assert.AreEqual(0, shell.HomeButton.onClick.GetPersistentEventCount());
+            Assert.IsNull(shell.HomeButton);
+        }
+
+        static bool AllowedRaycast(string name)
+        {
+            if (name != null && (name.StartsWith("Management") || name.StartsWith("Soon") || name.StartsWith("MapSoon") || name.StartsWith("RailScroll")))
+                return true;
+
+            switch (name)
+            {
+                case "CommandHeader":
+                case "ModuleRail":
+                case "RailViewport":
+                case "ContextPanel":
+                case "SummaryBar":
+                case "Close":
+                case "RegionChip":
+                case "RegionMenu":
+                case "RegionViewport":
+                case "Region0":
+                case "Region1":
+                case "Region2":
+                case "Region3":
+                case "Region4":
+                case "Region5":
+                case "Region6":
+                case "Region7":
+                case "Mode0":
+                case "Mode1":
+                case "Mode2":
+                case "Mode3":
+                case "Mode4":
+                case "Mode5":
+                case "Mode6":
+                case "Mode7":
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         static bool SurfaceRaised(MapCommandShell shell, string name)
@@ -460,6 +512,14 @@ namespace LogistiCore.Tests
             var image = found.GetComponent<Image>();
             Assert.IsNotNull(image, name);
             return image.color.a;
+        }
+
+        static int CountNamed(Transform parent, string name)
+        {
+            var count = parent.name == name ? 1 : 0;
+            for (var i = 0; i < parent.childCount; i++)
+                count += CountNamed(parent.GetChild(i), name);
+            return count;
         }
 
         static Transform Find(Transform root, string name)

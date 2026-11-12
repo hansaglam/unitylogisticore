@@ -11,7 +11,12 @@ import { digest, pageRequest } from "./logisticsModel";
 import { assertLocalEnvironment } from "./localEnvironment";
 import { acceptPayload, clockTime, contractDto, contractIdFor, epochFor, expired, makeTerms, ServerClock, serverClock, validateContract } from "./contractModel";
 import { readContractConfig, requireContractEligibility } from "./contractEligibility";
+import { DEV_FIRST_CONTRACT_CANDIDATES, LOCAL_DEV_CONTRACT_VERSION } from "./devContractIds";
+import { LOCAL_DEV_FLEET_V2, validateDevFleetV2 } from "./devFleetCatalog";
+import { LOCAL_DEV_ROUTE_NETWORK_V2, devRouteNetworkV2Digest } from "./devRouteNetworkV2";
 import { readPinnedCosts, settlementDto } from "./operatingCosts";
+import { assertLogisticsRepinComplete } from "./repinCatalog";
+import { ROUTE_NETWORK_COLLECTION, assertContractRoutesOnNetwork, requireRouteNetwork } from "./routeNetworkModel";
 
 const poolRef = (state: CompanyState, epoch: number) => state.companyRef.collection("contractPools").doc(`epoch_${safe(epoch)}`);
 /** Validate the entire bounded pool, including aggregate quota, without repricing snapshots. */
@@ -52,6 +57,7 @@ export function generateContractOffers(db: Firestore, auth: {uid:string}|undefin
     validate(payload){exact(payload as DocumentData,"");return {configVersion:version,epoch,assets};},
     async resolveCompany(tx,uid){
       const state=await readFoundation(tx,db,uid);if(!state.economy) invalid();
+      if(version===LOCAL_DEV_CONTRACT_VERSION) await assertLogisticsRepinComplete(tx,db,state);
       if(!await readPool(tx,state,epoch)) {
         const remnants=await tx.getAll(state.playerRef.collection("commands").doc(key),
           ...Array.from({length:5},(_,slot)=>state.companyRef.collection("contracts").doc(contractIdFor(state.companyId,epoch,slot))));
@@ -62,6 +68,15 @@ export function generateContractOffers(db: Firestore, auth: {uid:string}|undefin
     async apply(tx){
       const state=states.get(tx)!;
       const {config,costs,market,liveOps}=await readContractConfig(tx,db,state,version);
+      if(version===LOCAL_DEV_CONTRACT_VERSION){
+        const network=requireRouteNetwork(
+          (await tx.get(db.collection(ROUTE_NETWORK_COLLECTION).doc(LOCAL_DEV_ROUTE_NETWORK_V2))).data(),
+          LOCAL_DEV_ROUTE_NETWORK_V2, devRouteNetworkV2Digest());
+        assertContractRoutesOnNetwork(config, network);
+        if(config.logisticsVersion!==LOCAL_DEV_FLEET_V2 || config.logisticsHash!==digest(validateDevFleetV2()) ||
+           config.epochDurationMs!==DEV_FIRST_CONTRACT_CANDIDATES.epochDurationMs ||
+           config.offerTtlMs!==DEV_FIRST_CONTRACT_CANDIDATES.offerTtlMs) invalid();
+      }
       if((await tx.get(poolRef(state,epoch))).exists) invalid();
       const now=clockTime(clock); const expiry=epoch*config.epochDurationMs+config.offerTtlMs;
       if(epochFor(now,config.epochDurationMs)!==epoch || now>=expiry) throw new CommandError("OFFER_EXPIRED");

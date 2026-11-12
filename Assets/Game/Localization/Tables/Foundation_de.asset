@@ -123,15 +123,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 372236310
-    m_Localized: "Ziel ausw\u00E4hlen."
+    m_Localized: "Ziel ausw\xE4hlen."
     m_Metadata:
       m_Items: []
   - m_Id: 372236311
-    m_Localized: "Entdecke St\u00E4dte und die Weltkarte."
+    m_Localized: "Entdecke St\xE4dte und die Weltkarte."
     m_Metadata:
       m_Items: []
   - m_Id: 372236312
-    m_Localized: "\u00DCbersicht \u00F6ffnen."
+    m_Localized: "\xDCbersicht \xF6ffnen."
     m_Metadata:
       m_Items: []
   - m_Id: 372236313

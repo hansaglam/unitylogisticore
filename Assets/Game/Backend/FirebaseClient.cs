@@ -57,8 +57,11 @@ namespace LogistiCore.Backend
         static readonly object Sync = new object();
         static int _mainThreadId;
         static int _connectAttempts;
+        static bool _sdkAppReady;
         static ClientBackendPhase _phase = ClientBackendPhase.Idle;
         static ClientBackendStatus _status;
+
+        internal static event Action<ClientBackendStatus> StatusChanged;
 
         internal static ConnectHandler Connect = SdkConnect;
 
@@ -77,6 +80,15 @@ namespace LogistiCore.Backend
             {
                 lock (Sync)
                     return _connectAttempts;
+            }
+        }
+
+        internal static bool SdkAppReady
+        {
+            get
+            {
+                lock (Sync)
+                    return _sdkAppReady;
             }
         }
 
@@ -158,8 +170,11 @@ namespace LogistiCore.Backend
                     GameLog.Info("Firebase", logDetail);
                 else if (logError)
                     GameLog.Error("Firebase", logDetail);
+                ClientBackendStatus offline;
                 lock (Sync)
-                    return _status;
+                    offline = _status;
+                RaiseStatus(offline);
+                return offline;
             }
 
             try
@@ -194,6 +209,7 @@ namespace LogistiCore.Backend
             {
                 _mainThreadId = Thread.CurrentThread.ManagedThreadId;
                 _connectAttempts = 0;
+                _sdkAppReady = false;
                 _phase = ClientBackendPhase.Idle;
                 _status = default;
                 Connect = SdkConnect;
@@ -222,6 +238,14 @@ namespace LogistiCore.Backend
                 GameLog.Error("Firebase", detail);
             else
                 GameLog.Info("Firebase", detail);
+            RaiseStatus(_status);
+        }
+
+        static void RaiseStatus(ClientBackendStatus status)
+        {
+            var handler = StatusChanged;
+            if (handler != null)
+                handler(status);
         }
 
         static void SdkConnect(
@@ -254,6 +278,8 @@ namespace LogistiCore.Backend
                         ApiKey = settings.ApiKey
                     };
                     var app = FirebaseApp.Create(options);
+                    lock (Sync)
+                        _sdkAppReady = true;
                     if (decision == ClientConnectionDecision.ConnectToEmulator)
                         ApplyEmulator(app, settings);
                     completed(ClientSdkResult.Ready);

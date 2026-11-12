@@ -1,0 +1,591 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Ops_de
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: de
+  m_SharedData: {fileID: 11400000, guid: 8d145d43c69c84e61a50f556354c2ad7, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 481288192
+    m_Localized: Flotte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871104
+    m_Localized: "Auftr\xE4ge"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871105
+    m_Localized: "Lagerh\xE4user"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871106
+    m_Localized: Markt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871107
+    m_Localized: Keine Live-Fuhrparkverbindung.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871108
+    m_Localized: Keine Live-Auftragsverbindung.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871109
+    m_Localized: Keine Live-Lagerverbindung.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871110
+    m_Localized: Keine Live-Marktverbindung.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871111
+    m_Localized: Erweitern
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871112
+    m_Localized: Kompakt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871113
+    m_Localized: Module
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799841447936
+    m_Localized: "Operationen werden gepr\xFCft\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030848
+    m_Localized: Operationen konnten nicht geladen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030849
+    m_Localized: Keine aktiven Operationen.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030850
+    m_Localized: Eine aktive Operation.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030851
+    m_Localized: Mehrere aktive Operationen.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131269828608
+    m_Localized: "Flotte wird geladen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411520
+    m_Localized: Keine Fahrzeuge in dieser Flotte.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411521
+    m_Localized: Filodaten konnten nicht geladen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411522
+    m_Localized: "Eigene Lkw und Fahrer sind aufgef\xFChrt."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411523
+    m_Localized: "Verf\xFCgbar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411524
+    m_Localized: Im Einsatz
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411525
+    m_Localized: "Au\xDFer Betrieb"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411526
+    m_Localized: Unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411527
+    m_Localized: Lkw
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411528
+    m_Localized: Fahrer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411529
+    m_Localized: "Anh\xE4nger"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411530
+    m_Localized: Derzeit zugewiesen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411531
+    m_Localized: Keine aktuelle Zuweisung
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411532
+    m_Localized: "Kapazit\xE4t"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411533
+    m_Localized: Standort unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411534
+    m_Localized: Stadtstandort bekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411535
+    m_Localized: Gemeldete Fahrzeugposition
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411536
+    m_Localized: Stadt zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411537
+    m_Localized: Position zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411538
+    m_Localized: Fuhrparkliste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619353362432
+    m_Localized: "Auftr\xE4ge werden geladen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619361751040
+    m_Localized: "Keine Auftr\xE4ge in diesem Stand."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945344
+    m_Localized: Auftragsdaten konnten nicht geladen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945345
+    m_Localized: Auftragsstand geladen.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945346
+    m_Localized: "Keine Auftr\xE4ge in dieser Kategorie."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945347
+    m_Localized: "Verf\xFCgbar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945348
+    m_Localized: Aktiv
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945349
+    m_Localized: Verlauf
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945350
+    m_Localized: Angeboten
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945351
+    m_Localized: Angenommen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945352
+    m_Localized: In Bearbeitung
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945353
+    m_Localized: Abgeschlossen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945354
+    m_Localized: Fehlgeschlagen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945355
+    m_Localized: Unbekannter Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945356
+    m_Localized: Angebot abgelaufen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945357
+    m_Localized: Fracht
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945358
+    m_Localized: "Pr\xE4mie"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945359
+    m_Localized: Zugewiesenes Fahrzeug
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945360
+    m_Localized: Anforderungen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945361
+    m_Localized: Lieferung aktiv
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945362
+    m_Localized: Lieferung abgeschlossen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945363
+    m_Localized: Startort unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945364
+    m_Localized: Zielort unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945365
+    m_Localized: Startort zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945366
+    m_Localized: Zielort zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945367
+    m_Localized: Auftragsliste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836864446464
+    m_Localized: "Lager werden geladen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029376
+    m_Localized: Keine eigenen Lager in diesem Stand.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029377
+    m_Localized: Lagerdaten konnten nicht geladen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029378
+    m_Localized: Lagerstand geladen.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029379
+    m_Localized: Betriebsbereit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029380
+    m_Localized: "Au\xDFer Betrieb"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029381
+    m_Localized: Unbekannter Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029382
+    m_Localized: Eigenes Lager
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029383
+    m_Localized: "Kapazit\xE4t"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029384
+    m_Localized: "Belegte Kapazit\xE4t unbekannt"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029385
+    m_Localized: Standort
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029386
+    m_Localized: Stadt unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029387
+    m_Localized: Stufe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029388
+    m_Localized: Typ
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029389
+    m_Localized: Stadt zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029390
+    m_Localized: Position zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029391
+    m_Localized: Lagerliste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877472370688
+    m_Localized: "Markt wird geladen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759296
+    m_Localized: Keine Marktbedingungen in diesem Stand.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759297
+    m_Localized: Marktdaten konnten nicht geladen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759298
+    m_Localized: Marktstand geladen.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759299
+    m_Localized: Alle Fracht
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759300
+    m_Localized: Marktbedingung
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759301
+    m_Localized: Fracht
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759302
+    m_Localized: Standort
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759303
+    m_Localized: Stadt unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759304
+    m_Localized: Anpassung bps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759305
+    m_Localized: Nachfrageindex
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759306
+    m_Localized: Angebotsindex
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759307
+    m_Localized: Preis ist in diesem Stand nicht enthalten.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759308
+    m_Localized: Stadt zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759309
+    m_Localized: Bedingungsliste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 218111008563200
+    m_Localized: "Pr\xE4mie ist in diesem Stand nicht enthalten."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174224199680
+    m_Localized: "Stra\xDFe"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782592
+    m_Localized: Keine Live-Lieferverbindung.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782593
+    m_Localized: "Lieferungen werden geladen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782594
+    m_Localized: "Keine aktiven Stra\xDFenlieferungen."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782595
+    m_Localized: Lieferdaten konnten nicht geladen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782596
+    m_Localized: "Aktive Stra\xDFenlieferungen."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782597
+    m_Localized: Aktiv
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782598
+    m_Localized: Unbekannter Lieferstatus
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782599
+    m_Localized: Lkw unbekannt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782600
+    m_Localized: Ankunftszeit nicht angegeben
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782601
+    m_Localized: Start zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782602
+    m_Localized: Ziel zeigen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782603
+    m_Localized: Lieferliste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782604
+    m_Localized: Unbekannte Fracht
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782605
+    m_Localized: "St\xFCckgut"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782606
+    m_Localized: Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782607
+    m_Localized: "Details schlie\xDFen"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066934575104
+    m_Localized: Annehmen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158016
+    m_Localized: "Auftrag wird angenommen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158017
+    m_Localized: "Annahmeergebnis ist unbest\xE4tigt."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158018
+    m_Localized: Dieser Auftrag kann jetzt nicht angenommen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158019
+    m_Localized: "Zum Annehmen ist eine Anmeldung n\xF6tig."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158020
+    m_Localized: Annahme ist nicht erlaubt.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158021
+    m_Localized: "Diese Annahmeanfrage ist ung\xFCltig."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158022
+    m_Localized: Diese Annahmeanfrage existiert bereits.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158023
+    m_Localized: "Dieses Angebot ist nicht mehr verf\xFCgbar."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158024
+    m_Localized: Dieser Auftrag kann nicht angenommen werden.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158025
+    m_Localized: "Die Flotte ist f\xFCr diesen Auftrag nicht geeignet."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158026
+    m_Localized: "Es k\xF6nnen jetzt keine weiteren Auftr\xE4ge angenommen werden."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947660675604480
+    m_Localized: "Ausr\xFCstung"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400896
+    m_Localized: "Verf\xFCgbar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400897
+    m_Localized: "Nicht verf\xFCgbar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400898
+    m_Localized: Nicht in dieser Flotte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400899
+    m_Localized: Im Einsatz
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400900
+    m_Localized: Typ stimmt nicht
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400901
+    m_Localized: "W\xE4hlen"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400902
+    m_Localized: "Ausgew\xE4hlt"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855767979220992
+    m_Localized: Stufe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301376
+    m_Localized: XP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301377
+    m_Localized: Ruf
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301378
+    m_Localized: "Nicht verf\xFCgbar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301379
+    m_Localized: "Wird geladen\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301380
+    m_Localized: Hinweise
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301381
+    m_Localized: Nachrichten
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301382
+    m_Localized: Einstellungen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301383
+    m_Localized: Spielzeit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301384
+    m_Localized: Wetter
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

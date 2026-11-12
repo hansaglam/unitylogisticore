@@ -10,6 +10,16 @@ import { checkedAdd, configHash, ECONOMY_READY, exact, invalid, levelFor, safe, 
 export function operationId(companyId: string, source: string): string {
   return createHash("sha256").update(`${companyId}:${source}`).digest("hex");
 }
+
+/** Emulator onboarding config id. Not a production publish. */
+export const LOCAL_DEV_ECONOMY_VERSION = "lc_dev_economy_v1";
+
+/** Narrow callable wrapper. Selector is server-owned; client payload must be empty. */
+export function initializeCompanyEconomyCommand(
+  db: Firestore, auth: { uid: string } | undefined, data: unknown,
+) {
+  return runEconomyCommand(db, auth, data, { kind: "initialize", id: LOCAL_DEV_ECONOMY_VERSION });
+}
 /** Internal server orchestration only. Payload must be empty; selector is trusted backend input.
  * No callable exports this mechanism. Every source is permanently single-use across request keys.
  */

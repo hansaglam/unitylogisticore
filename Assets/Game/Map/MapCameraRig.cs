@@ -9,6 +9,9 @@ namespace LogistiCore.Map
     {
         public const float CameraZ = -10f;
 
+        /// <summary>Ease-in-out region flight. Long enough to read, short enough to stay direct.</summary>
+        public const float RegionTransitionSeconds = 0.48f;
+
         Camera _camera;
         Vector2 _worldMin;
         Vector2 _worldMax;
@@ -16,6 +19,9 @@ namespace LogistiCore.Map
         Vector2 _turkeyMax;
         Vector2 _targetCenter;
         float _targetSize;
+        Vector2 _moveFrom;
+        float _moveFromSize;
+        float _moveElapsed;
         MapScope _scope = MapScope.Turkey;
         bool _moving;
         bool _userAdjusted;
@@ -63,11 +69,10 @@ namespace LogistiCore.Map
             if (!_moving)
                 return;
 
-            var t = 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime);
-            var current = new Vector2(transform.position.x, transform.position.y);
-            var next = Vector2.Lerp(current, _targetCenter, t);
-            var nextSize = Mathf.Lerp(_camera.orthographicSize, _targetSize, t);
-            if ((next - _targetCenter).sqrMagnitude < 0.000001f && Mathf.Abs(nextSize - _targetSize) < 0.0001f)
+            _moveElapsed += Time.unscaledDeltaTime;
+            var t = RegionTransitionSeconds <= 0f ? 1f : Mathf.Clamp01(_moveElapsed / RegionTransitionSeconds);
+            SampleRegionTransition(_moveFrom, _moveFromSize, _targetCenter, _targetSize, t, out var next, out var nextSize);
+            if (t >= 1f)
             {
                 next = _targetCenter;
                 nextSize = _targetSize;
@@ -76,6 +81,26 @@ namespace LogistiCore.Map
 
             transform.position = new Vector3(next.x, next.y, CameraZ);
             _camera.orthographicSize = nextSize;
+        }
+
+        public static float RegionTransitionEase(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t * (3f - 2f * t);
+        }
+
+        public static void SampleRegionTransition(
+            Vector2 fromCenter,
+            float fromSize,
+            Vector2 toCenter,
+            float toSize,
+            float t,
+            out Vector2 center,
+            out float size)
+        {
+            var eased = RegionTransitionEase(t);
+            center = Vector2.Lerp(fromCenter, toCenter, eased);
+            size = Mathf.Lerp(fromSize, toSize, eased);
         }
 
         public void FocusWorld()
@@ -88,6 +113,24 @@ namespace LogistiCore.Map
         {
             _userAdjusted = false;
             ApplyFocus(MapScope.Turkey, smooth: true);
+        }
+
+        public void FocusRegion(MapScope scope)
+        {
+            if (scope == MapScope.World)
+            {
+                FocusWorld();
+                return;
+            }
+
+            if (scope == MapScope.Turkey)
+            {
+                FocusTurkey();
+                return;
+            }
+
+            _userAdjusted = false;
+            ApplyFocus(scope, smooth: true);
         }
 
         public void Restore()
@@ -112,8 +155,18 @@ namespace LogistiCore.Map
                 return;
 
             var aspect = Aspect();
-            var center = _moving ? _targetCenter : new Vector2(transform.position.x, transform.position.y);
-            var size = _moving ? _targetSize : _camera.orthographicSize;
+            var center = new Vector2(transform.position.x, transform.position.y);
+            var size = _camera.orthographicSize;
+            PresentationTravel(
+                _scope,
+                size,
+                Screen.width,
+                Screen.height,
+                Screen.safeArea,
+                _worldMin,
+                _worldMax,
+                out var travelMin,
+                out var travelMax);
             MapViewMath.ZoomAbout(
                 center,
                 size,
@@ -124,15 +177,17 @@ namespace LogistiCore.Map
                 Screen.height,
                 MapFrames.MinimumOrthographicSize(aspect),
                 MapFrames.MaximumOrthographicSize(aspect),
-                _worldMin,
-                _worldMax,
+                travelMin,
+                travelMax,
                 out var newCenter,
                 out var newSize);
 
             _userAdjusted = true;
             _targetCenter = newCenter;
             _targetSize = newSize;
-            _moving = true;
+            _moving = false;
+            transform.position = new Vector3(newCenter.x, newCenter.y, CameraZ);
+            _camera.orthographicSize = newSize;
         }
 
         public void PanScreenDelta(Vector2 screenDelta)
@@ -145,7 +200,40 @@ namespace LogistiCore.Map
             var center = new Vector2(transform.position.x, transform.position.y);
             center.x -= screenDelta.x * unitsPerPixel;
             center.y -= screenDelta.y * unitsPerPixel;
-            center = MapViewMath.ClampCenter(center, _camera.orthographicSize, Aspect(), _worldMin, _worldMax);
+            PresentationTravel(
+                _scope,
+                _camera.orthographicSize,
+                Screen.width,
+                Screen.height,
+                Screen.safeArea,
+                _worldMin,
+                _worldMax,
+                out var travelMin,
+                out var travelMax);
+            center = MapViewMath.ClampCenter(center, _camera.orthographicSize, Aspect(), travelMin, travelMax);
+            transform.position = new Vector3(center.x, center.y, CameraZ);
+            _targetCenter = center;
+            _targetSize = _camera.orthographicSize;
+            _moving = false;
+            _userAdjusted = true;
+        }
+
+        public void FocusWorldPoint(Vector2 world)
+        {
+            if (_camera == null)
+                return;
+
+            PresentationTravel(
+                _scope,
+                _camera.orthographicSize,
+                Screen.width,
+                Screen.height,
+                Screen.safeArea,
+                _worldMin,
+                _worldMax,
+                out var travelMin,
+                out var travelMax);
+            var center = MapViewMath.ClampCenter(world, _camera.orthographicSize, Aspect(), travelMin, travelMax);
             transform.position = new Vector3(center.x, center.y, CameraZ);
             _targetCenter = center;
             _targetSize = _camera.orthographicSize;
@@ -160,11 +248,11 @@ namespace LogistiCore.Map
 
         /// <summary>
         /// Reapplies the current frame after the command shell changes the open area.
-        /// A pan or pinch sets <see cref="UserAdjusted"/> and this call leaves that view alone.
+        /// A pan, a pinch, or a region flight already on its way leaves that view alone.
         /// </summary>
         public void ReframeForChrome()
         {
-            if (_userAdjusted)
+            if (_userAdjusted || _moving)
                 return;
 
             ApplyImmediate(_scope);
@@ -279,6 +367,207 @@ namespace LogistiCore.Map
             return shifted ? CityFit.Shifted : CityFit.Overflow;
         }
 
+        /// <summary>
+        /// Frames a projected region in the map hole. Coverage frames reserve the
+        /// right-hand panel when that still keeps the region in view, and use the
+        /// wider closed hole only when it shows more of the geographic box.
+        /// Contained frames use the closed hole, because choosing a region closes
+        /// that panel before the camera moves.
+        /// </summary>
+        public static void FrameScope(
+            MapScope scope,
+            float aspect,
+            float screenWidth,
+            float screenHeight,
+            Rect safeArea,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            out Vector2 center,
+            out float orthographicSize)
+        {
+            if (!MapFrames.TryFrame(scope, out var boundsMin, out var boundsMax, out var mode))
+            {
+                MapViewMath.Fit(worldMin, worldMax, aspect, MapFrames.WorldFocusPadding, out center, out orthographicSize);
+                return;
+            }
+
+            if (scope == MapScope.Oceania || scope == MapScope.NorthAmerica || scope == MapScope.SouthAmerica)
+            {
+                var hole = MapCommandLayout.Evaluate(screenWidth, screenHeight, safeArea, false).Viewport;
+                MapViewMath.FitInViewport(
+                    boundsMin,
+                    boundsMax,
+                    aspect,
+                    MapFrames.RegionFocusPadding,
+                    hole,
+                    screenWidth,
+                    screenHeight,
+                    out _,
+                    out var preview);
+                PresentationTravel(
+                    scope,
+                    preview,
+                    screenWidth,
+                    screenHeight,
+                    safeArea,
+                    worldMin,
+                    worldMax,
+                    out worldMin,
+                    out worldMax);
+            }
+
+            RegionFrame(
+                boundsMin,
+                boundsMax,
+                aspect,
+                screenWidth,
+                screenHeight,
+                safeArea,
+                worldMin,
+                worldMax,
+                out center,
+                out orthographicSize,
+                mode);
+        }
+
+        public static void RegionFrame(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            float aspect,
+            float screenWidth,
+            float screenHeight,
+            Rect safeArea,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            out Vector2 center,
+            out float orthographicSize)
+        {
+            RegionFrame(
+                boundsMin,
+                boundsMax,
+                aspect,
+                screenWidth,
+                screenHeight,
+                safeArea,
+                worldMin,
+                worldMax,
+                out center,
+                out orthographicSize,
+                MapFrames.RegionFrameMode.Coverage);
+        }
+
+        public static void RegionFrame(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            float aspect,
+            float screenWidth,
+            float screenHeight,
+            Rect safeArea,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            out Vector2 center,
+            out float orthographicSize,
+            MapFrames.RegionFrameMode mode)
+        {
+            var openLayout = MapCommandLayout.Evaluate(screenWidth, screenHeight, safeArea, true);
+            var closedLayout = MapCommandLayout.Evaluate(screenWidth, screenHeight, safeArea, false);
+            var openViewport = openLayout.ContextOpen ? openLayout.Viewport : closedLayout.Viewport;
+            SolveRegion(boundsMin, boundsMax, aspect, screenWidth, screenHeight, openViewport, worldMin, worldMax, mode, out var openCenter, out var openSize);
+            SolveRegion(boundsMin, boundsMax, aspect, screenWidth, screenHeight, closedLayout.Viewport, worldMin, worldMax, mode, out var closedCenter, out var closedSize);
+            // A region choice closes the context panel first. Contained frames,
+            // and South America's closed coverage fit, use that wider hole.
+            // Coverage frames stay on the open hole unless the closed hole
+            // actually shows more of the geographic box.
+            if (mode == MapFrames.RegionFrameMode.Contain
+                || mode == MapFrames.RegionFrameMode.ClosedCoverage)
+            {
+                center = closedCenter;
+                orthographicSize = closedSize;
+                return;
+            }
+
+            var openCover = ViewportCoverage(boundsMin, boundsMax, openCenter, openSize, aspect, openViewport, screenWidth, screenHeight);
+            var closedCover = ViewportCoverage(boundsMin, boundsMax, closedCenter, closedSize, aspect, closedLayout.Viewport, screenWidth, screenHeight);
+            if (Mathf.Min(closedCover.x, closedCover.y) > Mathf.Min(openCover.x, openCover.y) + 0.01f)
+            {
+                center = closedCenter;
+                orthographicSize = closedSize;
+                return;
+            }
+
+            center = openCenter;
+            orthographicSize = openSize;
+        }
+
+        public static Vector2 ViewportCoverage(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            Vector2 center,
+            float orthographicSize,
+            float aspect,
+            Rect viewport,
+            float screenWidth,
+            float screenHeight)
+        {
+            return MapViewMath.ViewportSpan(
+                boundsMin,
+                boundsMax,
+                center,
+                orthographicSize,
+                aspect,
+                viewport,
+                screenWidth,
+                screenHeight);
+        }
+
+        static void SolveRegion(
+            Vector2 boundsMin,
+            Vector2 boundsMax,
+            float aspect,
+            float screenWidth,
+            float screenHeight,
+            Rect viewport,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            MapFrames.RegionFrameMode mode,
+            out Vector2 center,
+            out float size)
+        {
+            if (mode == MapFrames.RegionFrameMode.Width || mode == MapFrames.RegionFrameMode.Contain)
+            {
+                MapViewMath.FitInViewport(
+                    boundsMin,
+                    boundsMax,
+                    aspect,
+                    MapFrames.RegionFocusPadding,
+                    viewport,
+                    screenWidth,
+                    screenHeight,
+                    out center,
+                    out size);
+            }
+            else
+            {
+                MapViewMath.FitClamped(
+                    boundsMin,
+                    boundsMax,
+                    aspect,
+                    MapFrames.RegionFocusPadding,
+                    viewport,
+                    screenWidth,
+                    screenHeight,
+                    MapFrames.MinimumOrthographicSize(aspect),
+                    MapFrames.MaximumOrthographicSize(aspect),
+                    worldMin,
+                    worldMax,
+                    out center,
+                    out size);
+            }
+
+            size = MapViewMath.ClampSize(size, MapFrames.MinimumOrthographicSize(aspect), MapFrames.MaximumOrthographicSize(aspect));
+            center = MapViewMath.ClampCenter(center, size, aspect, worldMin, worldMax);
+        }
+
         static Rect Inset(Rect rect, float padding)
         {
             rect.xMin += padding;
@@ -298,9 +587,33 @@ namespace LogistiCore.Map
             var boundsMin = scope == MapScope.World ? _worldMin : _turkeyMin;
             var boundsMax = scope == MapScope.World ? _worldMax : _turkeyMax;
             var padding = scope == MapScope.World ? MapFrames.WorldFocusPadding : MapFrames.TurkeyFocusPadding;
-            MapViewMath.Fit(boundsMin, boundsMax, aspect, padding, out var center, out var size);
+            Vector2 center;
+            float size;
+            if (scope == MapScope.World || scope == MapScope.Turkey)
+            {
+                MapViewMath.Fit(boundsMin, boundsMax, aspect, padding, out center, out size);
+            }
+            else if (MapFrames.TryFrame(scope, out boundsMin, out boundsMax, out _))
+            {
+                FrameScope(
+                    scope,
+                    aspect,
+                    Screen.width,
+                    Screen.height,
+                    Screen.safeArea,
+                    _worldMin,
+                    _worldMax,
+                    out center,
+                    out size);
+            }
+            else
+            {
+                MapViewMath.Fit(_worldMin, _worldMax, aspect, MapFrames.WorldFocusPadding, out center, out size);
+            }
+
             size = MapViewMath.ClampSize(size, MapFrames.MinimumOrthographicSize(aspect), MapFrames.MaximumOrthographicSize(aspect));
-            center = MapViewMath.ClampCenter(center, size, aspect, _worldMin, _worldMax);
+            PresentationTravel(scope, size, Screen.width, Screen.height, Screen.safeArea, _worldMin, _worldMax, out var travelMin, out var travelMax);
+            center = MapViewMath.ClampCenter(center, size, aspect, travelMin, travelMax);
             if (scope == MapScope.Turkey)
             {
                 FitCitiesInside(
@@ -326,7 +639,10 @@ namespace LogistiCore.Map
             _appliedSafe = Screen.safeArea;
             _framed = true;
 
-            if (!smooth)
+            var live = new Vector2(transform.position.x, transform.position.y);
+            var liveSize = _camera.orthographicSize;
+            var arrived = (live - center).sqrMagnitude < 0.000001f && Mathf.Abs(liveSize - size) < 0.0001f;
+            if (!smooth || !Application.isPlaying || arrived)
             {
                 transform.position = new Vector3(center.x, center.y, CameraZ);
                 _camera.orthographicSize = size;
@@ -334,11 +650,46 @@ namespace LogistiCore.Map
             }
             else
             {
+                _moveFrom = live;
+                _moveFromSize = liveSize;
+                _moveElapsed = 0f;
                 _moving = true;
             }
 
             if (changed)
                 ScopeChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Travel limits for one preset. The mesh stays the world presentation.
+        /// A region may cross that edge only by the chrome that already covers
+        /// the screen: Oceania's right bleed, North America's rail, or South
+        /// America's footer. The useful map hole stays on the mesh.
+        /// </summary>
+        public static void PresentationTravel(
+            MapScope scope,
+            float orthographicSize,
+            float screenWidth,
+            float screenHeight,
+            Rect safeArea,
+            Vector2 worldMin,
+            Vector2 worldMax,
+            out Vector2 travelMin,
+            out Vector2 travelMax)
+        {
+            travelMin = worldMin;
+            travelMax = worldMax;
+            if (orthographicSize <= 0.0001f || screenHeight < 1f || screenWidth < 1f)
+                return;
+
+            var hole = MapCommandLayout.Evaluate(screenWidth, screenHeight, safeArea, false).Viewport;
+            var units = orthographicSize * 2f / screenHeight;
+            if (scope == MapScope.Oceania)
+                travelMax.x += Mathf.Max(0f, screenWidth - hole.xMax) * units;
+            else if (scope == MapScope.NorthAmerica)
+                travelMin.x -= Mathf.Max(0f, hole.xMin) * units;
+            else if (scope == MapScope.SouthAmerica)
+                travelMin.y -= Mathf.Max(0f, hole.yMin) * units;
         }
 
         void CacheBounds()

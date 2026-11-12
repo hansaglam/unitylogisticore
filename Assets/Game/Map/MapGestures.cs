@@ -23,6 +23,8 @@ namespace LogistiCore.Map
         }
 
         MapCameraRig _rig;
+        MapManagementPanel _management;
+        MapSoonPanel _soon;
         PointerEventData _pointer;
         readonly List<RaycastResult> _hits = new List<RaycastResult>(8);
 
@@ -220,7 +222,16 @@ namespace LogistiCore.Map
             _pointer.pointerId = pointerId;
             _hits.Clear();
             system.RaycastAll(_pointer, _hits);
-            return _hits.Count > 0;
+            if (_hits.Count > 0)
+                return true;
+
+            if (_management == null)
+                _management = FindAnyObjectByType<MapManagementPanel>();
+            if (_soon == null)
+                _soon = FindAnyObjectByType<MapSoonPanel>();
+
+            return (_soon != null && _soon.ContainsScreenPoint(screen))
+                || (_management != null && _management.ContainsScreenPoint(screen));
         }
     }
 }

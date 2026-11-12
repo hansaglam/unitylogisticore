@@ -1,0 +1,596 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: Ops Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: Ops
+  m_TableCollectionNameGuidString: 8d145d43c69c84e61a50f556354c2ad7
+  m_Entries:
+  - m_Id: 481288192
+    m_Key: ops.fleet.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871104
+    m_Key: ops.jobs.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871105
+    m_Key: ops.warehouses.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871106
+    m_Key: ops.market.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871107
+    m_Key: ops.fleet.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871108
+    m_Key: ops.jobs.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871109
+    m_Key: ops.warehouses.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871110
+    m_Key: ops.market.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871111
+    m_Key: ops.action.expand
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871112
+    m_Key: ops.action.collapse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 493871113
+    m_Key: ops.action.switch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799841447936
+    m_Key: ops.strip.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030848
+    m_Key: ops.strip.error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030849
+    m_Key: ops.strip.idle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030850
+    m_Key: ops.strip.single
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15799854030851
+    m_Key: ops.strip.multiple
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131269828608
+    m_Key: ops.fleet.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411520
+    m_Key: ops.fleet.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411521
+    m_Key: ops.fleet.error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411522
+    m_Key: ops.fleet.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411523
+    m_Key: ops.fleet.available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411524
+    m_Key: ops.fleet.busy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411525
+    m_Key: ops.fleet.out_of_service
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411526
+    m_Key: ops.fleet.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411527
+    m_Key: ops.fleet.kind.truck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411528
+    m_Key: ops.fleet.kind.driver
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411529
+    m_Key: ops.fleet.kind.trailer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411530
+    m_Key: ops.fleet.assigned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411531
+    m_Key: ops.fleet.unassigned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411532
+    m_Key: ops.fleet.capacity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411533
+    m_Key: ops.fleet.location.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411534
+    m_Key: ops.fleet.location.city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411535
+    m_Key: ops.fleet.location.gps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411536
+    m_Key: ops.fleet.action.show_city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411537
+    m_Key: ops.fleet.action.show_position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20131282411538
+    m_Key: ops.fleet.action.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619353362432
+    m_Key: ops.jobs.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619361751040
+    m_Key: ops.jobs.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945344
+    m_Key: ops.jobs.error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945345
+    m_Key: ops.jobs.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945346
+    m_Key: ops.jobs.category.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945347
+    m_Key: ops.jobs.available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945348
+    m_Key: ops.jobs.active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945349
+    m_Key: ops.jobs.history
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945350
+    m_Key: ops.jobs.status.offered
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945351
+    m_Key: ops.jobs.status.accepted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945352
+    m_Key: ops.jobs.status.in_progress
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945353
+    m_Key: ops.jobs.status.completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945354
+    m_Key: ops.jobs.status.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945355
+    m_Key: ops.jobs.status.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945356
+    m_Key: ops.jobs.expired
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945357
+    m_Key: ops.jobs.cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945358
+    m_Key: ops.jobs.reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945359
+    m_Key: ops.jobs.vehicle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945360
+    m_Key: ops.jobs.requirements
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945361
+    m_Key: ops.jobs.delivery.active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945362
+    m_Key: ops.jobs.delivery.completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945363
+    m_Key: ops.jobs.origin.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945364
+    m_Key: ops.jobs.destination.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945365
+    m_Key: ops.jobs.action.show_origin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945366
+    m_Key: ops.jobs.action.show_destination
+    m_Metadata:
+      m_Items: []
+  - m_Id: 201619365945367
+    m_Key: ops.jobs.action.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836864446464
+    m_Key: ops.warehouses.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029376
+    m_Key: ops.warehouses.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029377
+    m_Key: ops.warehouses.error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029378
+    m_Key: ops.warehouses.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029379
+    m_Key: ops.warehouses.operational
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029380
+    m_Key: ops.warehouses.out_of_service
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029381
+    m_Key: ops.warehouses.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029382
+    m_Key: ops.warehouses.owned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029383
+    m_Key: ops.warehouses.capacity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029384
+    m_Key: ops.warehouses.used.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029385
+    m_Key: ops.warehouses.location
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029386
+    m_Key: ops.warehouses.city.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029387
+    m_Key: ops.warehouses.level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029388
+    m_Key: ops.warehouses.type
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029389
+    m_Key: ops.warehouses.action.show_city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029390
+    m_Key: ops.warehouses.action.show_position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 205836877029391
+    m_Key: ops.warehouses.action.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877472370688
+    m_Key: ops.market.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759296
+    m_Key: ops.market.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759297
+    m_Key: ops.market.error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759298
+    m_Key: ops.market.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759299
+    m_Key: ops.market.all
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759300
+    m_Key: ops.market.condition
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759301
+    m_Key: ops.market.cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759302
+    m_Key: ops.market.location
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759303
+    m_Key: ops.market.city.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759304
+    m_Key: ops.market.adjustment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759305
+    m_Key: ops.market.demand_index
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759306
+    m_Key: ops.market.supply_index
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759307
+    m_Key: ops.market.price.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759308
+    m_Key: ops.market.action.show_city
+    m_Metadata:
+      m_Items: []
+  - m_Id: 209877480759309
+    m_Key: ops.market.action.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 218111008563200
+    m_Key: ops.jobs.reward.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174224199680
+    m_Key: ops.road.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782592
+    m_Key: ops.road.unconnected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782593
+    m_Key: ops.road.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782594
+    m_Key: ops.road.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782595
+    m_Key: ops.road.error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782596
+    m_Key: ops.road.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782597
+    m_Key: ops.road.status.active
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782598
+    m_Key: ops.road.status.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782599
+    m_Key: ops.road.truck.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782600
+    m_Key: ops.road.arrival.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782601
+    m_Key: ops.road.action.show_origin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782602
+    m_Key: ops.road.action.show_destination
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782603
+    m_Key: ops.road.action.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782604
+    m_Key: ops.jobs.cargo.unknown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782605
+    m_Key: ops.jobs.cargo.lc_dev_general_freight_v1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782606
+    m_Key: ops.jobs.field.status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265174236782607
+    m_Key: ops.jobs.action.close_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066934575104
+    m_Key: ops.jobs.action.accept
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158016
+    m_Key: ops.jobs.accept.busy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158017
+    m_Key: ops.jobs.accept.uncertain
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158018
+    m_Key: ops.jobs.accept.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158019
+    m_Key: ops.jobs.accept.unauthenticated
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158020
+    m_Key: ops.jobs.accept.denied
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158021
+    m_Key: ops.jobs.accept.invalid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158022
+    m_Key: ops.jobs.accept.conflict
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158023
+    m_Key: ops.jobs.accept.expired
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158024
+    m_Key: ops.jobs.accept.not_offered
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158025
+    m_Key: ops.jobs.accept.ineligible
+    m_Metadata:
+      m_Items: []
+  - m_Id: 933066947158026
+    m_Key: ops.jobs.accept.quota
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947660675604480
+    m_Key: ops.jobs.equipment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400896
+    m_Key: ops.jobs.equipment.available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400897
+    m_Key: ops.jobs.equipment.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400898
+    m_Key: ops.jobs.equipment.missing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400899
+    m_Key: ops.jobs.equipment.assigned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400900
+    m_Key: ops.jobs.equipment.mismatch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400901
+    m_Key: ops.jobs.equipment.select
+    m_Metadata:
+      m_Items: []
+  - m_Id: 947665096400902
+    m_Key: ops.jobs.equipment.selected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855767979220992
+    m_Key: ops.hud.level
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301376
+    m_Key: ops.hud.xp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301377
+    m_Key: ops.hud.reputation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301378
+    m_Key: ops.hud.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301379
+    m_Key: ops.hud.loading
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301380
+    m_Key: ops.hud.notifications
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301381
+    m_Key: ops.hud.messages
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301382
+    m_Key: ops.hud.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301383
+    m_Key: ops.hud.game_time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301384
+    m_Key: ops.hud.weather
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3875449847315693576
+  references:
+    version: 2
+    RefIds:
+    - rid: 3875449847315693576
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1793837318584

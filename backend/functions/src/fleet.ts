@@ -6,6 +6,15 @@ import { AssetKind, assetKind, digest, validateAsset } from "./logisticsModel";
 
 export const STARTER_TRUCK = "starter_truck";
 export const STARTER_DRIVER = "starter_driver";
+/** Emulator onboarding catalog id. Not a production publish. */
+export const LOCAL_DEV_FLEET_VERSION = "lc_dev_fleet_v1";
+
+/** Narrow callable wrapper. Selector is server-owned; client payload must be empty. */
+export function provisionCompanyStarterFleetCommand(
+  db: Firestore, auth: { uid: string } | undefined, data: unknown,
+) {
+  return provisionStarterFleet(db, auth, data, LOCAL_DEV_FLEET_VERSION);
+}
 /** Absence is pending; any partial or inconsistent package is an error, including on replay. */
 export async function readStarter(tx: Transaction, db: Firestore, state: CompanyState, getCatalog = catalogReader(tx, db)) {
   assertLocalEnvironment(process.env, true);

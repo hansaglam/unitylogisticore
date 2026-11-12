@@ -27,9 +27,10 @@ export function validateContractConfig(data: DocumentData | undefined, version: 
   const routes = (data.routes as DocumentData[]).map(r => {
     exact(r, "id,originCityId,destinationCityId,distance,unit,verification");
     if (!logistics.cities.includes(r.originCityId) || !logistics.cities.includes(r.destinationCityId) || r.originCityId === r.destinationCityId ||
-        r.verification !== "synthetic_fixture" || safe(r.distance) < 1) invalid();
+        (r.verification !== "synthetic_fixture" && r.verification !== "kgm_ilmesafe") || safe(r.distance) < 1) invalid();
     return { id: versionId(r.id), originCityId: versionId(r.originCityId), destinationCityId: versionId(r.destinationCityId),
-      distance: r.distance as number, unit: versionId(r.unit), verification: "synthetic_fixture" };
+      distance: r.distance as number, unit: versionId(r.unit),
+      verification: r.verification as "synthetic_fixture" | "kgm_ilmesafe" };
   });
   const cargo = (data.cargo as DocumentData[]).map(c => {
     exact(c, "id,unit,capability");return { id: versionId(c.id), unit: versionId(c.unit), capability: versionId(c.capability) };
@@ -104,7 +105,8 @@ export function validateContract(data: DocumentData | undefined, id: string, com
   for (const value of [t.templateId,t.route.id,t.route.originCityId,t.route.destinationCityId,t.route.unit,t.cargo.id,t.cargo.unit,t.cargo.capability,
     t.requirements.truck,t.requirements.driver,t.configVersion,t.logisticsVersion,t.economyVersion]) versionId(value);
   if (t.requirements.trailer !== null) versionId(t.requirements.trailer);
-  if (t.route.originCityId === t.route.destinationCityId || t.route.verification !== "synthetic_fixture" || safe(t.route.distance) < 1 ||
+  if (t.route.originCityId === t.route.destinationCityId ||
+      (t.route.verification !== "synthetic_fixture" && t.route.verification !== "kgm_ilmesafe") || safe(t.route.distance) < 1 ||
       safe(t.quantity) < 1 || safe(t.minLevel,1000) < 1 || !/^[A-Z]{3}$/.test(t.currency)) invalid();
   safe(t.reward);safe(t.scale,6);validateSelection(t.candidateAssets);
   for (const hash of [t.configHash,t.logisticsHash,t.economyHash,data.termsHash]) if (typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) invalid();
@@ -114,6 +116,10 @@ export function validateContract(data: DocumentData | undefined, id: string, com
     expiresAt: data.expiresAt as Timestamp, acceptedAt: accepted ? data.acceptedAt as Timestamp : null };
 }
 export function expired(status: ContractStatus, expiresAt: number, now: number): boolean { return status === "offered" && now >= expiresAt; }
+/** Public DTO: company-owned candidate document IDs only. Hashes, GPS, catalog, assignment stay internal. */
+export function candidateAssetsDto(assets: unknown): Selection {
+  return validateSelection(assets as Selection).map(entry => ({ assetId: entry.assetId, kind: entry.kind }));
+}
 export function acceptPayload(data: unknown): { contractId: string } {
   if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).join(",") !== "contractId") throw new CommandError("INVALID_ARGUMENT");
   try { return { contractId: versionId((data as DocumentData).contractId) }; }
@@ -124,6 +130,7 @@ export function contractDto(data: ReturnType<typeof validateContract>, now: numb
   return { ...settlementDto(t), ...(t.market?{market:marketDto(t.market)}:{}), contractId: data.contractId as string, status: data.status, expired: expired(data.status,data.expiresAt.toMillis(),now),
     originCityId:t.route.originCityId,destinationCityId:t.route.destinationCityId,routeId:t.route.id,cargoId:t.cargo.id,
     quantity:String(t.quantity),unit:t.cargo.unit,reward:String(t.reward),currency:t.currency,scale:t.scale,requirements:t.requirements,
+    candidateAssets:candidateAssetsDto(t.candidateAssets),
     minLevel:t.minLevel,configVersion:t.configVersion,logisticsVersion:t.logisticsVersion,economyVersion:t.economyVersion,
     expiresAt:data.expiresAt.toDate().toISOString(),acceptedAt:data.acceptedAt?.toDate().toISOString() ?? null };
 }

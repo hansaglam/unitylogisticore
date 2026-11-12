@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 using LogistiCore.Map;
@@ -13,7 +14,7 @@ namespace LogistiCore.Tests
     {
         const string ScenePath = "Assets/Game/Scenes/WorldMapVerticalSlice.unity";
         const string SceneSha256 = "e437dc5fbf47f9e7f55b7d76e347fdce63fe1c06bd4506ba931ecfff8bd678a0";
-        const string ReliefSha256 = "ac9c14157f50b3d2516994a5108cdfcf643f88d8f79bb905700795961616266d";
+        const string ReliefSha256 = "803d2e945c4afef11b38ef1264896fd42d1c3dde80eedd852be6323188f2faa8";
 
         [Test]
         public void WorldFrames_CollapseEveryCityIntoOneAggregate()
@@ -132,7 +133,7 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(8, harness.Layer.IndividualCount);
                 Assert.AreEqual("istanbul", harness.Layer.SelectedId);
                 Assert.IsTrue(harness.Plates[1].activeSelf);
-                Assert.IsFalse(harness.Plates[3].activeSelf, "Bursa’s label hides while it sits on Istanbul’s label.");
+                Assert.IsFalse(harness.Plates[3].activeSelf, "A selected İstanbul keeps the nearby Bursa plate clear.");
             }
             finally
             {
@@ -168,7 +169,7 @@ namespace LogistiCore.Tests
                 var ankara = harness.Plates[2].GetComponentInChildren<Text>(true);
                 var izmir = harness.Plates[0].GetComponentInChildren<Text>(true);
                 Assert.IsTrue(harness.Plates[2].activeSelf);
-                Assert.IsFalse(harness.Plates[3].activeSelf, "Bursa still yields when it collides with Istanbul.");
+                Assert.IsTrue(harness.Plates[3].activeSelf, "Bursa stays readable beside İstanbul on the short landscape.");
                 Assert.AreEqual(MapMarkerLayer.LabelFontSize(scale, false), ankara.fontSize);
                 Assert.GreaterOrEqual(ankara.fontSize * scale, 13f);
                 Assert.Less(ankara.rectTransform.parent.GetComponent<RectTransform>().sizeDelta.x * scale, 180f);
@@ -580,8 +581,8 @@ namespace LogistiCore.Tests
         {
             Assert.AreEqual(SceneSha256, Sha256(ScenePath));
             Assert.AreEqual(ReliefSha256, Sha256("Assets/Game/Map/Resources/MapReliefRegion.png"));
-            Assert.AreEqual(1024, MapRegionalRelief.Width);
-            Assert.AreEqual(512, MapRegionalRelief.Height);
+            Assert.AreEqual(2048, MapRegionalRelief.Width);
+            Assert.AreEqual(725, MapRegionalRelief.Height);
             Assert.AreEqual(8, MapCities.All.Length);
             Assert.AreEqual("ankara", MapCities.All[2].Id);
             Assert.AreEqual(39.929184d, MapCities.All[2].Latitude, 0.0000001d);
@@ -648,6 +649,290 @@ namespace LogistiCore.Tests
             using (var sha = SHA256.Create())
             using (var stream = File.OpenRead(path))
                 return System.BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+        }
+
+        [Test]
+        public void CityPlates_GrowOnLargeFramebuffersAndStayAuthoredAtReference()
+        {
+            Assert.AreEqual(16, MapMarkerLayer.LabelFontSize(1f, false));
+            Assert.Greater(MapMarkerLayer.LabelFontSize(1f, true), MapMarkerLayer.LabelFontSize(1f, false));
+            var compact = MapHudLayout.CanvasScale(844f, 390f);
+            Assert.GreaterOrEqual(MapMarkerLayer.LabelFontSize(compact, false) * compact, 13f);
+            var phone = MapHudLayout.CanvasScale(2868f, 1320f);
+            var phoneFont = MapMarkerLayer.LabelFontSize(phone, false);
+            Assert.Greater(phoneFont * phone, 32f);
+            Assert.Greater(MapMarkerLayer.LabelFontSize(phone, true), phoneFont);
+            Assert.LessOrEqual(phoneFont, 42);
+            Assert.AreEqual(0.46f, MapFrames.ClosestRelativeToTurkeyFrame, 0.0001f);
+            Assert.AreEqual(34f, MapMarkerLod.AggregateScreenPixels, 0.01f);
+            Assert.AreEqual(22f, MapMarkerLod.AggregateHitRadius, 0.01f);
+        }
+
+        [Test]
+        public void CityPlates_ClearHudMarkersAndKeepEightNames()
+        {
+            var names = new[]
+            {
+                "İzmir", "İstanbul", "Ankara", "Bursa", "Antalya", "Adana", "Diyarbakır", "Trabzon"
+            };
+            var english = new[]
+            {
+                "Izmir", "Istanbul", "Ankara", "Bursa", "Antalya", "Adana", "Diyarbakir", "Trabzon"
+            };
+            var german = new[]
+            {
+                "Izmir", "Istanbul", "Ankara", "Bursa", "Antalya", "Adana", "Diyarbakir", "Trabzon"
+            };
+            var harness = new Harness(1920, 1080, turkey: true);
+            try
+            {
+                harness.UseCanvasScale(1920, 1080);
+                var closed = MapMarkerLayer.LabelViewport(1920f, 1080f, new Rect(0f, 0f, 1920f, 1080f), false);
+                var open = MapMarkerLayer.LabelViewport(1920f, 1080f, new Rect(0f, 0f, 1920f, 1080f), true);
+                Assert.Less(open.xMax, closed.xMax);
+                var phone = MapMarkerLayer.LabelViewport(2868f, 1320f, new Rect(186f, 60f, 2496f, 1200f), false);
+                Assert.Greater(phone.xMin, 180f);
+                Assert.Less(phone.yMax, 1260f);
+
+                for (var pass = 0; pass < 3; pass++)
+                {
+                    var copy = pass == 0 ? names : pass == 1 ? english : german;
+                    for (var i = 0; i < copy.Length; i++)
+                        harness.Plates[i].GetComponentInChildren<Text>(true).text = copy[i];
+                    harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                    var visible = 0;
+                    for (var i = 0; i < harness.Plates.Length; i++)
+                    {
+                        if (!harness.Plates[i].activeSelf)
+                            continue;
+                        visible++;
+                        var text = harness.Plates[i].GetComponentInChildren<Text>(true);
+                        Assert.AreEqual(copy[i], text.text);
+                        Assert.IsFalse(text.raycastTarget);
+                        Assert.AreEqual(FontStyle.Bold, text.fontStyle);
+                        Assert.IsTrue(harness.Layer.TryLabelCenter(i, out var center));
+                        var marker = harness.ScreenOf(i);
+                        Assert.Less(Vector2.Distance(center, marker), 220f);
+                        var half = harness.Plates[i].GetComponent<RectTransform>().sizeDelta * 0.5f;
+                        var plate = new Rect(center.x - half.x, center.y - half.y, half.x * 2f, half.y * 2f);
+                        Assert.GreaterOrEqual(plate.xMin, closed.xMin - 1f);
+                        Assert.LessOrEqual(plate.xMax, closed.xMax + 1f);
+                        for (var other = 0; other < copy.Length; other++)
+                        {
+                            if (other == i)
+                                continue;
+                            Assert.IsFalse(Hits(plate, harness.ScreenOf(other), MapMarkerLayer.LabelClearRadius));
+                        }
+                    }
+
+                    Assert.AreEqual(8, visible, copy[0]);
+                }
+
+                var diyarbakir = harness.Plates[6].GetComponentInChildren<Text>(true);
+                diyarbakir.text = "Diyarbakır";
+                harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                Assert.AreEqual("Diyarbakır", diyarbakir.text);
+                Assert.Greater(diyarbakir.preferredWidth, diyarbakir.fontSize);
+
+                for (var i = 0; i < harness.Plates.Length; i++)
+                {
+                    var image = harness.Plates[i].GetComponent<Image>();
+                    if (image == null)
+                        image = harness.Plates[i].AddComponent<Image>();
+                    image.raycastTarget = true;
+                }
+
+                harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                var before = CountPlates(harness);
+                Assert.IsTrue(harness.Layer.TrySelect(harness.ScreenOf(2), out var selected));
+                Assert.AreEqual("ankara", selected);
+                harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                Assert.IsTrue(harness.Layer.TrySelect(harness.ScreenOf(2), out var again));
+                Assert.AreEqual("ankara", again);
+                harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                Assert.AreEqual(before, CountPlates(harness));
+
+                var ankara = harness.Plates[2].GetComponentInChildren<Text>(true);
+                var izmir = harness.Plates[0].GetComponentInChildren<Text>(true);
+                Assert.Greater(ankara.fontSize, izmir.fontSize);
+                Assert.Greater(ankara.color.g, 0.9f);
+                var ankaraPlate = harness.Plates[2].GetComponent<Image>();
+                var izmirPlate = harness.Plates[0].GetComponent<Image>();
+                Assert.IsFalse(ankaraPlate.raycastTarget);
+                Assert.IsFalse(izmirPlate.raycastTarget);
+                Assert.Greater(ankaraPlate.color.g, izmirPlate.color.g);
+                Assert.Greater(ankaraPlate.color.a, 0.9f);
+                Assert.AreEqual(MapHudPalette.Card, izmirPlate.color);
+                Assert.AreEqual(MapHudPalette.ButtonActive, ankaraPlate.color);
+                Assert.Greater(izmirPlate.color.b, izmirPlate.color.r);
+                var ankaraEdge = ankaraPlate.GetComponent<Outline>();
+                var izmirEdge = izmirPlate.GetComponent<Outline>();
+                Assert.IsNotNull(ankaraEdge);
+                Assert.IsNotNull(izmirEdge);
+                Assert.AreEqual(MapHudPalette.Accent, ankaraEdge.effectColor);
+                Assert.AreEqual(MapHudPalette.Rule, izmirEdge.effectColor);
+                Assert.AreEqual(1f, ankaraEdge.effectDistance.x, 0.01f);
+                Assert.AreEqual(16, MapMarkerLayer.LabelFontSize(1f, false));
+                var selectedPlates = 0;
+                for (var i = 0; i < harness.Plates.Length; i++)
+                {
+                    var plate = harness.Plates[i].GetComponent<Image>();
+                    if (plate != null && plate.color == MapHudPalette.ButtonActive)
+                        selectedPlates++;
+                }
+
+                Assert.AreEqual(1, selectedPlates);
+
+                var markerBefore = harness.ScreenOf(2);
+                Assert.IsTrue(harness.Layer.TryLabelCenter(2, out var labelBefore));
+                harness.NudgeCamera(0.35f, -0.2f);
+                harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                var markerAfter = harness.ScreenOf(2);
+                Assert.IsTrue(harness.Layer.TryLabelCenter(2, out var labelAfter));
+                Assert.AreEqual(markerAfter.x - markerBefore.x, labelAfter.x - labelBefore.x, 1.5f);
+                Assert.AreEqual(markerAfter.y - markerBefore.y, labelAfter.y - labelBefore.y, 1.5f);
+
+                var watch = Stopwatch.StartNew();
+                for (var i = 0; i < 200; i++)
+                    harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                watch.Stop();
+                TestContext.WriteLine("cityLabels200=" + watch.Elapsed.TotalMilliseconds.ToString("0.00") + "ms");
+                Assert.Less(watch.Elapsed.TotalMilliseconds, 500d);
+
+                harness.Frame(1920, 1080, turkey: false);
+                harness.Layer.ApplyViewport(1920, 1080, snap: true);
+                Assert.AreEqual(1, harness.Layer.ActiveAggregateCount);
+                Assert.AreEqual(8, harness.Layer.LargestAggregateMembers);
+                for (var i = 0; i < harness.Plates.Length; i++)
+                    Assert.IsFalse(harness.Plates[i].activeSelf);
+            }
+            finally
+            {
+                harness.Dispose();
+            }
+        }
+
+        [Test]
+        public void CityLabels_SeparateIstanbulFromBursaWithoutMovingTheMarkers()
+        {
+            var longitudes = new double[MapCities.All.Length];
+            var latitudes = new double[MapCities.All.Length];
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                longitudes[i] = MapCities.All[i].Longitude;
+                latitudes[i] = MapCities.All[i].Latitude;
+            }
+
+            var names = new[]
+            {
+                "İzmir", "İstanbul", "Ankara", "Bursa", "Antalya", "Adana", "Diyarbakır", "Trabzon"
+            };
+            var english = new[]
+            {
+                "Izmir", "Istanbul", "Ankara", "Bursa", "Antalya", "Adana", "Diyarbakir", "Trabzon"
+            };
+            var german = new[]
+            {
+                "Izmir", "Istanbul", "Ankara", "Bursa", "Antalya", "Adana", "Diyarbakir", "Trabzon"
+            };
+            var frames = new[]
+            {
+                new Vector2(1920f, 1080f),
+                new Vector2(2868f, 1320f),
+                new Vector2(844f, 390f)
+            };
+            for (var f = 0; f < frames.Length; f++)
+            {
+                var width = (int)frames[f].x;
+                var height = (int)frames[f].y;
+                var harness = new Harness(width, height, turkey: true);
+                try
+                {
+                    harness.UseCanvasScale(width, height);
+                    var copies = new[] { names, english, german };
+                    for (var pass = 0; pass < copies.Length; pass++)
+                    {
+                        for (var i = 0; i < copies[pass].Length; i++)
+                            harness.Plates[i].GetComponentInChildren<Text>(true).text = copies[pass][i];
+                        harness.Layer.ApplyViewport(width, height, snap: true);
+                        var visible = 0;
+                        var seen = new bool[copies[pass].Length];
+                        for (var i = 0; i < harness.Plates.Length; i++)
+                        {
+                            if (!harness.Plates[i].activeSelf)
+                                continue;
+                            visible++;
+                            seen[i] = true;
+                            Assert.IsTrue(harness.Layer.TryLabelCenter(i, out var center));
+                            var marker = harness.ScreenOf(i);
+                            Assert.Less(Vector2.Distance(center, marker), 220f, copies[pass][i]);
+                            var half = harness.Plates[i].GetComponent<RectTransform>().sizeDelta * Harness.CanvasMatch(width, height) * 0.5f;
+                            var plate = new Rect(center.x - half.x, center.y - half.y, half.x * 2f, half.y * 2f);
+                            for (var other = 0; other < copies[pass].Length; other++)
+                            {
+                                if (other == i)
+                                    continue;
+                                Assert.IsFalse(Hits(plate, harness.ScreenOf(other), MapMarkerLayer.LabelClearRadius), copies[pass][i]);
+                                if (!harness.Plates[other].activeSelf || !harness.Layer.TryLabelCenter(other, out var otherCenter))
+                                    continue;
+                                var otherHalf = harness.Plates[other].GetComponent<RectTransform>().sizeDelta * Harness.CanvasMatch(width, height) * 0.5f;
+                                var gapX = Mathf.Abs(center.x - otherCenter.x) - half.x - otherHalf.x;
+                                var gapY = Mathf.Abs(center.y - otherCenter.y) - half.y - otherHalf.y;
+                                Assert.Greater(Mathf.Max(gapX, gapY), 2f, copies[pass][i] + "/" + copies[pass][other]);
+                            }
+                        }
+
+                        Assert.IsTrue(seen[1], "İstanbul " + width);
+                        Assert.IsTrue(seen[3], "Bursa " + width);
+                        Assert.GreaterOrEqual(visible, 7, width.ToString());
+                        Assert.IsTrue(harness.Layer.TryLabelCenter(1, out var istanbul));
+                        Assert.IsTrue(harness.Layer.TryLabelCenter(3, out var bursa));
+                        harness.Layer.ApplyViewport(width, height, snap: true);
+                        Assert.IsTrue(harness.Layer.TryLabelCenter(1, out var istanbulAgain));
+                        Assert.IsTrue(harness.Layer.TryLabelCenter(3, out var bursaAgain));
+                        Assert.AreEqual(istanbul.x, istanbulAgain.x, 0.05f);
+                        Assert.AreEqual(istanbul.y, istanbulAgain.y, 0.05f);
+                        Assert.AreEqual(bursa.x, bursaAgain.x, 0.05f);
+                        Assert.AreEqual(bursa.y, bursaAgain.y, 0.05f);
+                        TestContext.WriteLine(
+                            "citypair " + width + "x" + height + " " + copies[pass][1]
+                            + " istanbul=(" + istanbul.x.ToString("0") + "," + istanbul.y.ToString("0") + ")"
+                            + " bursa=(" + bursa.x.ToString("0") + "," + bursa.y.ToString("0") + ")"
+                            + " visible=" + visible);
+                    }
+                }
+                finally
+                {
+                    harness.Dispose();
+                }
+            }
+
+            for (var i = 0; i < MapCities.All.Length; i++)
+            {
+                Assert.AreEqual(longitudes[i], MapCities.All[i].Longitude, 0.0000001d);
+                Assert.AreEqual(latitudes[i], MapCities.All[i].Latitude, 0.0000001d);
+            }
+        }
+
+        static bool Hits(Rect plate, Vector2 center, float radius)
+        {
+            var x = center.x < plate.xMin ? plate.xMin : (center.x > plate.xMax ? plate.xMax : center.x);
+            var y = center.y < plate.yMin ? plate.yMin : (center.y > plate.yMax ? plate.yMax : center.y);
+            var dx = center.x - x;
+            var dy = center.y - y;
+            return dx * dx + dy * dy < radius * radius;
+        }
+
+        static int CountPlates(Harness harness)
+        {
+            var count = 0;
+            for (var i = 0; i < harness.Plates.Length; i++)
+            {
+                if (harness.Plates[i] != null)
+                    count++;
+            }
+
+            return count;
         }
 
         sealed class Harness
@@ -784,6 +1069,14 @@ namespace LogistiCore.Tests
             public void SetOrthographicSize(float size)
             {
                 _camera.orthographicSize = size;
+            }
+
+            public void NudgeCamera(float x, float y)
+            {
+                var position = _camera.transform.position;
+                position.x += x;
+                position.y += y;
+                _camera.transform.position = position;
             }
 
             public void UseCanvasScale(float width, float height)

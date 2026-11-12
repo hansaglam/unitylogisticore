@@ -75,13 +75,15 @@ namespace LogistiCore.Map
 
         static void DrawTruck(Color32[] pixels, int n)
         {
-            FillRect(pixels, n, 6, 24, 30, 16);
-            FillRect(pixels, n, 34, 28, 22, 12);
-            ClearRect(pixels, n, 38, 32, 12, 6);
-            FillCircle(pixels, n, 16, 20, 6);
-            FillCircle(pixels, n, 42, 20, 6);
-            ClearCircle(pixels, n, 16, 20, 2);
-            ClearCircle(pixels, n, 42, 20, 2);
+            FillRect(pixels, n, 6, 25, 32, 15);
+            FillRect(pixels, n, 38, 21, 18, 19);
+            ClearRect(pixels, n, 42, 25, 10, 8);
+            FillRect(pixels, n, 38, 36, 18, 4);
+            FillCircle(pixels, n, 16, 19, 7);
+            FillCircle(pixels, n, 46, 19, 7);
+            ClearCircle(pixels, n, 16, 19, 3);
+            ClearCircle(pixels, n, 46, 19, 3);
+            FillRect(pixels, n, 4, 28, 3, 5);
         }
 
         static void DrawClipboard(Color32[] pixels, int n)
@@ -119,12 +121,16 @@ namespace LogistiCore.Map
 
         static void DrawTrain(Color32[] pixels, int n)
         {
-            FillRect(pixels, n, 8, 24, 22, 16);
-            FillRect(pixels, n, 34, 24, 22, 16);
-            FillRect(pixels, n, 30, 29, 4, 5);
-            FillRect(pixels, n, 12, 40, 8, 10);
-            FillCircle(pixels, n, 16, 18, 5);
-            FillCircle(pixels, n, 42, 18, 5);
+            FillRect(pixels, n, 7, 24, 22, 17);
+            FillRect(pixels, n, 32, 24, 25, 17);
+            FillRect(pixels, n, 13, 41, 7, 8);
+            FillRect(pixels, n, 39, 41, 7, 8);
+            FillRect(pixels, n, 15, 17, 8, 7);
+            FillRect(pixels, n, 11, 12, 16, 5);
+            ClearRect(pixels, n, 37, 29, 7, 5);
+            ClearRect(pixels, n, 48, 29, 7, 5);
+            FillRect(pixels, n, 7, 50, 50, 3);
+            FillRect(pixels, n, 11, 54, 42, 2);
         }
 
         static void DrawShip(Color32[] pixels, int n)
@@ -139,14 +145,12 @@ namespace LogistiCore.Map
 
         static void DrawPlane(Color32[] pixels, int n)
         {
-            FillRect(pixels, n, 29, 6, 6, 52);
-            for (var i = 0; i < 22; i++)
-            {
-                FillRect(pixels, n, 27 - i, 34 + i / 4, 3, 5);
-                FillRect(pixels, n, 34 + i, 34 + i / 4, 3, 5);
-            }
-
-            FillRect(pixels, n, 18, 12, 28, 4);
+            FillRect(pixels, n, 27, 6, 10, 52);
+            FillRect(pixels, n, 10, 31, 44, 8);
+            FillRect(pixels, n, 20, 13, 24, 6);
+            FillRect(pixels, n, 22, 47, 20, 6);
+            ClearRect(pixels, n, 30, 11, 4, 7);
+            ClearRect(pixels, n, 30, 45, 4, 7);
         }
 
         static void FillRect(Color32[] pixels, int n, int x, int y, int width, int height)

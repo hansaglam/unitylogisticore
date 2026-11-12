@@ -179,19 +179,131 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 120578086
-    m_Localized: ROAD
+    m_Localized: Road
     m_Metadata:
       m_Items: []
   - m_Id: 120578087
-    m_Localized: RAIL
+    m_Localized: Rail
     m_Metadata:
       m_Items: []
   - m_Id: 120578088
-    m_Localized: SEA
+    m_Localized: Sea
     m_Metadata:
       m_Items: []
   - m_Id: 120578089
-    m_Localized: AIR
+    m_Localized: Air
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578090
+    m_Localized: Europe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578091
+    m_Localized: Asia
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578092
+    m_Localized: Africa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578093
+    m_Localized: North America
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578094
+    m_Localized: South America
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578095
+    m_Localized: Oceania
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578096
+    m_Localized: Black Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578097
+    m_Localized: Aegean Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578098
+    m_Localized: Mediterranean Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578099
+    m_Localized: Sea of Marmara
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578100
+    m_Localized: Caspian Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578101
+    m_Localized: Adriatic Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578102
+    m_Localized: Red Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578103
+    m_Localized: North Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578104
+    m_Localized: Baltic Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578105
+    m_Localized: Arabian Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578106
+    m_Localized: South China Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578107
+    m_Localized: Sea of Japan
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578108
+    m_Localized: Caribbean Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578109
+    m_Localized: Bering Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578110
+    m_Localized: Coral Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578111
+    m_Localized: Tasman Sea
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578112
+    m_Localized: Atlantic Ocean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578113
+    m_Localized: Pacific Ocean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578114
+    m_Localized: Indian Ocean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578115
+    m_Localized: Arctic Ocean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578116
+    m_Localized: Southern Ocean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 120578117
+    m_Localized: This transport mode is not available yet.
     m_Metadata:
       m_Items: []
   references:

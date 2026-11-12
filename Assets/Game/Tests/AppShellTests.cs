@@ -278,8 +278,9 @@ namespace LogistiCore.Tests
                     Assert.AreEqual(MapCommandShell.PanelState.Closed, view.State);
                     Assert.IsFalse(view.ContextOpen);
                     Assert.IsNull(FindNamed(view.transform, "Collapse"));
-                    Assert.IsNotNull(view.HomeButton);
-                    Assert.IsTrue(view.HomeButton.interactable);
+                    Assert.IsNull(view.HomeButton);
+                    Assert.IsNotNull(view.RegionButton);
+                    Assert.IsTrue(view.RegionButton.interactable);
                     Assert.IsNull(FindNamed(view.transform, "TopBar"));
                     Assert.IsNull(FindNamed(view.transform, "CommandRail"));
                 }

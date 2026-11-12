@@ -188,14 +188,16 @@ namespace LogistiCore.Tests
         public void DefaultAsset_IsUnconfiguredAndEmpty()
         {
             ClientEnvironmentAssetSetup.EnsureDefaultAsset();
-            var settings = ClientEnvironmentSettings.Load();
+            var settings = AssetDatabase.LoadAssetAtPath<ClientEnvironmentSettings>(
+                ClientEnvironmentAssetSetup.AssetPath);
+            Assert.IsNotNull(settings);
             var request = settings.ToRequest();
 
             Assert.AreEqual(ClientBackendEnvironment.Unconfigured, settings.Environment);
             Assert.IsFalse(request.HasAppConfiguration);
             Assert.IsFalse(request.HasEmulatorEndpoint);
             Assert.AreEqual(ClientConnectionDecision.StayOffline, ClientConnectionPolicy.Decide(request));
-            Assert.IsFalse(string.IsNullOrEmpty(AssetDatabase.GetAssetPath(settings)));
+            Assert.AreEqual(ClientEnvironmentAssetSetup.AssetPath, AssetDatabase.GetAssetPath(settings));
         }
     }
 
