@@ -90,6 +90,36 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void ManagementArt_IsCachedAndNotAHitTarget()
+        {
+            var first = MapPremiumPanelArt.Header;
+            Assert.AreSame(first, MapPremiumPanelArt.Header);
+            Assert.AreEqual(256, first.texture.width);
+            Assert.AreEqual(88, first.texture.height);
+
+            var root = new GameObject("PanelArtHarness", typeof(RectTransform),
+                typeof(Canvas), typeof(MapCommandShell));
+            try
+            {
+                var shell = root.GetComponent<MapCommandShell>();
+                shell.Apply(1920f, 1080f, new Rect(0f, 0f, 1920f, 1080f));
+                var panel = shell.Management;
+                Assert.IsNotNull(panel);
+                var art = Find(panel.transform, "ManagementHeaderArt").GetComponent<Image>();
+                var accent = Find(panel.transform, "ManagementHeaderAccent").GetComponent<Image>();
+                var close = Find(panel.transform, "ManagementClose").GetComponent<Button>();
+                Assert.AreSame(first, art.sprite);
+                Assert.IsFalse(art.raycastTarget);
+                Assert.IsFalse(accent.raycastTarget);
+                Assert.IsTrue(close.GetComponent<Image>().raycastTarget);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void AllMapCardCopy_IsProvidedInEnglishTurkishGerman()
         {
             var title = false;
