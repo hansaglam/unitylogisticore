@@ -499,8 +499,7 @@ namespace LogistiCore.Map
             item.hideFlags = HideFlags.DontSave;
             item.transform.SetParent(parent, false);
             var image = item.GetComponent<Image>();
-            image.color = new Color(0.035f, 0.07f, 0.12f, 1f);
-            image.raycastTarget = false;
+            MapPremiumUi.StyleSurface(image, MapPremiumSurface.Card);
             return (RectTransform)item.transform;
         }
 
