@@ -18,6 +18,8 @@ namespace LogistiCore.Map
 
         RectTransform _blocker;
         RectTransform _panel;
+        Image _premiumHeaderArt;
+        Image _premiumHeaderAccent;
         Button _close;
         Button _expand;
         Button _chip;
@@ -278,15 +280,26 @@ namespace LogistiCore.Map
             _blocker = Graphic("ManagementBlocker", transform, new Color(0.01f, 0.03f, 0.05f, 0.45f), true);
             _panel = Graphic("ManagementPanel", transform, Surface, true);
             MapPremiumUi.StyleSurface(_panel.GetComponent<Image>(), MapPremiumSurface.Panel, true);
+            var header = Graphic("ManagementHeaderArt", _panel, Color.white, false);
+            _premiumHeaderArt = header.GetComponent<Image>();
+            _premiumHeaderArt.sprite = MapPremiumPanelArt.Header;
+            _premiumHeaderArt.type = Image.Type.Simple;
+            _premiumHeaderArt.raycastTarget = false;
+            var accent = Graphic("ManagementHeaderAccent", _panel, MapPremiumTheme.Cyan, false);
+            _premiumHeaderAccent = accent.GetComponent<Image>();
+            _premiumHeaderAccent.raycastTarget = false;
             Stroke(_panel);
             _title = Label(_panel, "ManagementTitle", font, FontStyle.Bold, MapHudPalette.Text);
             _body = Label(_panel, "ManagementBody", font, FontStyle.Normal, MapHudPalette.TextMuted);
             _close = IconButton(_panel, "ManagementClose", out _closeIcon, out var closeAccess);
+            MapPremiumUi.StyleSurface(_close.GetComponent<Image>(), MapPremiumSurface.Button, true);
             closeAccess.enabled = false;
             _closeIcon.sprite = MapPanelIcons.Get(MapPanelIcons.Close);
             _closeIcon.color = MapHudPalette.Accent;
             _expand = IconButton(_panel, "ManagementExpand", out _expandIcon, out _expandLabel);
+            MapPremiumUi.StyleSurface(_expand.GetComponent<Image>(), MapPremiumSurface.Button, true);
             _chip = Action(_panel, "ManagementChip", font, out _chipLabel);
+            MapPremiumUi.StyleSurface(_chip.GetComponent<Image>(), MapPremiumSurface.Selected, true);
             _chipLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
             _chipLabel.verticalOverflow = VerticalWrapMode.Overflow;
             _menu = Graphic("ManagementMenu", _panel, Raised, true);
@@ -295,6 +308,7 @@ namespace LogistiCore.Map
             for (var i = 0; i < _choices.Length; i++)
             {
                 _choices[i] = Action(_menu, "ManagementChoice" + i, font, out _);
+                MapPremiumUi.StyleSurface(_choices[i].GetComponent<Image>(), MapPremiumSurface.Button, true);
                 var slot = i;
                 _choices[i].onClick.AddListener(() => Choose(slot));
             }
@@ -424,6 +438,14 @@ namespace LogistiCore.Map
 
             if (_chipLabel != null)
                 _chipLabel.text = _titles[index] ?? string.Empty;
+            if (_premiumHeaderAccent != null)
+            {
+                // A purely decorative mode accent, not an online/live status.
+                var hue = _module == MapModule.Market ? MapPremiumTheme.Success
+                    : _module == MapModule.Warehouses ? MapPremiumTheme.Warning
+                    : MapPremiumTheme.Cyan;
+                _premiumHeaderAccent.color = MapPremiumTheme.Alpha(hue, 0.85f);
+            }
             if (_fleet != null)
             {
                 var fleet = _module == MapModule.Fleet && IsOpen;
@@ -484,6 +506,24 @@ namespace LogistiCore.Map
         {
             var canvasTouch = MapManagementLayout.CanvasTouch(screenWidth, screenHeight, scale);
             var pad = Mathf.Max(8f, metrics.Gap / scale);
+            if (_premiumHeaderArt != null)
+            {
+                var art = _premiumHeaderArt.rectTransform;
+                art.anchorMin = new Vector2(0f, 1f);
+                art.anchorMax = new Vector2(1f, 1f);
+                art.pivot = new Vector2(0.5f, 1f);
+                art.sizeDelta = new Vector2(-2f, canvasTouch + pad * 2f + 8f);
+                art.anchoredPosition = Vector2.zero;
+            }
+            if (_premiumHeaderAccent != null)
+            {
+                var rule = _premiumHeaderAccent.rectTransform;
+                rule.anchorMin = new Vector2(0f, 1f);
+                rule.anchorMax = new Vector2(1f, 1f);
+                rule.pivot = new Vector2(0.5f, 1f);
+                rule.sizeDelta = new Vector2(-2f, 3f);
+                rule.anchoredPosition = Vector2.zero;
+            }
             var close = (RectTransform)_close.transform;
             close.anchorMin = new Vector2(1f, 1f);
             close.anchorMax = new Vector2(1f, 1f);
