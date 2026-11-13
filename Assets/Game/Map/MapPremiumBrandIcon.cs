@@ -10,14 +10,11 @@ namespace LogistiCore.Map
     {
         const int Size = 64;
         static Sprite _sprite;
-        public static Sprite Sprite
+        public static Sprite Get()
         {
-            get
-            {
-                if (_sprite == null)
-                    _sprite = Build();
-                return _sprite;
-            }
+            if (_sprite == null)
+                _sprite = Build();
+            return _sprite;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
