@@ -11,8 +11,8 @@ The screenshots supplied by the owner showed a largely empty geographic surface,
 ## Architecture
 - `MapSchematicLinks.cs` contains eleven explicitly authored *visual links* among the eight city coordinates already in `MapCities`. Each link's endpoints come from `MapProjection`; intermediate points are gently curved, illustrative lines.
 - `MapPremiumNetworkOverlay.cs` is a runtime-only view of those links. It creates cached `LineRenderer` objects and 8 city halo rings, using a single generated material and reusing line vertex buffers.
-- `MapMarkerLayer.OnEnable()` attaches the overlay when playing. It does not change the scene, prefab, serialized marker arrays, existing hit areas, translation bindings or the city-selection signal.
-- Overlay is shown only in `MapScope.Turkey` near the regional camera frame, hidden when viewing the world or other continents. It responds to zoom by keeping approximate screen-pixel stroke widths and halo sizes stable.
+- `MapMarkerLayer.OnEnable()` attaches the overlay when playing, while the already-existing city nameplates receive cached 9-slice rounded surfaces. It does not change the scene, prefab, serialized marker arrays, existing hit areas, translation bindings or the city-selection signal.
+- Overlay is shown only in `MapScope.Turkey` when `MapMarkerLod.AtCountryScale` already shows individual city markers; it remains hidden for aggregated country badges, the world and other continents. Zoom changes keep approximate screen-pixel stroke widths and halo sizes stable.
 - Selecting a city highlights only nearby graph edges and its halo, dimming unrelated links. This is a *visual neighborhood*, not an active delivery or server route.
 - The overlay is noninteractive and owns no raycast targets.
 - Generated runtime objects and material are disposed with the scene; no per-frame texture, GameObject or path-array creation.
