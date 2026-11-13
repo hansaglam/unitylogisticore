@@ -587,11 +587,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1855768067301391
-    m_Localized: "\\u015Eematik a\\u011F"
+    m_Localized: "\u015Eematik a\u011F"
     m_Metadata:
       m_Items: []
   - m_Id: 1855768067301392
-    m_Localized: "G\\u00F6rsel ba\\u011Flant\\u0131lar, canl\\u0131 rota de\\u011Fil"
+    m_Localized: "G\u00F6rsel ba\u011Flant\u0131lar, canl\u0131 rota de\u011Fil"
     m_Metadata:
       m_Items: []
   references:
