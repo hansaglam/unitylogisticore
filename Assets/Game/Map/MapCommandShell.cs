@@ -819,10 +819,11 @@ namespace LogistiCore.Map
             var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             _leftBleed = EdgeFill("LeftBleed");
             _rightBleed = EdgeFill("RightBleed");
-            _header = Panel("CommandHeader", out _);
+            _header = Panel("CommandHeader", out var headerImage);
+            MapPremiumUi.StyleSurface(headerImage, MapPremiumSurface.Panel);
             EnsureManagement();
             _rail = Panel("ModuleRail", out var railImage);
-            railImage.raycastTarget = false;
+            MapPremiumUi.StyleSurface(railImage, MapPremiumSurface.Panel);
             _context = Panel("ContextPanel", out _contextImage);
             _summary = Panel("SummaryBar", out _);
             _brandLead = Line(_header, "Brand", font, FontStyle.Bold, MapHudPalette.Text);
@@ -1187,12 +1188,17 @@ namespace LogistiCore.Map
             image.color = new Color(1f, 1f, 1f, 0f);
             image.raycastTarget = true;
 
-            var face = new GameObject("PremiumFace", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var face = new GameObject("PremiumFace", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline));
             face.hideFlags = HideFlags.DontSave;
             face.transform.SetParent(row.transform, false);
             var faceImage = face.GetComponent<Image>();
             MapPremiumUi.StyleSurface(faceImage, MapPremiumSurface.Card);
             faceImage.color = MapPremiumTheme.Alpha(MapPremiumTheme.Card, 0.50f);
+            var faceOutline = face.GetComponent<Outline>();
+            faceOutline.effectColor = MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, 0.56f);
+            faceOutline.effectDistance = new Vector2(1f, -1f);
+            faceOutline.useGraphicAlpha = false;
+            faceOutline.enabled = false;
 
             var edge = new GameObject("PremiumEdge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             edge.hideFlags = HideFlags.DontSave;
@@ -1488,6 +1494,9 @@ namespace LogistiCore.Map
                 faceImage.color = soon
                     ? MapPremiumTheme.Alpha(MapPremiumTheme.Panel, 0.48f)
                     : selected ? MapPremiumTheme.Selected : MapPremiumTheme.Alpha(MapPremiumTheme.Card, 0.55f);
+            var outline = face != null ? face.GetComponent<Outline>() : null;
+            if (outline != null)
+                outline.enabled = selected && !soon;
             var edge = button.transform.Find("PremiumEdge");
             var edgeImage = edge != null ? edge.GetComponent<Image>() : null;
             if (edgeImage != null)
