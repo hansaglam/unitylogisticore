@@ -140,6 +140,14 @@ namespace LogistiCore.Map
             var shader = Shader.Find("Sprites/Default");
             if (shader == null)
                 shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            // In stripped player builds, a shader already present on the authored
+            // city sprites is preferable to forcing a new GraphicsSettings asset.
+            if (shader == null && _markers != null)
+            {
+                var existing = _markers.GetComponentInChildren<SpriteRenderer>(true);
+                if (existing != null && existing.sharedMaterial != null)
+                    shader = existing.sharedMaterial.shader;
+            }
             if (shader == null)
             {
                 Debug.LogWarning("[LogistiCore] VISUAL-01 schematic overlay unavailable: no compatible sprite shader.");
