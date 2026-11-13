@@ -120,6 +120,41 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void ManagementListCards_UseTheSameNineSliceWithTouchableRoot()
+        {
+            var root = new GameObject("CardHarness", typeof(RectTransform),
+                typeof(Canvas), typeof(MapCommandShell));
+            try
+            {
+                var shell = root.GetComponent<MapCommandShell>();
+                shell.Apply(1920f, 1080f, new Rect(0f, 0f, 1920f, 1080f));
+                var names = new[]
+                {
+                    "ManagementFleetRow0", "ManagementJobsRow0", "ManagementWarehouseRow0",
+                    "ManagementMarketRow0", "ManagementRoadRow0"
+                };
+                Sprite surface = null;
+                foreach (var name in names)
+                {
+                    var row = Find(shell.transform, name);
+                    Assert.IsNotNull(row, name);
+                    var image = row.GetComponent<Image>();
+                    Assert.IsNotNull(image, name);
+                    Assert.IsTrue(image.raycastTarget, name);
+                    Assert.AreEqual(Image.Type.Sliced, image.type, name);
+                    if (surface == null)
+                        surface = image.sprite;
+                    else
+                        Assert.AreSame(surface, image.sprite, name);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void AllMapCardCopy_IsProvidedInEnglishTurkishGerman()
         {
             var title = false;
