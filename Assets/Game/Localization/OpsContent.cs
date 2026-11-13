@@ -148,6 +148,8 @@ namespace LogistiCore.Localization
         public const string HudLoading = "ops.hud.loading";
         public const string HudUnavailable = "ops.hud.unavailable";
         public const string HudReputation = "ops.hud.reputation";
+        public const string MapSchematicTitle = "ops.map.schematic.title";
+        public const string MapSchematicNote = "ops.map.schematic.note";
 
         public const string LongestTitle = "Lagerhäuser";
         public const string LongestBody = "Keine Live-Fuhrparkverbindung.";
@@ -298,7 +300,9 @@ namespace LogistiCore.Localization
             HudXp,
             HudLoading,
             HudUnavailable,
-            HudReputation
+            HudReputation,
+            MapSchematicTitle,
+            MapSchematicNote
         };
 
         public readonly struct Line
@@ -455,7 +459,9 @@ namespace LogistiCore.Localization
             new Line(HudXp, "XP", "XP", "XP"),
             new Line(HudLoading, "Loading…", "Yükleniyor…", "Wird geladen…"),
             new Line(HudUnavailable, "Unavailable", "Kullanılamıyor", "Nicht verfügbar"),
-            new Line(HudReputation, "Reputation", "İtibar", "Ruf")
+            new Line(HudReputation, "Reputation", "İtibar", "Ruf"),
+            new Line(MapSchematicTitle, "Schematic network", "Şematik ağ", "Schematisches Netz"),
+            new Line(MapSchematicNote, "Visual links, not live routes", "Görsel bağlantılar, canlı rota değil", "Nur Schema, keine aktiven Routen")
         };
 
         public static string CommandErrorKey(string detailsCode)
