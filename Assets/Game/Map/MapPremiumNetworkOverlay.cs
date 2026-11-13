@@ -17,7 +17,6 @@ namespace LogistiCore.Map
         const int RouteGlowOrder = 12;
         const int RouteCoreOrder = 13;
         const int CityRingOrder = 19;
-        const float MaxTurkeyFrameFactor = 1.55f;
 
         sealed class LinkView
         {
@@ -245,7 +244,7 @@ namespace LogistiCore.Map
             // No glowing routes at world scale, on other continents or in the
             // aggregated country-badge state. The graph is a local city preview.
             bool show = _rig.Scope == MapScope.Turkey &&
-                        ortho <= fitSize * MaxTurkeyFrameFactor;
+                        MapMarkerLod.AtCountryScale(ortho, fitSize);
             if (_visuals.activeSelf != show)
                 _visuals.SetActive(show);
             if (!show)
