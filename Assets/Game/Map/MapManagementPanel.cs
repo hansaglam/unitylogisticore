@@ -13,8 +13,8 @@ namespace LogistiCore.Map
     [DisallowMultipleComponent]
     public sealed class MapManagementPanel : MonoBehaviour
     {
-        static readonly Color Surface = new Color(0.027f, 0.055f, 0.094f, 0.96f);
-        static readonly Color Raised = new Color(0.055f, 0.102f, 0.138f, 1f);
+        static readonly Color Surface = MapPremiumTheme.Panel;
+        static readonly Color Raised = MapPremiumTheme.Card;
 
         RectTransform _blocker;
         RectTransform _panel;
@@ -277,6 +277,7 @@ namespace LogistiCore.Map
 
             _blocker = Graphic("ManagementBlocker", transform, new Color(0.01f, 0.03f, 0.05f, 0.45f), true);
             _panel = Graphic("ManagementPanel", transform, Surface, true);
+            MapPremiumUi.StyleSurface(_panel.GetComponent<Image>(), MapPremiumSurface.Panel, true);
             Stroke(_panel);
             _title = Label(_panel, "ManagementTitle", font, FontStyle.Bold, MapHudPalette.Text);
             _body = Label(_panel, "ManagementBody", font, FontStyle.Normal, MapHudPalette.TextMuted);
@@ -289,6 +290,7 @@ namespace LogistiCore.Map
             _chipLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
             _chipLabel.verticalOverflow = VerticalWrapMode.Overflow;
             _menu = Graphic("ManagementMenu", _panel, Raised, true);
+            MapPremiumUi.StyleSurface(_menu.GetComponent<Image>(), MapPremiumSurface.Card, true);
             _menu.gameObject.SetActive(false);
             for (var i = 0; i < _choices.Length; i++)
             {
