@@ -512,8 +512,8 @@ namespace LogistiCore.Map
                 art.anchorMin = new Vector2(0f, 1f);
                 art.anchorMax = new Vector2(1f, 1f);
                 art.pivot = new Vector2(0.5f, 1f);
-                art.sizeDelta = new Vector2(-2f, canvasTouch + pad * 2f + 8f);
-                art.anchoredPosition = Vector2.zero;
+                art.sizeDelta = new Vector2(-12f, canvasTouch + pad * 2f);
+                art.anchoredPosition = new Vector2(0f, -6f);
             }
             if (_premiumHeaderAccent != null)
             {
