@@ -140,6 +140,8 @@ namespace LogistiCore.Map
 
             Subscribe();
             ApplyViewport(Screen.width, Screen.height, snap: true);
+            // Runtime presentation only; does not modify the serialized city map.
+            MapPremiumNetworkOverlay.Ensure(this, mapCamera);
         }
 
         void OnDisable()
@@ -967,7 +969,11 @@ namespace LogistiCore.Map
             for (var i = 0; i < labels.Length && i < _plates.Length; i++)
             {
                 if (_plates[i] == null && labels[i] != null && labels[i].transform.parent != null)
+                {
                     _plates[i] = labels[i].transform.parent.GetComponent<Image>();
+                    if (_plates[i] != null)
+                        MapPremiumUi.StyleSurface(_plates[i], MapPremiumSurface.Chip);
+                }
                 if (_plates[i] == null || _accents == null || i >= _accents.Length || _accents[i] != null)
                     continue;
 
