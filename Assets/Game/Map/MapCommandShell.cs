@@ -20,9 +20,9 @@ namespace LogistiCore.Map
     [DisallowMultipleComponent]
     public sealed class MapCommandShell : MonoBehaviour
     {
-        static readonly Color Surface = new Color(0.016f, 0.036f, 0.062f, 1f);
-        static readonly Color SurfaceRaised = new Color(0.055f, 0.102f, 0.138f, 1f);
-        static readonly Color StrokeColor = new Color(0.47f, 0.76f, 0.84f, 0.38f);
+        static readonly Color Surface = MapPremiumTheme.Background;
+        static readonly Color SurfaceRaised = MapPremiumTheme.Selected;
+        static readonly Color StrokeColor = MapPremiumTheme.Outline;
         RectTransform _rect;
         RectTransform _header;
         RectTransform _rail;
