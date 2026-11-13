@@ -831,7 +831,7 @@ namespace LogistiCore.Map
             emblem.hideFlags = HideFlags.DontSave;
             emblem.transform.SetParent(_header, false);
             _brandEmblem = emblem.GetComponent<Image>();
-            _brandEmblem.sprite = MapPremiumBrandIcon.Sprite;
+            _brandEmblem.sprite = MapPremiumBrandIcon.Get();
             _brandEmblem.preserveAspect = true;
             _brandEmblem.raycastTarget = false;
             _brandEmblem.color = Color.white;
