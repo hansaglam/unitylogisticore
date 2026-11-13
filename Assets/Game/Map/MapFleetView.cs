@@ -11,8 +11,8 @@ namespace LogistiCore.Map
     public sealed class MapFleetView : MonoBehaviour
     {
         public const int MaxRows = 20;
-        static readonly Color Row = new Color(0.045f, 0.086f, 0.125f, 0.35f);
-        static readonly Color RowSelected = new Color(0.070f, 0.155f, 0.190f, 0.45f);
+        static readonly Color Row = MapPremiumTheme.Alpha(MapPremiumTheme.Card, 0.72f);
+        static readonly Color RowSelected = MapPremiumTheme.Alpha(MapPremiumTheme.Selected, 0.94f);
 
         RectTransform _status;
         Text _statusText;
@@ -576,8 +576,8 @@ namespace LogistiCore.Map
             item.hideFlags = HideFlags.DontSave;
             item.transform.SetParent(parent, false);
             var image = item.GetComponent<Image>();
+            MapPremiumUi.StyleSurface(image, MapPremiumSurface.Card, true);
             image.color = Row;
-            image.raycastTarget = true;
             var button = item.GetComponent<Button>();
             button.targetGraphic = image;
             label = Label(item.transform, "Label", font, FontStyle.Bold, MapHudPalette.Text);

@@ -52,6 +52,23 @@ namespace LogistiCore.Map
 
         public static int Count => Graph.Length;
 
+        /// <summary>
+        /// Number of schematic display links touching one existing city.
+        /// Never treat this count as available roads or active contracts.
+        /// </summary>
+        public static int NeighborCount(string cityId)
+        {
+            if (!MapCities.TryGet(cityId, out _))
+                return 0;
+            int count = 0;
+            for (int i = 0; i < Graph.Length; i++)
+            {
+                if (Graph[i].Touches(cityId))
+                    count++;
+            }
+            return count;
+        }
+
         public static MapSchematicLink At(int index)
         {
             return Graph[index];

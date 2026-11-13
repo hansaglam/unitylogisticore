@@ -12,8 +12,8 @@ namespace LogistiCore.Map
     public sealed class MapJobsView : MonoBehaviour
     {
         public const int MaxRows = 20;
-        static readonly Color Row = new Color(0.045f, 0.086f, 0.125f, 0.22f);
-        static readonly Color RowSelected = new Color(0.090f, 0.210f, 0.255f, 0.55f);
+        static readonly Color Row = MapPremiumTheme.Alpha(MapPremiumTheme.Card, 0.72f);
+        static readonly Color RowSelected = MapPremiumTheme.Alpha(MapPremiumTheme.Selected, 0.94f);
         static readonly Color ChipOn = new Color(0.090f, 0.210f, 0.255f, 0.62f);
         static readonly Color ChipOff = new Color(0.045f, 0.086f, 0.125f, 0.18f);
         static readonly Color Ink = MapHudPalette.Text;
@@ -1531,8 +1531,8 @@ namespace LogistiCore.Map
             item.hideFlags = HideFlags.DontSave;
             item.transform.SetParent(parent, false);
             var image = item.GetComponent<Image>();
+            MapPremiumUi.StyleSurface(image, MapPremiumSurface.Card, true);
             image.color = Row;
-            image.raycastTarget = true;
             var button = item.GetComponent<Button>();
             button.targetGraphic = image;
             label = Label(item.transform, "Label", font, FontStyle.Bold, Ink);

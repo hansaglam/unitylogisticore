@@ -73,6 +73,12 @@ namespace LogistiCore.Map
         Text _cityName;
         Text _coordinateLabel;
         Text _coordinateValue;
+        Image _cityHero;
+        RectTransform _cityCoordinatesCard;
+        RectTransform _cityNetworkCard;
+        Text _schematicTitle;
+        Text _schematicNote;
+        Text _schematicCount;
         Text _summaryText;
         Text _summaryAction;
         Button _summaryButton;
@@ -568,6 +574,23 @@ namespace LogistiCore.Map
             var known = city && !string.IsNullOrEmpty(_shownCity) && MapCities.TryGet(_shownCity, out _);
             string localized = null;
             var named = known && _markers != null && _markers.TryGetLocalizedName(_shownCity, out localized) && !string.IsNullOrEmpty(localized);
+            if (_cityHero != null)
+                _cityHero.gameObject.SetActive(known);
+            if (_cityCoordinatesCard != null)
+                _cityCoordinatesCard.gameObject.SetActive(known);
+            if (_cityNetworkCard != null)
+                _cityNetworkCard.gameObject.SetActive(known);
+            if (_schematicTitle != null)
+                _schematicTitle.gameObject.SetActive(known);
+            if (_schematicNote != null)
+                _schematicNote.gameObject.SetActive(known);
+            if (_schematicCount != null)
+            {
+                _schematicCount.gameObject.SetActive(known);
+                _schematicCount.text = known
+                    ? MapSchematicLinks.NeighborCount(_shownCity).ToString()
+                    : string.Empty;
+            }
 
             if (_section != null)
             {
@@ -791,6 +814,9 @@ namespace LogistiCore.Map
                     SetFont(text, metrics.CanvasFont);
             }
 
+            SetFont(_schematicTitle, Mathf.Max(12, metrics.CanvasFont - 1));
+            SetFont(_schematicNote, Mathf.Max(11, metrics.CanvasFont - 3));
+            SetFont(_schematicCount, Mathf.Max(18, metrics.CanvasTitle + 3));
             var brandEnd = PlaceBrand(leftPad, topPad, metrics.CanvasTitle);
             PlaceRegion(metrics, brandEnd, topPad, scale, safe);
             PlaceHud();
@@ -857,7 +883,22 @@ namespace LogistiCore.Map
             _progressText = _hud.ProgressText;
             PresentEconomy();
             BuildRegion(font);
-            _contextImage.color = Surface;
+            MapPremiumUi.StyleSurface(_contextImage, MapPremiumSurface.Panel, true);
+            var cityArtObject = new GameObject("CityHeroArtwork", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            cityArtObject.hideFlags = HideFlags.DontSave;
+            cityArtObject.transform.SetParent(_context, false);
+            _cityHero = cityArtObject.GetComponent<Image>();
+            _cityHero.sprite = MapPremiumCityArt.Banner;
+            _cityHero.type = Image.Type.Simple;
+            _cityHero.color = Color.white;
+            _cityHero.raycastTarget = false;
+            _cityHero.gameObject.SetActive(false);
+            _cityCoordinatesCard = (RectTransform)MapPremiumUi.CreateSurface(_context,
+                "CityCoordinatesCard", MapPremiumSurface.Card).transform;
+            _cityCoordinatesCard.gameObject.SetActive(false);
+            _cityNetworkCard = (RectTransform)MapPremiumUi.CreateSurface(_context,
+                "CityNetworkCard", MapPremiumSurface.Card).transform;
+            _cityNetworkCard.gameObject.SetActive(false);
             Stroke(_header);
             Stroke(_rail);
             Stroke(_context);
@@ -867,6 +908,11 @@ namespace LogistiCore.Map
             _cityName = Line(_context, "CityName", font, FontStyle.Bold, MapHudPalette.Text);
             _coordinateLabel = Line(_context, "CoordinateLabel", font, FontStyle.Normal, MapHudPalette.TextMuted);
             _coordinateValue = Line(_context, "CoordinateValue", font, FontStyle.Normal, MapHudPalette.Accent);
+            _schematicTitle = Line(_context, "SchematicTitle", font, FontStyle.Bold, MapPremiumTheme.TextPrimary);
+            _schematicNote = Line(_context, "SchematicNote", font, FontStyle.Normal, MapPremiumTheme.TextSecondary);
+            _schematicNote.horizontalOverflow = HorizontalWrapMode.Wrap;
+            _schematicCount = Line(_context, "SchematicCount", font, FontStyle.Bold, MapPremiumTheme.Cyan);
+            _schematicCount.alignment = TextAnchor.UpperRight;
             _section = section;
             _close = ActionButton(_context, "Close", font, out var closeLabel);
             HideHomeLabel(closeLabel);
@@ -905,6 +951,8 @@ namespace LogistiCore.Map
             TopBand(_cityName, 52f, 40f, 0f);
             TopBand(_coordinateLabel, 100f, 24f, 0f);
             TopBand(_coordinateValue, 126f, 32f, 0f);
+            TopBand(_schematicTitle, 175f, 28f, 60f);
+            TopBand(_schematicNote, 224f, 44f, 0f);
             Quiet(_close);
             Stroke((RectTransform)_close.transform);
             for (var i = 0; i < MapContent.RegionViews.Length; i++)
@@ -946,6 +994,8 @@ namespace LogistiCore.Map
             });
             Track(MapContent.Table, MapContent.Close, closeLabel);
             Track(MapContent.Table, MapContent.InspectorCoordinates, _coordinateLabel);
+            Track(OpsContent.Table, OpsContent.MapSchematicTitle, _schematicTitle);
+            Track(OpsContent.Table, OpsContent.MapSchematicNote, _schematicNote);
             TrackQuiet(MapContent.Table, MapContent.SummaryUnconnected, value =>
             {
                 _stripUnconfigured = value;
@@ -1549,6 +1599,33 @@ namespace LogistiCore.Map
             var coordinateTop = 18f + metrics.CanvasFont * 3.8f;
             TopBand(_coordinateLabel, coordinateTop, metrics.CanvasFont * 1.3f, rightPad + closeSide);
             TopBand(_coordinateValue, coordinateTop + metrics.CanvasFont * 1.4f, metrics.CanvasFont * 1.5f, rightPad + closeSide);
+            // Decorative surfaces never intercept city taps or panel controls.
+            PlaceCityCard(_cityHero != null ? _cityHero.rectTransform : null, 8f, 137f, 9f);
+            PlaceCityCard(_cityCoordinatesCard, coordinateTop - 8f, metrics.CanvasFont * 4.9f, 13f);
+            var schematicTop = coordinateTop + metrics.CanvasFont * 5.1f;
+            PlaceCityCard(_cityNetworkCard, schematicTop, metrics.CanvasFont * 7.8f, 13f);
+            TopBand(_schematicTitle, schematicTop + 14f, metrics.CanvasFont * 1.7f, rightPad + 56f);
+            TopBand(_schematicNote, schematicTop + metrics.CanvasFont * 4.1f, metrics.CanvasFont * 2.8f, rightPad + 16f);
+            if (_schematicCount != null)
+            {
+                var count = _schematicCount.rectTransform;
+                count.anchorMin = new Vector2(1f, 1f);
+                count.anchorMax = new Vector2(1f, 1f);
+                count.pivot = new Vector2(1f, 1f);
+                count.sizeDelta = new Vector2(43f, metrics.CanvasFont * 2.7f);
+                count.anchoredPosition = new Vector2(-(rightPad + 27f), -(schematicTop + 10f));
+            }
+        }
+
+        static void PlaceCityCard(RectTransform item, float top, float height, float side)
+        {
+            if (item == null)
+                return;
+            item.anchorMin = new Vector2(0f, 1f);
+            item.anchorMax = new Vector2(1f, 1f);
+            item.pivot = new Vector2(0.5f, 1f);
+            item.sizeDelta = new Vector2(-side * 2f, Mathf.Max(20f, height));
+            item.anchoredPosition = new Vector2(0f, -top);
         }
 
         static float BrandEmblemSize(int titleSize)

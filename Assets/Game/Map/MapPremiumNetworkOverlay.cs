@@ -14,6 +14,7 @@ namespace LogistiCore.Map
     {
         const int CurvePoints = 17;
         const int RingPoints = 33;
+        const float SelectionRevealSeconds = 0.28f;
         const int RouteGlowOrder = 12;
         const int RouteCoreOrder = 13;
         const int CityRingOrder = 19;
@@ -23,6 +24,7 @@ namespace LogistiCore.Map
             public MapSchematicLink Link;
             public LineRenderer Glow;
             public LineRenderer Line;
+            public SpriteRenderer Waypoint;
         }
 
         sealed class CityView
@@ -45,6 +47,9 @@ namespace LogistiCore.Map
         int _lastHeight = -1;
         MapScope _lastScope = MapScope.World;
         string _lastSelected;
+        bool _revealing;
+        float _revealElapsed;
+        [SerializeField] bool reduceMotion;
 
         public static void Ensure(MapMarkerLayer markers, Camera camera)
         {
@@ -104,6 +109,18 @@ namespace LogistiCore.Map
             if (!Application.isPlaying || !_bound || _rig == null || _camera == null)
                 return;
 
+            if (_revealing)
+            {
+                _revealElapsed += Time.unscaledDeltaTime;
+                if (_revealElapsed >= SelectionRevealSeconds)
+                {
+                    _revealElapsed = SelectionRevealSeconds;
+                    _revealing = false;
+                }
+                Refresh(true);
+                return;
+            }
+
             // Only presentation values change: there is no game-state polling.
             var selected = _markers != null ? _markers.SelectedId : null;
             if (Mathf.Abs(_camera.orthographicSize - _lastOrtho) > 0.0001f ||
@@ -131,7 +148,16 @@ namespace LogistiCore.Map
 
         void OnSelectionChanged()
         {
+            _revealElapsed = 0f;
+            _revealing = !reduceMotion && _markers != null &&
+                !string.IsNullOrEmpty(_markers.SelectedId);
             Refresh(true);
+        }
+
+        internal static float SelectionEase(float normalizedTime)
+        {
+            var t = Mathf.Clamp01(normalizedTime);
+            return t * t * (3f - 2f * t);
         }
 
         void Build()
@@ -163,6 +189,20 @@ namespace LogistiCore.Map
             _visuals.hideFlags = HideFlags.DontSave;
             _visuals.transform.SetParent(transform, false);
 
+            // Waypoints are illustrative junction markers, not vehicles.
+            Sprite waypointSprite = null;
+            if (_markers != null)
+            {
+                var sprites = _markers.GetComponentsInChildren<SpriteRenderer>(true);
+                for (var s = 0; s < sprites.Length; s++)
+                {
+                    if (sprites[s].gameObject.name != "Core" || sprites[s].sprite == null)
+                        continue;
+                    waypointSprite = sprites[s].sprite;
+                    break;
+                }
+            }
+
             _links = new LinkView[MapSchematicLinks.Count];
             for (int i = 0; i < _links.Length; i++)
             {
@@ -181,6 +221,17 @@ namespace LogistiCore.Map
                 view.Glow.SetPositions(points);
                 view.Line.positionCount = points.Length;
                 view.Line.SetPositions(points);
+                if (waypointSprite != null)
+                {
+                    var waypoint = new GameObject("SchematicWaypoint_" + i);
+                    waypoint.hideFlags = HideFlags.DontSave;
+                    waypoint.transform.SetParent(_visuals.transform, false);
+                    waypoint.transform.position = points[CurvePoints / 2];
+                    var sprite = waypoint.AddComponent<SpriteRenderer>();
+                    sprite.sprite = waypointSprite;
+                    sprite.sortingOrder = RouteCoreOrder + 1;
+                    view.Waypoint = sprite;
+                }
                 _links[i] = view;
             }
 
@@ -252,18 +303,32 @@ namespace LogistiCore.Map
 
             float units = MapMarkerLod.UnitsPerPixel(ortho, height);
             bool hasSelection = !string.IsNullOrEmpty(selected);
+            float reveal = _revealing
+                ? SelectionEase(_revealElapsed / SelectionRevealSeconds)
+                : 1f;
             for (int i = 0; i < _links.Length; i++)
             {
                 var view = _links[i];
                 if (view == null)
                     continue;
                 bool highlighted = hasSelection && view.Link.Touches(selected);
-                float lineAlpha = hasSelection ? (highlighted ? 0.93f : 0.13f) : 0.38f;
-                float glowAlpha = hasSelection ? (highlighted ? 0.30f : 0.025f) : 0.075f;
+                float lineAlpha = hasSelection
+                    ? (highlighted ? Mathf.Lerp(0.20f, 0.93f, reveal) : 0.13f) : 0.38f;
+                float glowAlpha = hasSelection
+                    ? (highlighted ? Mathf.Lerp(0.03f, 0.30f, reveal) : 0.025f) : 0.075f;
                 SetLine(view.Line, MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, lineAlpha),
                     units * (highlighted ? 2.8f : 1.55f));
                 SetLine(view.Glow, MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, glowAlpha),
                     units * (highlighted ? 9f : 5f));
+                if (view.Waypoint != null)
+                {
+                    view.Waypoint.color = MapPremiumTheme.Alpha(MapPremiumTheme.Cyan,
+                        highlighted ? Mathf.Lerp(0.34f, 0.95f, reveal)
+                                    : (hasSelection ? 0.17f : 0.57f));
+                    float size = MapMarkerLod.ScaleForPixels(
+                        highlighted ? 8f : 5f, ortho, height);
+                    view.Waypoint.transform.localScale = new Vector3(size, size, 1f);
+                }
             }
 
             for (int i = 0; i < _cities.Length; i++)
@@ -273,7 +338,7 @@ namespace LogistiCore.Map
                     continue;
                 bool active = string.Equals(city.CityId, selected, StringComparison.Ordinal);
                 var points = city.Points;
-                float radius = units * (active ? 25f : 19f);
+                float radius = units * (active ? 25f + (1f - reveal) * 6f : 19f);
                 for (var j = 0; j < RingPoints; j++)
                 {
                     float angle = j * Mathf.PI * 2f / (RingPoints - 1);
@@ -282,7 +347,8 @@ namespace LogistiCore.Map
                 }
                 city.Ring.SetPositions(points);
                 SetLine(city.Ring, MapPremiumTheme.Alpha(MapPremiumTheme.Cyan,
-                        active ? 0.96f : (hasSelection ? 0.32f : 0.66f)),
+                        active ? Mathf.Lerp(0.55f, 0.96f, reveal)
+                               : (hasSelection ? 0.32f : 0.66f)),
                     units * (active ? 2.2f : 1.15f));
             }
         }

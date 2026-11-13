@@ -586,6 +586,14 @@ MonoBehaviour:
     m_Localized: Wetter
     m_Metadata:
       m_Items: []
+  - m_Id: 1855768067301391
+    m_Localized: Schematisches Netz
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301392
+    m_Localized: Nur Schema, keine aktiven Routen
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
