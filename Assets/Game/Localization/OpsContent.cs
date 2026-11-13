@@ -142,6 +142,13 @@ namespace LogistiCore.Localization
         public const string RoadShowDestination = "ops.road.action.show_destination";
         public const string RoadBack = "ops.road.action.back";
 
+        // Keys already present in the EN/TR/DE Ops string table assets.
+        public const string HudLevel = "ops.hud.level";
+        public const string HudXp = "ops.hud.xp";
+        public const string HudLoading = "ops.hud.loading";
+        public const string HudUnavailable = "ops.hud.unavailable";
+        public const string HudReputation = "ops.hud.reputation";
+
         public const string LongestTitle = "Lagerhäuser";
         public const string LongestBody = "Keine Live-Fuhrparkverbindung.";
         public const string LongestExpand = "Erweitern";
@@ -286,7 +293,12 @@ namespace LogistiCore.Localization
             RoadArrivalUnknown,
             RoadShowOrigin,
             RoadShowDestination,
-            RoadBack
+            RoadBack,
+            HudLevel,
+            HudXp,
+            HudLoading,
+            HudUnavailable,
+            HudReputation
         };
 
         public readonly struct Line
@@ -438,7 +450,12 @@ namespace LogistiCore.Localization
             new Line(RoadArrivalUnknown, "Arrival time not provided", "Varış zamanı yok", "Ankunftszeit nicht angegeben"),
             new Line(RoadShowOrigin, "Show origin", "Kalkışı göster", "Start zeigen"),
             new Line(RoadShowDestination, "Show destination", "Varışı göster", "Ziel zeigen"),
-            new Line(RoadBack, "Delivery list", "Teslimat listesi", "Lieferliste")
+            new Line(RoadBack, "Delivery list", "Teslimat listesi", "Lieferliste"),
+            new Line(HudLevel, "Level", "Seviye", "Stufe"),
+            new Line(HudXp, "XP", "XP", "XP"),
+            new Line(HudLoading, "Loading…", "Yükleniyor…", "Wird geladen…"),
+            new Line(HudUnavailable, "Unavailable", "Kullanılamıyor", "Nicht verfügbar"),
+            new Line(HudReputation, "Reputation", "İtibar", "Ruf")
         };
 
         public static string CommandErrorKey(string detailsCode)
