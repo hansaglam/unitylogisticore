@@ -140,6 +140,8 @@ namespace LogistiCore.Map
 
             Subscribe();
             ApplyViewport(Screen.width, Screen.height, snap: true);
+            // Runtime presentation only; does not modify the serialized city map.
+            MapPremiumNetworkOverlay.Ensure(this, mapCamera);
         }
 
         void OnDisable()
