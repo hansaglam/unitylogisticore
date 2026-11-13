@@ -583,6 +583,14 @@ MonoBehaviour:
     m_Key: ops.hud.weather
     m_Metadata:
       m_Items: []
+  - m_Id: 1855768067301391
+    m_Key: ops.map.schematic.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1855768067301392
+    m_Key: ops.map.schematic.note
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
