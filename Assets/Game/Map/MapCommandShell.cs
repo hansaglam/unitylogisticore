@@ -56,6 +56,7 @@ namespace LogistiCore.Map
         readonly Button[] _regionRows = new Button[8];
         Text _brandLead;
         Text _brandTail;
+        Image _brandEmblem;
         Text _economyText;
         Text _progressText;
         MapTopHud _hud;
@@ -818,14 +819,35 @@ namespace LogistiCore.Map
             var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             _leftBleed = EdgeFill("LeftBleed");
             _rightBleed = EdgeFill("RightBleed");
-            _header = Panel("CommandHeader", out _);
+            _header = Panel("CommandHeader", out var headerImage);
+            MapPremiumUi.StyleSurface(headerImage, MapPremiumSurface.Panel);
             EnsureManagement();
             _rail = Panel("ModuleRail", out var railImage);
-            railImage.raycastTarget = false;
+            MapPremiumUi.StyleSurface(railImage, MapPremiumSurface.Panel);
             _context = Panel("ContextPanel", out _contextImage);
             _summary = Panel("SummaryBar", out _);
             _brandLead = Line(_header, "Brand", font, FontStyle.Bold, MapHudPalette.Text);
             _brandTail = Line(_header, "BrandCore", font, FontStyle.Bold, MapHudPalette.Accent);
+            var emblem = new GameObject("BrandEmblem", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            emblem.hideFlags = HideFlags.DontSave;
+            emblem.transform.SetParent(_header, false);
+            _brandEmblem = emblem.GetComponent<Image>();
+            _brandEmblem.sprite = MapPremiumBrandIcon.Get();
+            _brandEmblem.preserveAspect = true;
+            _brandEmblem.raycastTarget = false;
+            _brandEmblem.color = Color.white;
+            var topRule = new GameObject("HeaderTopAccent", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            topRule.hideFlags = HideFlags.DontSave;
+            topRule.transform.SetParent(_header, false);
+            var topRect = (RectTransform)topRule.transform;
+            topRect.anchorMin = new Vector2(0f, 1f);
+            topRect.anchorMax = new Vector2(1f, 1f);
+            topRect.pivot = new Vector2(0.5f, 1f);
+            topRect.sizeDelta = new Vector2(0f, 2f);
+            topRect.anchoredPosition = Vector2.zero;
+            var topImage = topRule.GetComponent<Image>();
+            topImage.color = MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, 0.46f);
+            topImage.raycastTarget = false;
             _brandLead.text = "Logisti";
             _brandTail.text = "Core";
             _brandLead.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -1165,6 +1187,33 @@ namespace LogistiCore.Map
             var image = row.GetComponent<Image>();
             image.color = new Color(1f, 1f, 1f, 0f);
             image.raycastTarget = true;
+
+            var face = new GameObject("PremiumFace", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline));
+            face.hideFlags = HideFlags.DontSave;
+            face.transform.SetParent(row.transform, false);
+            var faceImage = face.GetComponent<Image>();
+            MapPremiumUi.StyleSurface(faceImage, MapPremiumSurface.Card);
+            faceImage.color = MapPremiumTheme.Alpha(MapPremiumTheme.Card, 0.50f);
+            var faceOutline = face.GetComponent<Outline>();
+            faceOutline.effectColor = MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, 0.56f);
+            faceOutline.effectDistance = new Vector2(1f, -1f);
+            faceOutline.useGraphicAlpha = false;
+            faceOutline.enabled = false;
+
+            var edge = new GameObject("PremiumEdge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            edge.hideFlags = HideFlags.DontSave;
+            edge.transform.SetParent(row.transform, false);
+            var edgeImage = edge.GetComponent<Image>();
+            edgeImage.color = MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, 0f);
+            edgeImage.raycastTarget = false;
+
+            var iconPlate = new GameObject("PremiumIconPlate", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            iconPlate.hideFlags = HideFlags.DontSave;
+            iconPlate.transform.SetParent(row.transform, false);
+            var plateImage = iconPlate.GetComponent<Image>();
+            MapPremiumUi.StyleSurface(plateImage, MapPremiumSurface.Chip);
+            plateImage.color = MapPremiumTheme.Alpha(MapPremiumTheme.Chip, 0.48f);
+
             var button = row.GetComponent<Button>();
             button.targetGraphic = image;
             Quiet(button);
@@ -1438,7 +1487,26 @@ namespace LogistiCore.Map
             button.interactable = !soon;
             var image = button.GetComponent<Image>();
             if (image != null)
-                image.color = selected && !soon ? SurfaceRaised : new Color(1f, 1f, 1f, 0f);
+                image.color = new Color(1f, 1f, 1f, 0f);
+            var face = button.transform.Find("PremiumFace");
+            var faceImage = face != null ? face.GetComponent<Image>() : null;
+            if (faceImage != null)
+                faceImage.color = soon
+                    ? MapPremiumTheme.Alpha(MapPremiumTheme.Panel, 0.48f)
+                    : selected ? MapPremiumTheme.Selected : MapPremiumTheme.Alpha(MapPremiumTheme.Card, 0.55f);
+            var outline = face != null ? face.GetComponent<Outline>() : null;
+            if (outline != null)
+                outline.enabled = selected && !soon;
+            var edge = button.transform.Find("PremiumEdge");
+            var edgeImage = edge != null ? edge.GetComponent<Image>() : null;
+            if (edgeImage != null)
+                edgeImage.color = MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, selected && !soon ? 1f : 0f);
+            var plate = button.transform.Find("PremiumIconPlate");
+            var plateImage = plate != null ? plate.GetComponent<Image>() : null;
+            if (plateImage != null)
+                plateImage.color = selected && !soon
+                    ? MapPremiumTheme.Alpha(MapPremiumTheme.Cyan, 0.22f)
+                    : MapPremiumTheme.Alpha(MapPremiumTheme.Chip, soon ? 0.22f : 0.56f);
             var label = FindText(button.transform, "Label");
             var status = FindText(button.transform, "Status");
             var icon = button.transform.Find("Icon");
@@ -1457,7 +1525,7 @@ namespace LogistiCore.Map
             if (label == null)
                 return;
 
-            label.color = soon ? muted : selected ? MapHudPalette.Accent : muted;
+            label.color = soon ? muted : selected ? MapPremiumTheme.TextPrimary : MapHudPalette.TextMuted;
             label.fontStyle = FontStyle.Bold;
         }
 
@@ -1483,21 +1551,43 @@ namespace LogistiCore.Map
             TopBand(_coordinateValue, coordinateTop + metrics.CanvasFont * 1.4f, metrics.CanvasFont * 1.5f, rightPad + closeSide);
         }
 
+        static float BrandEmblemSize(int titleSize)
+        {
+            return Mathf.Clamp(titleSize * 1.10f, 17f, 30f);
+        }
+
+        static float BrandEmblemReserve(int titleSize)
+        {
+            return BrandEmblemSize(titleSize) + Mathf.Max(6f, titleSize * 0.25f);
+        }
+
         float PlaceBrand(float leftPad, float topPad, int titleSize)
         {
+            var reserve = BrandEmblemReserve(titleSize);
             if (_brandLead == null || _brandTail == null)
             {
-                return leftPad + 12f + Mathf.Max(48f, "Logisti".Length * titleSize * 0.56f)
+                return leftPad + 12f + reserve + Mathf.Max(48f, "Logisti".Length * titleSize * 0.56f)
                     + Mathf.Max(28f, "Core".Length * titleSize * 0.56f)
                     + MapCommandLayout.BrandGlyphPadCanvas(titleSize);
             }
 
             SetFont(_brandLead, titleSize);
             SetFont(_brandTail, titleSize);
+            if (_brandEmblem != null)
+            {
+                var emblem = _brandEmblem.rectTransform;
+                emblem.anchorMin = new Vector2(0f, 0.5f);
+                emblem.anchorMax = new Vector2(0f, 0.5f);
+                emblem.pivot = new Vector2(0f, 0.5f);
+                var size = BrandEmblemSize(titleSize);
+                emblem.sizeDelta = new Vector2(size, size);
+                emblem.anchoredPosition = new Vector2(leftPad + 12f, -topPad * 0.5f);
+            }
+
             var leadWidth = Mathf.Max(1f, _brandLead.preferredWidth);
             var tailWidth = Mathf.Max(1f, _brandTail.preferredWidth);
             var pad = MapCommandLayout.BrandGlyphPadCanvas(titleSize);
-            var x = leftPad + 12f;
+            var x = leftPad + 12f + reserve;
             AnchorLeft(_brandLead, x, leadWidth, 0f, topPad);
             AnchorLeft(_brandTail, x + leadWidth, tailWidth + pad, 0f, topPad);
             return x + leadWidth + tailWidth + pad;
@@ -1505,16 +1595,17 @@ namespace LogistiCore.Map
 
         float BrandEndCanvas(float leftPad, int titleSize)
         {
+            var start = leftPad + 12f + BrandEmblemReserve(titleSize);
             if (_brandLead == null || _brandTail == null)
             {
-                return leftPad + 12f + Mathf.Max(48f, "Logisti".Length * titleSize * 0.56f)
+                return start + Mathf.Max(48f, "Logisti".Length * titleSize * 0.56f)
                     + Mathf.Max(28f, "Core".Length * titleSize * 0.56f)
                     + MapCommandLayout.BrandGlyphPadCanvas(titleSize);
             }
 
             var leadWidth = Mathf.Max(1f, _brandLead.preferredWidth);
             var tailWidth = Mathf.Max(1f, _brandTail.preferredWidth);
-            return leftPad + 12f + leadWidth + tailWidth + MapCommandLayout.BrandGlyphPadCanvas(titleSize);
+            return start + leadWidth + tailWidth + MapCommandLayout.BrandGlyphPadCanvas(titleSize);
         }
 
         float BrandChipGap(int titleSize)
@@ -2576,6 +2667,27 @@ namespace LogistiCore.Map
             row.sizeDelta = new Vector2(width, height);
             row.anchoredPosition = new Vector2(x, y);
             var frames = MapCommandLayout.RailFrames(width, height, icon, labelBlock, iconGap, comingSoon, 0.5f);
+            var face = row.Find("PremiumFace") as RectTransform;
+            if (face != null)
+            {
+                face.anchorMin = Vector2.zero;
+                face.anchorMax = Vector2.one;
+                face.offsetMin = new Vector2(4f, 3f);
+                face.offsetMax = new Vector2(-4f, -3f);
+            }
+            var edge = row.Find("PremiumEdge") as RectTransform;
+            if (edge != null)
+            {
+                edge.anchorMin = new Vector2(0f, 0.5f);
+                edge.anchorMax = new Vector2(0f, 0.5f);
+                edge.pivot = new Vector2(0f, 0.5f);
+                edge.sizeDelta = new Vector2(3f, Mathf.Max(12f, height * 0.45f));
+                edge.anchoredPosition = new Vector2(4f, 0f);
+            }
+            var plate = row.Find("PremiumIconPlate") as RectTransform;
+            if (plate != null)
+                PlaceRailItem(plate, new Rect(frames.Icon.x - 4f, frames.Icon.y - 4f,
+                    frames.Icon.width + 8f, frames.Icon.height + 8f), width);
             PlaceRailItem(row.Find("Icon") as RectTransform, frames.Icon, width);
             var status = row.Find("Status") as RectTransform;
             if (status != null)

@@ -23,6 +23,7 @@ namespace LogistiCore.Map
         RectTransform _xpTrack;
         RectTransform _xpFill;
         Image _xpFillImage;
+        Image _balanceState;
         Text _levelValue;
         Text _levelLabel;
         Text _xpLabel;
@@ -64,6 +65,8 @@ namespace LogistiCore.Map
             hud._xpFill.gameObject.SetActive(false);
 
             Icon(hud._balanceRoot, "BalanceIcon", MapHudIcons.Get(MapHudIcons.Wallet), MapHudPalette.Accent);
+            var status = Bar(hud._balanceRoot, "BalanceStateAccent", MapPremiumTheme.Warning);
+            hud._balanceState = status.GetComponent<Image>();
             hud._balanceText = Label(hud._balanceRoot, "Economy", font, FontStyle.Bold, MapHudPalette.Text);
             hud._balanceText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
@@ -101,6 +104,9 @@ namespace LogistiCore.Map
                     ? FirstNonEmpty(_loadingCopy, "—")
                     : FirstNonEmpty(_unavailableCopy, "—");
                 _balanceText.text = hold;
+                if (_balanceState != null)
+                    _balanceState.color = MapCompanyEconomyRead.InFlight
+                        ? MapPremiumTheme.Cyan : MapPremiumTheme.Warning;
                 _levelValue.text = "—";
                 _levelLabel.text = FirstNonEmpty(_levelCopy, "");
                 _xpLabel.text = "";
@@ -112,6 +118,9 @@ namespace LogistiCore.Map
 
             var economy = MapCompanyStore.Economy;
             _balanceText.text = FormatBalance(economy);
+            if (_balanceState != null)
+                _balanceState.color = economy.HasBalance
+                    ? MapPremiumTheme.Success : MapPremiumTheme.Warning;
             if (economy.Level > 0)
             {
                 _levelValue.text = economy.Level.ToString();
@@ -397,6 +406,16 @@ namespace LogistiCore.Map
 
         void LayoutBalance(float icon, float inner, float pad)
         {
+            if (_balanceState != null)
+            {
+                var strip = _balanceState.rectTransform;
+                strip.anchorMin = new Vector2(0f, 0.5f);
+                strip.anchorMax = new Vector2(0f, 0.5f);
+                strip.pivot = new Vector2(0f, 0.5f);
+                strip.sizeDelta = new Vector2(3f, Mathf.Max(12f, inner * 0.48f));
+                strip.anchoredPosition = new Vector2(1.5f, 0f);
+            }
+
             var iconRect = _balanceRoot.Find("BalanceIcon") as RectTransform;
             if (iconRect != null)
             {
