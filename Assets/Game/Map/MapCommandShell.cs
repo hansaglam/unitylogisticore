@@ -597,7 +597,7 @@ namespace LogistiCore.Map
 
             var city = open && _state == PanelState.City;
             var legacyKnown = city && !string.IsNullOrEmpty(_shownCity) && MapCities.TryGet(_shownCity, out _);
-            MapGlobalCity globalCity;
+            MapGlobalCity globalCity = default;
             var globalKnown = city && _shownWorldCity.IsValid &&
                 MapTradeRegionCatalog.Includes(_shownWorldCity) &&
                 MapGlobalCityCatalog.TryGet(_shownWorldCity, out globalCity);
