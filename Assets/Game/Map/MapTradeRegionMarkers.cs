@@ -118,6 +118,33 @@ namespace LogistiCore.Map
             Refresh(true);
         }
 
+        void Start()
+        {
+            if (!MapHeadquartersPreviewSelection.HasPending || _rig == null ||
+                _camera == null || _root == null)
+                return;
+
+            if (!MapHeadquartersPreviewSelection.TryConsume(out var location) ||
+                !MapGlobalCityCatalog.TryGet(location, out var city) ||
+                !MapTradeRegionCatalog.Includes(city) ||
+                !MapProjection.TryProject(city.Latitude, city.Longitude, out var world))
+                return;
+
+            // The user explicitly requested a location preview from the
+            // company scene. Do not infer this from current account data.
+            _rig.ApplyImmediate(location.CountryCode == "TUR"
+                ? MapScope.Turkey : MapScope.Europe);
+            _rig.FocusWorldPoint(world);
+            _rig.ZoomAtScreen(
+                new Vector2(Screen.width * 0.5f, Screen.height * 0.5f),
+                location.CountryCode == "TUR" ? 1.35f : 1.85f);
+
+            var inspector = FindAnyObjectByType<MapCommandShell>();
+            if (inspector != null)
+                inspector.ShowGlobalCity(location);
+            Refresh(true);
+        }
+
         void OnDisable()
         {
             if (_root != null)

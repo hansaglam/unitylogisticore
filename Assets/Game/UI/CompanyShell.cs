@@ -24,6 +24,7 @@ namespace LogistiCore.UI
         LayoutElement _overviewElement;
         LayoutElement _buttonElement;
         ShellWidgets.Column _column;
+        CompanyHeadquartersPreview _headquartersPreview;
         bool _built;
         bool _subscribed;
         bool _listening;
@@ -129,6 +130,14 @@ namespace LogistiCore.UI
 
             _column = ShellWidgets.ScrollColumn(safeObject.transform);
             ShellWidgets.Header(_column.Content, font, false, out _brand, out _heading, out _);
+            // Non-persistent starting-city browser. It never writes to a company;
+            // an existing player's current headquarters remains untouched.
+            var preview = new GameObject(
+                "HeadquartersPreview", typeof(RectTransform),
+                typeof(LayoutElement), typeof(CompanyHeadquartersPreview));
+            preview.transform.SetParent(_column.Content, false);
+            _headquartersPreview = preview.GetComponent<CompanyHeadquartersPreview>();
+            _headquartersPreview.Build(font);
             var overview = ShellWidgets.Overview(_column.Content, font, out _status, out _body);
             _homeButton = ShellWidgets.ActionBar(_column.Content, "Home", font, out _buttonLabel);
             _overviewElement = overview.GetComponent<LayoutElement>();
@@ -152,7 +161,7 @@ namespace LogistiCore.UI
                 _column.Layout.spacing = ShellTypography.BlockGap;
             }
 
-            ShellWidgets.UseScroll(_column, metrics.Overflow);
+            ShellWidgets.UseScroll(_column, true); // HQ preview adds a scrollable country/city panel.
             ShellWidgets.SetLine(_brand, metrics.BrandSize, 1);
             ShellWidgets.SetLine(_heading, metrics.HeadingSize, 1);
             ShellWidgets.SetLine(_status, metrics.StatusSize, 1);
