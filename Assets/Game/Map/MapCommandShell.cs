@@ -532,6 +532,7 @@ namespace LogistiCore.Map
         }
 
         string _shownCity;
+        MapBusinessLocation _shownWorldCity;
 
         void Relayout()
         {
@@ -543,6 +544,7 @@ namespace LogistiCore.Map
 
         internal void ShowCity(string cityId)
         {
+            _shownWorldCity = default;
             _shownCity = cityId;
             if (ManagementOpen)
             {
@@ -564,6 +566,29 @@ namespace LogistiCore.Map
             Relayout();
         }
 
+        internal void ShowGlobalCity(MapBusinessLocation location)
+        {
+            // No contract or branch entitlement is inferred from a map marker.
+            _shownCity = null;
+            _shownWorldCity = MapTradeRegionCatalog.Includes(location) ? location : default;
+            if (ManagementOpen)
+            {
+                Present();
+                return;
+            }
+
+            if (_shownWorldCity.IsValid)
+            {
+                _state = PanelState.City;
+                _moduleIndex = -1;
+            }
+            else if (_state == PanelState.City)
+            {
+                _state = PanelState.Closed;
+            }
+            Relayout();
+        }
+
         void Present()
         {
             var open = _state != PanelState.Closed && _metrics.ContextOpen;
@@ -571,27 +596,46 @@ namespace LogistiCore.Map
                 _context.gameObject.SetActive(open);
 
             var city = open && _state == PanelState.City;
-            var known = city && !string.IsNullOrEmpty(_shownCity) && MapCities.TryGet(_shownCity, out _);
+            var legacyKnown = city && !string.IsNullOrEmpty(_shownCity) && MapCities.TryGet(_shownCity, out _);
+            MapGlobalCity globalCity = default;
+            var globalKnown = city && _shownWorldCity.IsValid &&
+                MapTradeRegionCatalog.Includes(_shownWorldCity) &&
+                MapGlobalCityCatalog.TryGet(_shownWorldCity, out globalCity);
+            // Assign explicitly because short-circuit evaluation may not write
+            // the out parameter in non-city contexts.
+            if (!globalKnown)
+                globalCity = default;
+            var known = legacyKnown || globalKnown;
             string localized = null;
-            var named = known && _markers != null && _markers.TryGetLocalizedName(_shownCity, out localized) && !string.IsNullOrEmpty(localized);
+            var named = (legacyKnown && _markers != null &&
+                _markers.TryGetLocalizedName(_shownCity, out localized) &&
+                !string.IsNullOrEmpty(localized)) || globalKnown;
+            if (globalKnown)
+                localized = globalCity.DisplayName; // Neutral source name until TR/EN/DE localization.
             if (_cityHero != null)
             {
                 _cityHero.gameObject.SetActive(known);
-                if (known)
+                if (legacyKnown)
                     _cityHero.sprite = MapPremiumCityArt.ForCity(_shownCity);
+                else if (globalKnown)
+                    _cityHero.sprite = MapPremiumCityArt.ForWorldCity(
+                        MapTradeRegionCatalog.ArtworkKey(globalCity),
+                        globalCity.Location.CountryCode);
             }
             if (_cityCoordinatesCard != null)
                 _cityCoordinatesCard.gameObject.SetActive(known);
+            // The existing route-network card is an eight-city schematic,
+            // not verified European roads or contracts. Hide it on new cities.
             if (_cityNetworkCard != null)
-                _cityNetworkCard.gameObject.SetActive(known);
+                _cityNetworkCard.gameObject.SetActive(legacyKnown);
             if (_schematicTitle != null)
-                _schematicTitle.gameObject.SetActive(known);
+                _schematicTitle.gameObject.SetActive(legacyKnown);
             if (_schematicNote != null)
-                _schematicNote.gameObject.SetActive(known);
+                _schematicNote.gameObject.SetActive(legacyKnown);
             if (_schematicCount != null)
             {
-                _schematicCount.gameObject.SetActive(known);
-                _schematicCount.text = known
+                _schematicCount.gameObject.SetActive(legacyKnown);
+                _schematicCount.text = legacyKnown
                     ? MapSchematicLinks.NeighborCount(_shownCity).ToString()
                     : string.Empty;
             }
@@ -621,12 +665,16 @@ namespace LogistiCore.Map
             if (_coordinateValue != null)
             {
                 _coordinateValue.gameObject.SetActive(known);
-                if (known && MapCities.TryGet(_shownCity, out var located))
+                if (known)
                 {
+                    var latitude = globalKnown ? globalCity.Latitude :
+                        (MapCities.TryGet(_shownCity, out var located) ? located.Latitude : 0d);
+                    var longitude = globalKnown ? globalCity.Longitude :
+                        (MapCities.TryGet(_shownCity, out var longitudeCity) ? longitudeCity.Longitude : 0d);
                     var culture = LocaleService.CurrentCulture;
                     _coordinateValue.text =
-                        LocalizedFormatting.Number(located.Latitude, culture, 2) + ", " +
-                        LocalizedFormatting.Number(located.Longitude, culture, 2);
+                        LocalizedFormatting.Number(latitude, culture, 2) + ", " +
+                        LocalizedFormatting.Number(longitude, culture, 2);
                 }
                 else
                 {
