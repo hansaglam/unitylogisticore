@@ -13,7 +13,9 @@ namespace LogistiCore.Map
     {
         const int Width = 320;
         const int Height = 128;
+        const int MaxCachedCities = 24; // ~4 MiB of raw pixel textures on mobile.
         static readonly Dictionary<string, Sprite> CityBanners = new Dictionary<string, Sprite>();
+        static readonly Queue<string> CacheOrder = new Queue<string>();
         static Sprite _banner;
 
         // Retained for existing callers and as the safe unknown-city fallback.
@@ -27,25 +29,77 @@ namespace LogistiCore.Map
             }
         }
 
+        // Compatible with the original eight Turkey city markers.
         public static Sprite ForCity(string cityId)
         {
-            if (!MapCityAtmosphereCatalog.TryGet(cityId, out var atmosphere))
+            return ForWorldCity(cityId, null);
+        }
+
+        /// <summary>
+        /// Future global city catalogs can provide their stable city id and
+        /// ISO-3166 alpha-3 country code. Neither a marker nor a city record
+        /// is fabricated here: the method creates presentation art only.
+        /// </summary>
+        public static Sprite ForWorldCity(string cityId, string countryCode)
+        {
+            if (!MapWorldCityAtmosphereResolver.TryResolve(cityId, countryCode, out var atmosphere))
                 return Banner;
 
-            if (!CityBanners.TryGetValue(cityId, out var sprite) || sprite == null)
+            var country = string.IsNullOrWhiteSpace(countryCode)
+                ? (MapCityAtmosphereCatalog.TryGet(atmosphere.CityId, out _) ? "TUR" : "")
+                : countryCode.Trim().ToUpperInvariant();
+            var key = country + "|" + atmosphere.CityId;
+
+            if (CityBanners.TryGetValue(key, out var sprite) && sprite != null)
+                return sprite;
+
+            // The map shows one city context at a time. Eviction keeps browsing
+            // hundreds of cities from allocating hundreds of retained textures.
+            if (CityBanners.Count >= MaxCachedCities && CacheOrder.Count > 0)
             {
-                sprite = Create(atmosphere);
-                CityBanners[cityId] = sprite;
+                var discarded = CacheOrder.Dequeue();
+                if (CityBanners.TryGetValue(discarded, out var previous))
+                {
+                    CityBanners.Remove(discarded);
+                    Release(previous);
+                }
             }
 
+            sprite = Create(atmosphere);
+            CityBanners[key] = sprite;
+            CacheOrder.Enqueue(key);
             return sprite;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset()
         {
+            if (_banner != null)
+                Release(_banner);
             _banner = null;
+            foreach (var pair in CityBanners)
+                Release(pair.Value);
             CityBanners.Clear();
+            CacheOrder.Clear();
+        }
+
+        static void Release(Sprite sprite)
+        {
+            if (sprite == null)
+                return;
+            var texture = sprite.texture;
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(sprite);
+                if (texture != null)
+                    UnityEngine.Object.Destroy(texture);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(sprite);
+                if (texture != null)
+                    UnityEngine.Object.DestroyImmediate(texture);
+            }
         }
 
         static Sprite Create(MapCityAtmosphere? selected)
@@ -199,6 +253,39 @@ namespace LogistiCore.Map
                     Roof(pixels, x - 21, 19, 66, 70, shape);
                     Roof(pixels, x + 34, 16, 46, 57, dark);
                     Rect(pixels, x - 50, 12, 100, 5, shape);
+                    break;
+                case MapCityLandmark.LatticeTower: // Stylized lattice observation tower.
+                    for (var level = 0; level < 76; level++)
+                    {
+                        var half = Mathf.Max(2, Mathf.RoundToInt((76 - level) * .24f));
+                        Rect(pixels, x - half, 23 + level, 3, 1, shape);
+                        Rect(pixels, x + half - 2, 23 + level, 3, 1, shape);
+                        if (level % 9 == 0)
+                            Rect(pixels, x - half, 23 + level, half * 2 + 1, 2, shape);
+                    }
+                    Rect(pixels, x - 2, 98, 4, 18, shape);
+                    break;
+                case MapCityLandmark.NeedleTower: // Tall broadcast tower.
+                    Rect(pixels, x - 3, 20, 6, 76, shape);
+                    Rect(pixels, x - 12, 77, 24, 6, dark);
+                    Rect(pixels, x - 8, 88, 16, 4, shape);
+                    Rect(pixels, x - 2, 96, 4, 24, shape);
+                    break;
+                case MapCityLandmark.SailRoof: // Sydney-inspired layered sail roof.
+                    Rect(pixels, x - 48, 24, 92, 8, dark);
+                    Roof(pixels, x - 23, 32, 28, 42, shape);
+                    Roof(pixels, x + 9, 32, 24, 56, shape);
+                    Roof(pixels, x + 30, 32, 16, 35, dark);
+                    break;
+                case MapCityLandmark.Skyscrapers: // Dense tall-city profile.
+                    Rect(pixels, x - 40, 22, 20, 59, shape);
+                    Rect(pixels, x - 17, 22, 20, 94, dark);
+                    Rect(pixels, x + 8, 22, 25, 77, shape);
+                    Rect(pixels, x + 36, 22, 12, 52, dark);
+                    break;
+                case MapCityLandmark.Pyramids: // Stylized heritage silhouettes.
+                    Roof(pixels, x - 29, 23, 35, 40, shape);
+                    Roof(pixels, x + 26, 23, 30, 32, dark);
                     break;
             }
         }
