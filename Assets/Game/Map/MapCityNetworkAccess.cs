@@ -20,7 +20,8 @@ namespace LogistiCore.Map
         }
 
         public bool IsValid =>
-            CountryCode.Length == 3 && CityKey.Length > 0 &&
+            CountryCode != null && CountryCode.Length == 3 &&
+            !string.IsNullOrEmpty(CityKey) &&
             CountryCode[0] >= 'A' && CountryCode[0] <= 'Z' &&
             CountryCode[1] >= 'A' && CountryCode[1] <= 'Z' &&
             CountryCode[2] >= 'A' && CountryCode[2] <= 'Z';
