@@ -575,7 +575,11 @@ namespace LogistiCore.Map
             string localized = null;
             var named = known && _markers != null && _markers.TryGetLocalizedName(_shownCity, out localized) && !string.IsNullOrEmpty(localized);
             if (_cityHero != null)
+            {
                 _cityHero.gameObject.SetActive(known);
+                if (known)
+                    _cityHero.sprite = MapPremiumCityArt.ForCity(_shownCity);
+            }
             if (_cityCoordinatesCard != null)
                 _cityCoordinatesCard.gameObject.SetActive(known);
             if (_cityNetworkCard != null)
