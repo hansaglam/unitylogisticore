@@ -204,6 +204,21 @@ namespace LogistiCore.Map
             if (layer == null)
                 return;
 
+            var tradeCities = layer.GetComponent<MapTradeRegionMarkers>();
+            if (tradeCities != null && tradeCities.TrySelect(screen, out var location))
+            {
+                // Clear the legacy selection before showing a global city;
+                // otherwise its observer may overwrite the world city card.
+                layer.ClearSelection();
+                if (location.IsValid)
+                {
+                    var shell = FindAnyObjectByType<MapCommandShell>();
+                    if (shell != null)
+                        shell.ShowGlobalCity(location);
+                }
+                return;
+            }
+
             if (!layer.TrySelect(screen, out _))
                 layer.ClearSelection();
         }
