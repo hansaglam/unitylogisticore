@@ -14,7 +14,12 @@ namespace LogistiCore.Map
         Minaret,
         BridgeAndDome,
         CityWalls,
-        CoastalMountains
+        CoastalMountains,
+        LatticeTower,
+        NeedleTower,
+        SailRoof,
+        Skyscrapers,
+        Pyramids
     }
 
     public enum MapCityHorizon : byte
