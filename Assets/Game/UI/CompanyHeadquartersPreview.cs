@@ -18,7 +18,7 @@ namespace LogistiCore.UI
     [DisallowMultipleComponent]
     public sealed class CompanyHeadquartersPreview : MonoBehaviour
     {
-        const float PreferredHeight = 650f;
+        const float PreferredHeight = 720f;
 
         struct CountryOption
         {
@@ -219,9 +219,21 @@ namespace LogistiCore.UI
                 "Yalnızca harita önizlemesi. Şirket kurmaz veya mevcut merkezini değiştirmez.",
                 "Nur Kartenvorschau. Dies gründet keine Firma und ändert deinen Firmensitz nicht.");
             _action.text = Copy("Preview on map", "Haritada incele", "Auf Karte ansehen");
+            var previousLocation = SelectedLocation;
             var previousCountry = _countries.Count > 0 && _country.value < _countries.Count
                 ? _countries[_country.value].Code : "TUR";
             RebuildCountries(previousCountry);
+            if (previousLocation.IsValid)
+            {
+                for (var i = 0; i < _cities.Count; i++)
+                {
+                    if (!_cities[i].Location.Equals(previousLocation))
+                        continue;
+                    _city.SetValueWithoutNotify(i);
+                    _city.RefreshShownValue();
+                    break;
+                }
+            }
         }
 
         void RebuildCountries(string requestedCode)
