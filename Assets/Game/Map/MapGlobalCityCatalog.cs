@@ -27,11 +27,12 @@ namespace LogistiCore.Map
     /// Initial worldwide settlement seed from Natural Earth ne_110m_populated_places,
     /// master, fetched 2026-11-26 (public domain). Original WIKIDATAID is retained
     /// as ne-qNNN key. Eight established Turkish markers keep their legacy ids and
-    /// their 10m marker coordinates. All other source records are unmodified points.
-    /// Source: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_populated_places.geojson
-    /// This is an initial tier of 322 places; full cities15000/10m dataset
-    /// import and map marker LOD are follow-up tasks. NEVER infer roads or delivery
-    /// permissions from this list.
+    /// their 10m marker coordinates. 73 additional province centres are derived
+    /// from the MIT-licensed TurkeyProvinces catalog (license in Docs/ThirdParty).
+    /// Natural Earth: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_populated_places.geojson
+    /// Turkey provinces: https://github.com/halilozel1903/prayer-times-kotlin
+    /// Initial tier: 322 places. A deeper licensed European city catalog is a
+    /// follow-up; NEVER infer roads or delivery permissions from this list.
     /// </summary>
     public static class MapGlobalCityCatalog
     {
