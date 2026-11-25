@@ -204,6 +204,27 @@ namespace LogistiCore.Map
             if (layer == null)
                 return;
 
+            // Preserve the original eight cities' precise tap targets. The
+            // new regional cluster overlay must not steal those selections.
+            if (_rig != null && _rig.Scope == MapScope.Turkey)
+            {
+                var mapCamera = _rig.GetComponent<Camera>();
+                if (mapCamera != null)
+                {
+                    for (var i = 0; i < MapCities.All.Length; i++)
+                    {
+                        var city = MapCities.All[i];
+                        if (!MapProjection.TryProject(city.Latitude, city.Longitude, out var world))
+                            continue;
+                        var projected = mapCamera.WorldToScreenPoint(
+                            new Vector3(world.x, world.y, 0f));
+                        if (((Vector2)projected - screen).sqrMagnitude <= 20f * 20f &&
+                            layer.TrySelect(screen, out _))
+                            return;
+                    }
+                }
+            }
+
             var tradeCities = layer.GetComponent<MapTradeRegionMarkers>();
             if (tradeCities != null && tradeCities.TrySelect(screen, out var location))
             {
