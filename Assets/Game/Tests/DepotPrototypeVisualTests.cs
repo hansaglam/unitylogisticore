@@ -142,6 +142,21 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void DepotIllustrationStageNamesAreUniqueAndNeverImplyDispatch()
+        {
+            var names = new System.Collections.Generic.HashSet<string>();
+            Assert.AreEqual(4, DepotIllustrationCatalog.Stages.Length);
+            foreach (var stage in DepotIllustrationCatalog.Stages)
+            {
+                var fileName = DepotIllustrationCatalog.FileName(stage);
+                Assert.IsFalse(string.IsNullOrEmpty(fileName));
+                Assert.IsTrue(fileName.EndsWith(".png"));
+                Assert.IsTrue(names.Add(fileName));
+            }
+            Assert.IsNull(DepotIllustrationCatalog.FileName((DepotVisualStage)255));
+        }
+
+        [Test]
         public void PrototypeControllerDoesNotClaimVerifiedCompanyOffline()
         {
             var obj = new GameObject("OfflineDepot",
