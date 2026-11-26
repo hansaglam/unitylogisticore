@@ -658,6 +658,7 @@ namespace LogistiCore.Map
                     ? MapSchematicLinks.NeighborCount(_shownCity).ToString()
                     : string.Empty;
             }
+            PresentRoadPreviewState();
 
             if (_section != null)
             {
@@ -1220,9 +1221,9 @@ namespace LogistiCore.Map
                     break;
                 case MapRoadPreviewState.Visible:
                     _routePreviewStatus.text = RouteCopy(
-                        "Road preview only. Freight dispatch is not authorized.",
-                        "Yalnızca yol önizlemesi. Sevkiyat izni vermez.",
-                        "Nur Routenvorschau. Kein Frachtauftrag freigegeben.");
+                        "Road preview only · © OpenStreetMap contributors. No freight dispatch.",
+                        "Yol önizlemesi · © OpenStreetMap katılımcıları. Sevkiyat izni vermez.",
+                        "Nur Routenvorschau · © OpenStreetMap-Mitwirkende. Kein Frachtversand.");
                     break;
                 case MapRoadPreviewState.NoRoad:
                     _routePreviewStatus.text = RouteCopy("No connected driving route found.",
