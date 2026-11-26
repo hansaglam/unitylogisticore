@@ -52,6 +52,9 @@ namespace LogistiCore.UI
             _generation++;
             _requested = false;
             _requestUid = "";
+            _verified = false;
+            _failed = false;
+            _state = default;
         }
 
         public void Build(Font font)
@@ -93,7 +96,19 @@ namespace LogistiCore.UI
 
         void Update()
         {
-            if (!_built || _requested || _verified || _failed)
+            if (!_built)
+                return;
+
+            // Read states belong to a specific Firebase user. A sign-out or
+            // account switch must never show another company's depot status.
+            if (!string.IsNullOrEmpty(_requestUid) &&
+                CurrentUid() != _requestUid)
+            {
+                InvalidateForCompanyCreation();
+                return;
+            }
+
+            if (_requested || _verified || _failed)
                 return;
 
             var status = FirebaseClient.Current;
@@ -101,14 +116,7 @@ namespace LogistiCore.UI
                 !ClientLocalEmulatorSecurity.AllowsLiveReads(ClientJobsRuntime.Settings, status))
                 return;
 
-            string uid;
-            try
-            {
-                var auth = FirebaseAuth.DefaultInstance;
-                uid = auth != null && auth.CurrentUser != null
-                    ? auth.CurrentUser.UserId : "";
-            }
-            catch { return; }
+            var uid = CurrentUid();
             if (string.IsNullOrEmpty(uid))
                 return;
 
@@ -149,6 +157,19 @@ namespace LogistiCore.UI
                         _failed = true;
                     Refresh();
                 });
+        }
+
+        static string CurrentUid()
+        {
+            try
+            {
+                if (!FirebaseClient.SdkAppReady)
+                    return "";
+                var auth = FirebaseAuth.DefaultInstance;
+                return auth != null && auth.CurrentUser != null
+                    ? auth.CurrentUser.UserId : "";
+            }
+            catch { return ""; }
         }
 
         string Language
