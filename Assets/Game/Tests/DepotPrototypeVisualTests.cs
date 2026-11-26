@@ -111,6 +111,37 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void AuthoredKitOnlyShowsClosedDocksForVerifiedOperationalStage()
+        {
+            var obj = new GameObject("AuthoredDepotKitTest",
+                typeof(MeshFilter), typeof(MeshRenderer), typeof(DepotYardBlockoutView));
+            try
+            {
+                var yard = obj.GetComponent<DepotYardBlockoutView>();
+                yard.SetStage(DepotVisualStage.Unverified);
+                var neutralTriangles = yard.AuthoredTriangleCount;
+                Assert.IsFalse(yard.ShowsLoadingDockArt);
+                Assert.IsFalse(yard.ShowsWarehouse);
+
+                yard.SetStage(DepotVisualStage.ReservedParcel);
+                var reservedTriangles = yard.AuthoredTriangleCount;
+                Assert.Greater(reservedTriangles, neutralTriangles);
+                Assert.IsFalse(yard.ShowsLoadingDockArt);
+
+                yard.SetStage(DepotVisualStage.ActivationReady);
+                Assert.Greater(yard.AuthoredTriangleCount, reservedTriangles);
+                Assert.IsFalse(yard.ShowsLoadingDockArt);
+
+                yard.SetStage(DepotVisualStage.StorageOperational);
+                Assert.IsTrue(yard.ShowsWarehouse);
+                Assert.IsTrue(yard.ShowsLoadingDockArt);
+                Assert.Greater(yard.AuthoredTriangleCount, reservedTriangles);
+                Assert.IsFalse(yard.ShowsVehicle);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        [Test]
         public void PrototypeControllerDoesNotClaimVerifiedCompanyOffline()
         {
             var obj = new GameObject("OfflineDepot",

@@ -27,6 +27,16 @@ namespace LogistiCore.Depot
         static readonly Color32 RoofEdge = new Color32(127, 166, 179, 255);
         static readonly Color32 Dock = new Color32(31, 49, 62, 255);
         static readonly Color32 Readied = new Color32(218, 181, 113, 255);
+        // Authored, fixed-perspective depot material family. These are geometry
+        // details, not textures, fictional equipment or generated variations.
+        static readonly Color32 Shadow = new Color32(18, 33, 43, 255);
+        static readonly Color32 Concrete = new Color32(94, 119, 124, 255);
+        static readonly Color32 ConcreteEdge = new Color32(149, 170, 167, 255);
+        static readonly Color32 Steel = new Color32(148, 174, 178, 255);
+        static readonly Color32 RoofRib = new Color32(78, 112, 130, 255);
+        static readonly Color32 Vent = new Color32(37, 65, 79, 255);
+        static readonly Color32 DockSeal = new Color32(19, 33, 44, 255);
+        static readonly Color32 Safety = new Color32(205, 171, 105, 255);
 
         readonly List<Vector3> _vertices = new List<Vector3>(140);
         readonly List<Color32> _colors = new List<Color32>(140);
@@ -41,6 +51,8 @@ namespace LogistiCore.Depot
         public DepotVisualStage Stage => _stage;
         public bool ShowsWarehouse => _stage == DepotVisualStage.StorageOperational;
         public bool ShowsVehicle => false; // No verified vehicle location exists yet.
+        public int AuthoredTriangleCount => _triangles.Count / 3;
+        public bool ShowsLoadingDockArt => ShowsWarehouse;
 
         void Awake()
         {
@@ -168,8 +180,19 @@ namespace LogistiCore.Depot
             Strip(c, d, 0.055f, color);
             Strip(d, a, 0.055f, color);
 
-            // Yard access road and three unoccupied future loading positions.
+            // Three surveyed corners and access curb are fixed physical
+            // fixtures only. No trucks or fake operating loading bays.
+            foreach (var corner in new[] { a, b, c, d })
+            {
+                Quad(corner + V(-0.11f, -0.055f), corner + V(0f, 0.08f),
+                    corner + V(0.11f, -0.055f), corner + V(0f, -0.18f), Shadow);
+                Strip(corner + V(0f, -0.12f), corner + V(0f, 0.10f),
+                    0.042f, stage == DepotVisualStage.ActivationReady ? Readied : Steel);
+            }
+
+            // Road edge follows the same 3/4 projection as the warehouse.
             Strip(V(0.2f, -2.65f), V(4.8f, -1.05f), 0.16f, Curb);
+            Strip(V(0.2f, -2.79f), V(4.8f, -1.19f), 0.038f, ConcreteEdge);
             for (var i = 0; i < 3; i++)
             {
                 var t = 0.19f + i * 0.29f;
@@ -186,10 +209,27 @@ namespace LogistiCore.Depot
                 new Color32(64, 91, 101, 255));
             Strip(V(-3.25f, -0.32f), V(0.45f, 0.98f), 0.035f, Readied);
             Strip(V(0.45f, 0.98f), V(4.15f, -0.36f), 0.035f, Readied);
+            // An unoccupied slab with visible expansion joints; it cannot
+            // be mistaken for an operational warehouse.
+            for (var i = 1; i < 4; i++)
+            {
+                var t = i / 4f;
+                var north = Vector2.Lerp(V(-3.25f, -0.32f), V(0.45f, 0.98f), t);
+                var south = Vector2.Lerp(V(0.45f, -1.58f), V(4.15f, -0.36f), t);
+                Strip(north, south, 0.025f, ConcreteEdge);
+            }
         }
 
         void BuildWarehouse()
         {
+            // The shadow and loading apron visually ground the building.
+            // Neither carries cargo data or implies a dispatched vehicle.
+            Quad(V(-3.42f, -0.18f), V(0.42f, -1.94f),
+                V(4.72f, -0.70f), V(0.76f, 0.22f), Shadow);
+            Quad(V(0.35f, -1.75f), V(4.27f, -0.54f),
+                V(4.88f, -1.04f), V(0.89f, -2.38f), Concrete);
+            Strip(V(0.89f, -2.38f), V(4.88f, -1.04f), 0.055f, ConcreteEdge);
+
             // Near wall, darker side wall, then roof; all vertices are authored
             // together to maintain one unchanging mobile isometric projection.
             Quad(V(0.4f, -0.2f), V(4.2f, 0.95f),
@@ -201,6 +241,22 @@ namespace LogistiCore.Depot
             Strip(V(-3.2f, 1.42f), V(0.55f, 2.45f), 0.075f, RoofEdge);
             Strip(V(0.55f, 2.45f), V(4.2f, 0.95f), 0.075f, RoofEdge);
             Strip(V(4.2f, 0.95f), V(0.4f, -0.2f), 0.065f, RoofEdge);
+            // Four hand-placed standing seams and two static roof vents.
+            // Keep the roof perspective and the screen-space weight unified.
+            for (var i = 1; i <= 4; i++)
+            {
+                var t = i / 5f;
+                var rear = Vector2.Lerp(V(-3.2f, 1.42f), V(0.55f, 2.45f), t);
+                var front = Vector2.Lerp(V(0.4f, -0.2f), V(4.2f, 0.95f), t);
+                Strip(rear, front, 0.024f, RoofRib);
+            }
+            for (var i = 0; i < 2; i++)
+            {
+                var x = -1.10f + i * 1.50f;
+                Quad(V(x, 1.29f), V(x + 0.48f, 1.42f),
+                    V(x + 0.78f, 1.29f), V(x + 0.26f, 1.14f), Vent);
+                Strip(V(x, 1.29f), V(x + 0.48f, 1.42f), 0.032f, Steel);
+            }
 
             // Closed loading dock doors. No palettes, loaded trucks or
             // forklifts appear without an inventory / asset position record.
@@ -211,9 +267,22 @@ namespace LogistiCore.Depot
                 var t = 0.12f + i * 0.30f;
                 var foot = Vector2.Lerp(edgeStart, edgeEnd, t);
                 var right = foot + (edgeEnd - edgeStart) * 0.20f;
+                Quad(foot + V(-0.07f, -0.04f), right + V(0.07f, -0.02f),
+                    right + V(0.07f, 0.98f), foot + V(-0.07f, 0.98f), DockSeal);
                 Quad(foot, right, right + V(0f, 0.9f),
                     foot + V(0f, 0.9f), Dock);
-                Strip(foot, right, 0.05f, Curb);
+                // Closed sectional panels communicate no loading activity.
+                for (var panel = 1; panel < 4; panel++)
+                {
+                    var y = panel * 0.20f;
+                    Strip(foot + V(0f, y), right + V(0f, y + 0.02f),
+                        0.017f, Steel);
+                }
+                Strip(foot, right, 0.055f, Curb);
+                // Stationary wheel guards, not loading equipment.
+                var front = Vector2.Lerp(foot, right, 0.5f);
+                Strip(front + V(0.15f, -0.12f), front + V(0.29f, -0.22f),
+                    0.055f, Safety);
             }
         }
 
