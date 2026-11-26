@@ -5,7 +5,7 @@ import { validateHeadquartersRecord } from "./headquartersRecord";
 import { validateInitialHeadquarters } from "./headquartersCatalog";
 import { requireUid } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
-import { fetchLocalRoadPreview, LocalRouteFetch } from "./localRoadRouting";
+import { fetchLocalRoadPreview } from "./localRoadRouting";
 
 export type RoadPreviewRequest = {
   origin: { countryCode: string; cityKey: string };
