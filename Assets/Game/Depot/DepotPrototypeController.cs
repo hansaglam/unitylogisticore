@@ -64,27 +64,36 @@ namespace LogistiCore.Depot
         {
             if (!Application.isPlaying) return;
             LocalizationSettings.SelectedLocaleChanged -= OnLocaleChanged;
+            ResetReadState();
+        }
+
+        /// <summary>
+        /// Invalidate authenticated data before a subsequent account/scene read.
+        /// This must clear the failure latch too, otherwise a failed request
+        /// permanently blocks the next signed-in player's depot read.
+        /// </summary>
+        void ResetReadState()
+        {
             _generation++;
             _requested = false;
             _verified = false;
+            _error = false;
+            _company = default;
+            _stage = DepotVisualStage.Unverified;
             _uid = "";
+            if (_yard != null)
+                _yard.SetStage(_stage);
+            Refresh();
         }
 
         void Update()
         {
             if (!_built)
                 return;
+            // A sign-out or account change must also clear any previous
+            // error latch, cached warehouse and late response generation.
             if (!string.IsNullOrEmpty(_uid) && CurrentUid() != _uid)
-            {
-                _generation++;
-                _requested = false;
-                _verified = false;
-                _company = default;
-                _stage = DepotVisualStage.Unverified;
-                _yard.SetStage(_stage);
-                _uid = "";
-                Refresh();
-            }
+                ResetReadState();
             if (_requested || _verified || _error ||
                 !FirebaseClient.SdkAppReady ||
                 !ClientLocalEmulatorSecurity.AllowsLiveReads(
@@ -111,6 +120,7 @@ namespace LogistiCore.Depot
                     {
                         _company = state;
                         _verified = true;
+                        _error = false;
                         _stage = DepotVisualStagePolicy.Resolve(true, state);
                         _yard.SetStage(_stage);
                     }
@@ -118,6 +128,7 @@ namespace LogistiCore.Depot
                     {
                         _error = true;
                         _verified = false;
+                        _company = default;
                         _stage = DepotVisualStage.Unverified;
                         _yard.SetStage(_stage);
                     }
