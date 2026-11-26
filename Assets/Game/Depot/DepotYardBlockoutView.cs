@@ -75,6 +75,16 @@ namespace LogistiCore.Depot
                 SetStage(DepotVisualStage.Unverified);
         }
 
+        // [ExecuteAlways] drives this in Edit Mode as Inspector values change.
+        // Do not rebuild in OnValidate: touching Mesh/Renderer assets during
+        // Unity's serialization/validation callback is unsafe.
+        void Update()
+        {
+            if (!Application.isPlaying &&
+                (!_initialized || _stage != editorPreviewStage))
+                SetStage(editorPreviewStage);
+        }
+
         /// <summary>Runtime state comes ONLY from DepotVisualStagePolicy.</summary>
         public void SetStage(DepotVisualStage stage)
         {
