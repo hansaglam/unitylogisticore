@@ -59,7 +59,7 @@ test("forged capacity, extra warehouses, cross-country data or active dispatch f
   ]) {
     const altered = cloned();
     altered.warehouses[0] = { ...altered.warehouses[0], ...patch };
-    assert.throws(() => validateDevStarterDepotCatalog(altered), codeIs("INVALID_ARGUMENT"));
+    assert.throws(() => validateDevStarterDepotCatalog(altered), codeIs("FAILED_PRECONDITION"));
   }
   for (const change of [
     { approval: "production" }, { schemaVersion: 1 },
