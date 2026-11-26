@@ -213,14 +213,16 @@ namespace LogistiCore.UI
             var hasAlphanumeric = false;
             for (var i = 0; i < name.Length; i++)
             {
-                if (char.IsSurrogate(name[i]))
+                var c = name[i];
+                if (char.IsSurrogate(c))
                 {
-                    if (!char.IsHighSurrogate(name[i]) || i + 1 >= name.Length ||
+                    if (!char.IsHighSurrogate(c) || i + 1 >= name.Length ||
                         !char.IsLowSurrogate(name[i + 1]))
                         return false;
-                    i++;
+                    i++; // One well-formed supplementary Unicode code point.
+                    codePoints++;
+                    continue;
                 }
-                var c = name[i];
                 if (char.IsLetterOrDigit(c))
                     hasAlphanumeric = true;
                 var category = CharUnicodeInfo.GetUnicodeCategory(c);
