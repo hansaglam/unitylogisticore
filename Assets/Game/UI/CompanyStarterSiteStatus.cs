@@ -92,7 +92,7 @@ namespace LogistiCore.UI
             _details = MakeText("DepotStatusDetails", font, 27, 78, FontStyle.Normal);
             _details.color = ShellPalette.TextSecondary;
             _details.horizontalOverflow = HorizontalWrapMode.Wrap;
-            _details.verticalOverflow = VerticalWrapMode.Wrap;
+            _details.verticalOverflow = VerticalWrapMode.Overflow;
 
             _button = ShellWidgets.ActionBar(transform, "ActivateStarterDepot", font,
                 out _buttonLabel);
