@@ -352,6 +352,7 @@ namespace LogistiCore.Backend
         public const string GetMyCompanyState = "getMyCompanyState";
         public const string GetMyCompanyHeadquarters = "getMyCompanyHeadquarters";
         public const string GetMyStarterDepotSite = "getMyStarterDepotSite";
+        public const string GetMyStarterDepotProgress = "getMyStarterDepotProgress";
         public const string GetMyEconomyState = "getMyEconomyState";
         public const string GetMyFleetState = "getMyFleetState";
         public const string GetMyWarehouseState = "getMyWarehouseState";
@@ -365,6 +366,7 @@ namespace LogistiCore.Backend
         public const string CreateCompanyWithHeadquarters = "createCompanyWithHeadquarters";
         public const string InitializeCompanyEconomy = "initializeCompanyEconomy";
         public const string ProvisionCompanyStarterFleet = "provisionCompanyStarterFleet";
+        public const string ActivateHeadquartersStarterDepot = "activateHeadquartersStarterDepot";
         public const string AcceptContract = "acceptContract";
         public const string StartDelivery = "startDelivery";
         public const string ClaimDeliveryReward = "claimDeliveryReward";
@@ -380,14 +382,14 @@ namespace LogistiCore.Backend
 
         static readonly string[] Reads =
         {
-            LocalHealth, GetMyCompanyState, GetMyCompanyHeadquarters, GetMyStarterDepotSite, GetMyEconomyState, GetMyFleetState, GetMyWarehouseState,
+            LocalHealth, GetMyCompanyState, GetMyCompanyHeadquarters, GetMyStarterDepotSite, GetMyStarterDepotProgress, GetMyEconomyState, GetMyFleetState, GetMyWarehouseState,
             GetMyContracts, GetMyDeliveries, GetMyMarketState, GetMyAcquisitionOffers, GetMyWorldEvents,
             GetMyBankState
         };
 
         static readonly string[] Commands =
         {
-            EnsurePlayerIdentity, CreateCompany, CreateCompanyWithHeadquarters, InitializeCompanyEconomy, ProvisionCompanyStarterFleet, AcceptContract, StartDelivery, ClaimDeliveryReward,
+            EnsurePlayerIdentity, CreateCompany, CreateCompanyWithHeadquarters, InitializeCompanyEconomy, ProvisionCompanyStarterFleet, ActivateHeadquartersStarterDepot, AcceptContract, StartDelivery, ClaimDeliveryReward,
             BuyVehicle, HireDriver, AcquireTrailer, OpenWarehouse, UpgradeWarehouse,
             QuoteCompanyLoan, CancelCompanyLoanQuote, TakeCompanyLoan, RepayCompanyLoan
         };

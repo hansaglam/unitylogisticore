@@ -329,3 +329,4 @@ await import('./market.unit.test.mjs');
 await import('./liveops.unit.test.mjs');
 await import('./liveops-admin.unit.test.mjs');
 await import('./headquarters.unit.test.mjs');
+await import('./starterDepot.unit.test.mjs');

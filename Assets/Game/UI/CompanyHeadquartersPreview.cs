@@ -18,7 +18,7 @@ namespace LogistiCore.UI
     [DisallowMultipleComponent]
     public sealed class CompanyHeadquartersPreview : MonoBehaviour
     {
-        const float PreferredHeight = 1610f;
+        const float PreferredHeight = 1750f;
 
         struct CountryOption
         {
