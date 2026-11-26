@@ -28,6 +28,18 @@ namespace LogistiCore.UI
         public bool IsVerified => _verified;
         public bool HasStarterSite => _verified && _state.HasStarterSite;
 
+        /// <summary>Re-read after explicit company registration, never after an arbitrary locale change.</summary>
+        public void InvalidateForCompanyCreation()
+        {
+            _generation++;
+            _requested = false;
+            _verified = false;
+            _failed = false;
+            _requestUid = "";
+            _state = default;
+            Refresh();
+        }
+
         void OnEnable()
         {
             LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
