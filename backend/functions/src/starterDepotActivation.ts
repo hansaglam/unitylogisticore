@@ -72,7 +72,10 @@ async function inspectDepot(tx: Transaction, db: Firestore, uid: string,
       throw new CommandError("COMPANY_STATE_INVALID");
     return { progress: progress("legacy_hq_missing", true, false, false, !!foundation.economy, false) };
   }
-  const location = validateHeadquartersRecord(hq!.data(), uid, foundation.companyId);
+  const storedHq = validateHeadquartersRecord(hq!.data(), uid, foundation.companyId);
+  const location: SiteLocation = {
+    countryCode: storedHq.countryCode, cityKey: storedHq.cityKey,
+  };
 
   if (!site!.exists) {
     if (activation!.exists)
