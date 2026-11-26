@@ -252,6 +252,53 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void MaterialAtlasKeepsFixedTilesAndDistinctIndustrialPatterns()
+        {
+            var atlas = DepotSurfacePatternAtlas.Create();
+            try
+            {
+                Assert.AreEqual(DepotSurfacePatternAtlas.Width, atlas.width);
+                Assert.AreEqual(DepotSurfacePatternAtlas.Height, atlas.height);
+                var asphalt = atlas.GetPixel32(8, 10);
+                var concrete = atlas.GetPixel32(
+                    DepotSurfacePatternAtlas.TileSize + 2, 10);
+                var sidingRib = atlas.GetPixel32(
+                    DepotSurfacePatternAtlas.TileSize * 3 + 16, 10);
+                var sidingPanel = atlas.GetPixel32(
+                    DepotSurfacePatternAtlas.TileSize * 3 + 20, 10);
+                Assert.AreNotEqual(asphalt.r, concrete.r);
+                Assert.AreNotEqual(sidingRib.r, sidingPanel.r);
+                DepotSurfacePatternAtlas.UvRect(
+                    DepotSurfacePatternAtlas.Roof, out var min, out var max);
+                Assert.Greater(max.x, min.x);
+                Assert.Greater(max.y, min.y);
+                Assert.GreaterOrEqual(min.x, 0f);
+                Assert.LessOrEqual(max.x, 1f);
+            }
+            finally { Object.DestroyImmediate(atlas); }
+        }
+
+        [Test]
+        public void AuthoredYardMeshSuppliesUvCoordinatesForEveryVertex()
+        {
+            var go = new GameObject("DepotMaterialUvTest",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView));
+            try
+            {
+                var yard = go.GetComponent<DepotYardBlockoutView>();
+                yard.SetStage(DepotVisualStage.StorageOperational);
+                var mesh = go.GetComponent<MeshFilter>().sharedMesh;
+                Assert.IsNotNull(mesh);
+                Assert.AreEqual(mesh.vertexCount, mesh.uv.Length);
+                // Material tiles are chosen per surface; the warehouse
+                // roof cannot share the entire asphalt sampling region.
+                Assert.AreNotEqual(mesh.uv[0].x, mesh.uv[mesh.uv.Length - 4].x);
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
         public void EntryWayfindingOnlyExistsForVerifiedSiteStages()
         {
             var obj = new GameObject("DepotEntryStageRegression",
