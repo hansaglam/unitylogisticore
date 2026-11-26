@@ -3,6 +3,7 @@ import { CommandError, executeCommand } from "./commands";
 import { requireUid, validateIdentityRequest } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
 import { COMPANY_STATUS, normalizeCompanyName, readFoundation } from "./company";
+import { createInitialStarterSite, STARTER_SITE_DISPATCH, STARTER_SITE_STATUS } from "./starterDepotSite";
 import {
   HEADQUARTERS_CATALOG_VERSION, HEADQUARTERS_SELECTION_KIND,
   InitialHeadquartersLocation, validateInitialHeadquarters,
@@ -95,6 +96,11 @@ export function createCompanyWithHeadquartersCommand(
         selectionKind: HEADQUARTERS_SELECTION_KIND,
         selectedAt: FieldValue.serverTimestamp(),
       });
+      // New HQ companies receive a *reserved depot site* at their chosen
+      // location in the SAME transaction. This is not an operational
+      // warehouse, starter fleet grant or contract entitlement.
+      createInitialStarterSite(tx, state.companyRef, state.companyId,
+        uid, payload.headquarters);
       tx.update(state.playerRef, { companyId: state.companyId });
 
       return {
@@ -107,6 +113,12 @@ export function createCompanyWithHeadquartersCommand(
           countryCode: payload.headquarters.countryCode,
           cityKey: payload.headquarters.cityKey,
           catalogVersion: HEADQUARTERS_CATALOG_VERSION,
+        },
+        starterSite: {
+          countryCode: payload.headquarters.countryCode,
+          cityKey: payload.headquarters.cityKey,
+          status: STARTER_SITE_STATUS,
+          dispatchStatus: STARTER_SITE_DISPATCH,
         },
       };
     },
