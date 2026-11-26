@@ -40,6 +40,8 @@ namespace LogistiCore.Depot
         static readonly Color32 YardJoint = new Color32(56, 80, 90, 255);
         static readonly Color32 Fence = new Color32(122, 152, 153, 255);
         static readonly Color32 Gate = new Color32(205, 174, 119, 255);
+        static readonly Color32 RoadShoulder = new Color32(53, 77, 86, 255);
+        static readonly Color32 AccessMark = new Color32(170, 160, 126, 255);
 
         readonly List<Vector3> _vertices = new List<Vector3>(140);
         readonly List<Color32> _colors = new List<Color32>(140);
@@ -120,15 +122,25 @@ namespace LogistiCore.Depot
             _colors.Clear();
             _triangles.Clear();
 
-            // An empty *neutral* yard exists as a stage backdrop. It is not
-            // an account-owned depot if account verification has not succeeded.
-            Quad(V(-8f, -4.1f), V(-0.2f, -1.1f), V(8f, -3.9f), V(0f, -7f), Road);
-            Quad(V(-7.4f, -2.1f), V(-0.3f, 0.5f), V(7.2f, -2.2f), V(0.2f, -4.8f), Tarmac);
-            for (var i = 0; i < 5; i++)
+            // One public approach road, its curb, and one coherent site
+            // ground plane. Previous two same-weight overlapping diamonds
+            // created the appearance of stacked floating slabs.
+            Quad(V(-7.4f, -3.78f), V(-0.25f, -1.16f),
+                V(7.4f, -3.72f), V(0.25f, -6.36f), Road);
+            Quad(V(-7.06f, -1.96f), V(-0.30f, 0.47f),
+                V(7.12f, -2.02f), V(0.38f, -4.53f), Tarmac);
+            // Seam at the access-road edge reads as a curb, not another
+            // raised platform, and keeps the road in the same projection.
+            Strip(V(-6.93f, -2.17f), V(0.38f, -4.75f),
+                0.062f, RoadShoulder);
+            Strip(V(0.38f, -4.75f), V(6.97f, -2.35f),
+                0.062f, RoadShoulder);
+            for (var i = 0; i < 4; i++)
             {
-                var x = -5.2f + i * 2.4f;
-                Strip(V(x, -4.7f + i * 0.04f),
-                    V(x + 0.8f, -4.42f + i * 0.04f), 0.038f, Lane);
+                var t = (i + 0.6f) / 4.5f;
+                var p = Vector2.Lerp(V(-5.55f, -4.66f),
+                    V(4.46f, -4.65f), t);
+                Strip(p, p + V(0.45f, 0.15f), 0.042f, Lane);
             }
 
             if (_stage != DepotVisualStage.Unverified)
@@ -140,6 +152,11 @@ namespace LogistiCore.Depot
                 BuildWarehouse();
             else if (_stage == DepotVisualStage.ActivationReady)
                 BuildPreparedPad();
+
+            // Foreground entrance marks are placed LAST: otherwise the
+            // warehouse/apron draw order obscures these useful landmarks.
+            if (_stage != DepotVisualStage.Unverified)
+                BuildEntranceMarkings();
 
             _mesh.Clear();
             _mesh.SetVertices(_vertices);
@@ -246,6 +263,25 @@ namespace LogistiCore.Depot
                 var b = Vector2.Lerp(V(0.51f, 0.89f),
                     V(4.18f, -0.40f), t);
                 Strip(a, b, 0.016f, YardJoint);
+            }
+        }
+
+        void BuildEntranceMarkings()
+        {
+            // Static survey/wayfinding paint only. No animated gate, moving
+            // vehicles or invented access rights.
+            var left = Vector2.Lerp(V(0.61f, -2.02f),
+                V(4.79f, -0.35f), 0.38f);
+            var right = Vector2.Lerp(V(0.61f, -2.02f),
+                V(4.79f, -0.35f), 0.71f);
+            Strip(left + V(0.20f, -0.30f), right + V(0.20f, -0.30f),
+                0.05f, AccessMark);
+            for (var i = 0; i < 3; i++)
+            {
+                var t = (i + 1f) / 4f;
+                var p = Vector2.Lerp(left, right, t) + V(0.22f, -0.33f);
+                Strip(p, p + V(0.26f, -0.14f),
+                    0.043f, Safety);
             }
         }
 
