@@ -21,9 +21,9 @@ namespace LogistiCore.Depot
         static readonly Color32 Parcel = new Color32(49, 78, 89, 255);
         static readonly Color32 Perimeter = new Color32(115, 156, 165, 255);
         static readonly Color32 Curb = new Color32(81, 117, 130, 255);
-        static readonly Color32 WallBright = new Color32(111, 144, 157, 255);
-        static readonly Color32 WallShade = new Color32(70, 103, 122, 255);
-        static readonly Color32 Roof = new Color32(58, 90, 111, 255);
+        static readonly Color32 WallBright = new Color32(151, 179, 184, 255);
+        static readonly Color32 WallShade = new Color32(84, 117, 132, 255);
+        static readonly Color32 Roof = new Color32(54, 82, 99, 255);
         static readonly Color32 RoofEdge = new Color32(127, 166, 179, 255);
         static readonly Color32 Dock = new Color32(31, 49, 62, 255);
         static readonly Color32 Readied = new Color32(218, 181, 113, 255);
@@ -222,67 +222,94 @@ namespace LogistiCore.Depot
 
         void BuildWarehouse()
         {
-            // The shadow and loading apron visually ground the building.
-            // Neither carries cargo data or implies a dispatched vehicle.
-            Quad(V(-3.42f, -0.18f), V(0.42f, -1.94f),
-                V(4.72f, -0.70f), V(0.76f, 0.22f), Shadow);
-            Quad(V(0.35f, -1.75f), V(4.27f, -0.54f),
-                V(4.88f, -1.04f), V(0.89f, -2.38f), Concrete);
-            Strip(V(0.89f, -2.38f), V(4.88f, -1.04f), 0.055f, ConcreteEdge);
+            // A 2D perspective requires a readable vertical wall silhouette:
+            // roof-front edges are shared with BOTH wall top edges, while the
+            // wall bottoms extend towards the loading apron. The old facade
+            // was close to the road color and read as a floating roof.
+            var leftRoof = V(-3.15f, 1.35f);
+            var backRoof = V(0.55f, 2.42f);
+            var rightRoof = V(4.18f, 0.91f);
+            var frontRoof = V(0.45f, -0.22f);
+            var leftFoot = leftRoof + V(0f, -2.10f);
+            var frontFoot = frontRoof + V(0f, -2.10f);
+            var rightFoot = rightRoof + V(0f, -2.10f);
 
-            // Near wall, darker side wall, then roof; all vertices are authored
-            // together to maintain one unchanging mobile isometric projection.
-            Quad(V(0.4f, -0.2f), V(4.2f, 0.95f),
-                V(4.2f, -0.52f), V(0.4f, -1.75f), WallBright);
-            Quad(V(-3.2f, 1.42f), V(0.4f, -0.2f),
-                V(0.4f, -1.75f), V(-3.2f, -0.14f), WallShade);
-            Quad(V(-3.2f, 1.42f), V(0.55f, 2.45f),
-                V(4.2f, 0.95f), V(0.4f, -0.2f), Roof);
-            Strip(V(-3.2f, 1.42f), V(0.55f, 2.45f), 0.075f, RoofEdge);
-            Strip(V(0.55f, 2.45f), V(4.2f, 0.95f), 0.075f, RoofEdge);
-            Strip(V(4.2f, 0.95f), V(0.4f, -0.2f), 0.065f, RoofEdge);
-            // Four hand-placed standing seams and two static roof vents.
-            // Keep the roof perspective and the screen-space weight unified.
+            // Ground contact and concrete apron remain visible in the same
+            // projection; the warehouse is not suspended above the yard.
+            Quad(leftFoot + V(-0.22f, -0.20f),
+                frontFoot + V(0.14f, -0.25f),
+                rightFoot + V(0.65f, -0.31f),
+                frontFoot + V(0.45f, -0.65f), Shadow);
+            Quad(frontFoot + V(-0.04f, -0.11f),
+                rightFoot + V(0.04f, -0.11f),
+                rightFoot + V(0.40f, -0.45f),
+                frontFoot + V(0.40f, -0.45f), Concrete);
+            Strip(frontFoot + V(0.40f, -0.45f),
+                rightFoot + V(0.40f, -0.45f), 0.055f, ConcreteEdge);
+
+            // Walls first, roof last. Keep all faces within one static mesh;
+            // the taller walls, separate shades and closed doors establish
+            // visible building mass at landscape phone resolutions.
+            Quad(leftRoof, frontRoof, frontFoot, leftFoot, WallShade);
+            Quad(frontRoof, rightRoof, rightFoot, frontFoot, WallBright);
+            Strip(leftFoot, frontFoot, 0.055f, DockSeal);
+            Strip(frontFoot, rightFoot, 0.055f, ConcreteEdge);
+            Strip(frontRoof, frontFoot, 0.060f, RoofEdge);
+
+            // Three closed industrial loading bays, inset into the *visible*
+            // right facade (not floating ahead of its bottom edge).
+            for (var i = 0; i < 3; i++)
+            {
+                var t0 = 0.065f + i * 0.30f;
+                var t1 = t0 + 0.23f;
+                var bottomLeft = Vector2.Lerp(frontFoot, rightFoot, t0) +
+                    V(0f, 0.12f);
+                var bottomRight = Vector2.Lerp(frontFoot, rightFoot, t1) +
+                    V(0f, 0.12f);
+                var topLeft = bottomLeft + V(0f, 1.38f);
+                var topRight = bottomRight + V(0f, 1.38f);
+                // Door seal / opening, then sectional shutter.
+                Quad(bottomLeft + V(-0.06f, -0.06f),
+                    bottomRight + V(0.06f, -0.06f),
+                    topRight + V(0.06f, 0.06f),
+                    topLeft + V(-0.06f, 0.06f), DockSeal);
+                Quad(bottomLeft, bottomRight, topRight, topLeft, Dock);
+                Strip(topLeft, topRight, 0.045f, Steel);
+                for (var panel = 1; panel < 5; panel++)
+                {
+                    var y = panel * 0.265f;
+                    Strip(bottomLeft + V(0f, y),
+                        bottomRight + V(0f, y), 0.024f, Steel);
+                }
+                // Unoccupied wheel guards. No cargo or loading animation.
+                var center = Vector2.Lerp(bottomLeft, bottomRight, 0.5f);
+                Strip(center + V(0.12f, -0.21f),
+                    center + V(0.28f, -0.35f), 0.055f, Safety);
+            }
+
+            // Roof top is a separate face with consistent corners and edge
+            // trim; restrained seam detailing avoids the slab-only silhouette.
+            Quad(leftRoof, backRoof, rightRoof, frontRoof, Roof);
+            Strip(leftRoof, backRoof, 0.075f, RoofEdge);
+            Strip(backRoof, rightRoof, 0.075f, RoofEdge);
+            Strip(rightRoof, frontRoof, 0.080f, RoofEdge);
+            Strip(frontRoof, leftRoof, 0.080f, RoofEdge);
             for (var i = 1; i <= 4; i++)
             {
                 var t = i / 5f;
-                var rear = Vector2.Lerp(V(-3.2f, 1.42f), V(0.55f, 2.45f), t);
-                var front = Vector2.Lerp(V(0.4f, -0.2f), V(4.2f, 0.95f), t);
-                Strip(rear, front, 0.024f, RoofRib);
+                Strip(Vector2.Lerp(leftRoof, backRoof, t),
+                    Vector2.Lerp(frontRoof, rightRoof, t),
+                    0.028f, RoofRib);
             }
+
+            // Two fixed roof vents, not moving equipment or activity.
             for (var i = 0; i < 2; i++)
             {
                 var x = -1.10f + i * 1.50f;
                 Quad(V(x, 1.29f), V(x + 0.48f, 1.42f),
                     V(x + 0.78f, 1.29f), V(x + 0.26f, 1.14f), Vent);
-                Strip(V(x, 1.29f), V(x + 0.48f, 1.42f), 0.032f, Steel);
-            }
-
-            // Closed loading dock doors. No palettes, loaded trucks or
-            // forklifts appear without an inventory / asset position record.
-            var edgeStart = V(0.45f, -1.70f);
-            var edgeEnd = V(4.15f, -0.53f);
-            for (var i = 0; i < 3; i++)
-            {
-                var t = 0.12f + i * 0.30f;
-                var foot = Vector2.Lerp(edgeStart, edgeEnd, t);
-                var right = foot + (edgeEnd - edgeStart) * 0.20f;
-                Quad(foot + V(-0.07f, -0.04f), right + V(0.07f, -0.02f),
-                    right + V(0.07f, 0.98f), foot + V(-0.07f, 0.98f), DockSeal);
-                Quad(foot, right, right + V(0f, 0.9f),
-                    foot + V(0f, 0.9f), Dock);
-                // Closed sectional panels communicate no loading activity.
-                for (var panel = 1; panel < 4; panel++)
-                {
-                    var y = panel * 0.20f;
-                    Strip(foot + V(0f, y), right + V(0f, y + 0.02f),
-                        0.017f, Steel);
-                }
-                Strip(foot, right, 0.055f, Curb);
-                // Stationary wheel guards, not loading equipment.
-                var front = Vector2.Lerp(foot, right, 0.5f);
-                Strip(front + V(0.15f, -0.12f), front + V(0.29f, -0.22f),
-                    0.055f, Safety);
+                Strip(V(x, 1.29f), V(x + 0.48f, 1.42f),
+                    0.032f, Steel);
             }
         }
 
