@@ -12,6 +12,11 @@ import {
   validateHeadquartersRecord,
 } from "../functions/lib/headquarters.js";
 import { validateCompanyPayload } from "../functions/lib/company.js";
+import {
+  STARTER_SITE_DISPATCH, STARTER_SITE_DOCUMENT, STARTER_SITE_STATUS,
+  validateStarterSiteRecord,
+} from "../functions/lib/starterDepotSite.js";
+
 import { Timestamp } from "firebase-admin/firestore";
 
 const errorIs = code => error => error.details?.code === code;
@@ -100,5 +105,36 @@ test("only authenticated matching immutable HQ sidecars are readable", () => {
     { selectionKind: "moved" }, { selectedAt: "fake" }, { balance: 900 },
   ])
     assert.throws(() => validateHeadquartersRecord({ ...state, ...changed }, "user_test", "co_test"),
+      errorIs("COMPANY_STATE_INVALID"));
+});
+
+
+test("reserved initial depot site is immutable, location-bound and never dispatch-ready", () => {
+  assert.equal(STARTER_SITE_DOCUMENT, "starterDepotSite");
+  assert.equal(STARTER_SITE_STATUS, "site_reserved");
+  assert.equal(STARTER_SITE_DISPATCH, "unavailable_pending_verified_routes");
+  const hq = { countryCode: "TUR", cityKey: "ankara" };
+  const site = {
+    schemaVersion: 1, companyId: "co_test", ownerUid: "owner_test",
+    countryCode: hq.countryCode, cityKey: hq.cityKey,
+    catalogVersion: HEADQUARTERS_CATALOG_VERSION,
+    status: STARTER_SITE_STATUS, dispatchStatus: STARTER_SITE_DISPATCH,
+    source: "initial_company_setup", reservedAt: Timestamp.now(),
+  };
+  assert.deepEqual(validateStarterSiteRecord(site, "owner_test", "co_test", hq), {
+    countryCode: "TUR", cityKey: "ankara",
+    catalogVersion: HEADQUARTERS_CATALOG_VERSION,
+    status: "site_reserved", dispatchStatus: "unavailable_pending_verified_routes",
+  });
+  const forged = [
+    { companyId: "other" }, { ownerUid: "other" },
+    { cityKey: "istanbul" }, { countryCode: "DEU" },
+    { status: "operational" }, { dispatchStatus: "ready" },
+    { catalogVersion: "unknown" }, { source: "client" },
+    { reservedAt: "spoof" }, { cash: 999999 },
+  ];
+  for (const change of forged)
+    assert.throws(() => validateStarterSiteRecord(
+      { ...site, ...change }, "owner_test", "co_test", hq),
       errorIs("COMPANY_STATE_INVALID"));
 });
