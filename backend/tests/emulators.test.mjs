@@ -492,3 +492,4 @@ await import('./bank.emulators.test.mjs');
 await import('./market.emulators.test.mjs');
 
 await import('./liveops.emulators.test.mjs');
+await import('./headquarters.emulators.test.mjs');
