@@ -259,13 +259,15 @@ namespace LogistiCore.Tests
             {
                 Assert.AreEqual(DepotSurfacePatternAtlas.Width, atlas.width);
                 Assert.AreEqual(DepotSurfacePatternAtlas.Height, atlas.height);
-                var asphalt = atlas.GetPixel32(8, 10);
-                var concrete = atlas.GetPixel32(
-                    DepotSurfacePatternAtlas.TileSize + 2, 10);
-                var sidingRib = atlas.GetPixel32(
-                    DepotSurfacePatternAtlas.TileSize * 3 + 16, 10);
-                var sidingPanel = atlas.GetPixel32(
-                    DepotSurfacePatternAtlas.TileSize * 3 + 20, 10);
+                // Unity 6 supports GetPixels32() but not GetPixel32(x,y).
+                var pixels = atlas.GetPixels32();
+                Color32 asphalt = pixels[10 * atlas.width + 8];
+                Color32 concrete = pixels[10 * atlas.width +
+                    DepotSurfacePatternAtlas.TileSize + 2];
+                Color32 sidingRib = pixels[10 * atlas.width +
+                    DepotSurfacePatternAtlas.TileSize * 3 + 16];
+                Color32 sidingPanel = pixels[10 * atlas.width +
+                    DepotSurfacePatternAtlas.TileSize * 3 + 20];
                 Assert.AreNotEqual(asphalt.r, concrete.r);
                 Assert.AreNotEqual(sidingRib.r, sidingPanel.r);
                 DepotSurfacePatternAtlas.UvRect(
