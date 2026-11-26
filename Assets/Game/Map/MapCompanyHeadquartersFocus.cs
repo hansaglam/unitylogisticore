@@ -128,6 +128,13 @@ namespace LogistiCore.Map
                 return;
             }
 
+            // Also catches on-screen zoom controls, which may bypass gestures.
+            if (_rig.UserAdjusted)
+            {
+                SuppressNavigation();
+                return;
+            }
+
             var status = FirebaseClient.Current;
             if (!FirebaseClient.SdkAppReady ||
                 !ClientLocalEmulatorSecurity.AllowsLiveReads(ClientJobsRuntime.Settings, status))
@@ -155,7 +162,8 @@ namespace LogistiCore.Map
                     // An Auth switch while the network call was in flight
                     // must never position the camera for the previous account.
                     if (CurrentUid() != _requestedUid ||
-                        _overlay == null || _overlay.ManualPreviewApplied)
+                        _overlay == null || _overlay.ManualPreviewApplied ||
+                        _rig == null || _rig.UserAdjusted)
                     {
                         ChangeState(MapHeadquartersFocusState.UserNavigated);
                         return;
