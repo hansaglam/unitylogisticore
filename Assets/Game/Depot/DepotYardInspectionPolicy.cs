@@ -56,22 +56,23 @@ namespace LogistiCore.Depot
 
         static bool Inside(Vector2 p, Vector2 a, Vector2 b, Vector2 c, Vector2 d)
         {
-            var sign = 0;
-            var corners = new[] { a, b, c, d };
-            for (var i = 0; i < 4; i++)
-            {
-                var from = corners[i];
-                var to = corners[(i + 1) % 4];
-                var cross = (to.x - from.x) * (p.y - from.y) -
-                    (to.y - from.y) * (p.x - from.x);
-                if (Mathf.Abs(cross) < 0.0001f)
-                    continue;
-                var current = cross > 0f ? 1 : -1;
-                if (sign != 0 && sign != current)
-                    return false;
-                sign = current;
-            }
-            return true;
+            // No allocation on pointer taps; evaluate the four edges directly.
+            var ab = Cross(a, b, p);
+            var bc = Cross(b, c, p);
+            var cd = Cross(c, d, p);
+            var da = Cross(d, a, p);
+            const float epsilon = 0.0001f;
+            var positive = ab > epsilon || bc > epsilon ||
+                cd > epsilon || da > epsilon;
+            var negative = ab < -epsilon || bc < -epsilon ||
+                cd < -epsilon || da < -epsilon;
+            return !(positive && negative);
+        }
+
+        static float Cross(Vector2 a, Vector2 b, Vector2 p)
+        {
+            return (b.x - a.x) * (p.y - a.y) -
+                (b.y - a.y) * (p.x - a.x);
         }
     }
 }
