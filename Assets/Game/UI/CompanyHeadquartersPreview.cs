@@ -54,6 +54,17 @@ namespace LogistiCore.UI
                 ? _cities[_city.value].Location
                 : default;
 
+        public void SetSetupLocked(bool locked)
+        {
+            if (_country != null)
+                _country.interactable = !locked;
+            if (_city != null)
+                _city.interactable = !locked;
+            if (_preview != null)
+                _preview.interactable = !locked || (_setup != null &&
+                    _setup.CurrentStage == CompanyHeadquartersSetupFlow.Stage.Saved);
+        }
+
         void OnEnable()
         {
             LocalizationSettings.SelectedLocaleChanged += OnLocaleChanged;
