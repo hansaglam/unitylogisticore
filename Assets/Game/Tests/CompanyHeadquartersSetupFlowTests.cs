@@ -28,7 +28,7 @@ namespace LogistiCore.Tests
                 Assert.IsNotNull(form);
                 Assert.AreEqual(CompanyHeadquartersSetupFlow.Stage.Edit, form.CurrentStage);
                 Assert.IsFalse(form.CanConfirm);
-                Assert.AreEqual(3, panel.GetComponentsInChildren<Button>(true).Length);
+                Assert.AreEqual(4, panel.GetComponentsInChildren<Button>(true).Length);
 
                 var input = panel.GetComponentInChildren<InputField>(true);
                 Assert.IsNotNull(input);
