@@ -1,7 +1,7 @@
 import { DocumentData, FieldValue, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
 import { CommandError } from "./commands";
 import { readFoundation } from "./company";
-import { validateHeadquartersRecord } from "./headquarters";
+import { validateHeadquartersRecord } from "./headquartersRecord";
 import { InitialHeadquartersLocation, HEADQUARTERS_CATALOG_VERSION } from "./headquartersCatalog";
 import { requireUid, validateIdentityRequest } from "./identity";
 import { assertLocalEnvironment } from "./localEnvironment";
