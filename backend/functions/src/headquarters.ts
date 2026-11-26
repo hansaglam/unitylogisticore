@@ -6,10 +6,10 @@ import {
   InitialHeadquartersLocation, validateInitialHeadquarters,
 } from "./headquartersCatalog";
 
-export interface CreateCompanyWithHeadquartersPayload {
+export type CreateCompanyWithHeadquartersPayload = {
   name: string;
   headquarters: InitialHeadquartersLocation;
-}
+};
 
 /** Distinct endpoint: leaves existing createCompany(name) and its receipts untouched. */
 export function validateCreateCompanyWithHeadquartersPayload(value: unknown): CreateCompanyWithHeadquartersPayload {
