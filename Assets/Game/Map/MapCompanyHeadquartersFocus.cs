@@ -88,8 +88,18 @@ namespace LogistiCore.Map
 
         void OnScopeChanged()
         {
-            if (!_completed && !_suppressed)
-                SuppressNavigation();
+            // Map rig, marker overlay and scene chrome may initialize in any
+            // OnEnable order. Initialization is not a user navigation action.
+            if (!_started || _completed || _suppressed)
+                return;
+            if (_overlay != null && _overlay.ManualPreviewApplied)
+            {
+                _suppressed = true;
+                _completed = true;
+                ChangeState(MapHeadquartersFocusState.ManualPreview);
+                return;
+            }
+            SuppressNavigation();
         }
 
         public void SuppressNavigation()
