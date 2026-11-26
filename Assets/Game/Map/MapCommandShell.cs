@@ -76,6 +76,10 @@ namespace LogistiCore.Map
         Image _cityHero;
         RectTransform _cityCoordinatesCard;
         RectTransform _cityNetworkCard;
+        Button _routePreviewButton;
+        Text _routePreviewButtonLabel;
+        Text _routePreviewStatus;
+        MapRoadRoutePreviewController _roadPreviewController;
         Text _schematicTitle;
         Text _schematicNote;
         Text _schematicCount;
@@ -292,6 +296,8 @@ namespace LogistiCore.Map
                     _close.onClick.RemoveListener(CloseContext);
                 if (_summaryButton != null)
                     _summaryButton.onClick.RemoveListener(OpenJobsFromStrip);
+                if (_routePreviewButton != null)
+                    _routePreviewButton.onClick.RemoveListener(PreviewSelectedRoadRoute);
                 for (var i = 0; i < _moduleButtons.Length; i++)
                 {
                     if (_moduleButtons[i] != null)
@@ -301,6 +307,7 @@ namespace LogistiCore.Map
                 _listening = false;
             }
 
+            ReleaseRoadPreview();
             Unsubscribe();
         }
 
@@ -544,6 +551,9 @@ namespace LogistiCore.Map
 
         internal void ShowCity(string cityId)
         {
+            if (!string.Equals(_shownCity, cityId, System.StringComparison.Ordinal) ||
+                _shownWorldCity.IsValid)
+                ReleaseRoadPreview();
             _shownWorldCity = default;
             _shownCity = cityId;
             if (ManagementOpen)
@@ -568,6 +578,8 @@ namespace LogistiCore.Map
 
         internal void ShowGlobalCity(MapBusinessLocation location)
         {
+            if (!location.Equals(_shownWorldCity) || !string.IsNullOrEmpty(_shownCity))
+                ReleaseRoadPreview();
             // No contract or branch entitlement is inferred from a map marker.
             _shownCity = null;
             _shownWorldCity = MapTradeRegionCatalog.Includes(location) ? location : default;
@@ -626,19 +638,27 @@ namespace LogistiCore.Map
                 _cityCoordinatesCard.gameObject.SetActive(known);
             // The existing route-network card is an eight-city schematic,
             // not verified European roads or contracts. Hide it on new cities.
+            var canPreviewRoad = known && Application.isPlaying &&
+                ClientLocalEmulatorSecurity.AllowsLiveReads(
+                    ClientJobsRuntime.Settings, FirebaseClient.Current);
             if (_cityNetworkCard != null)
-                _cityNetworkCard.gameObject.SetActive(legacyKnown);
+                _cityNetworkCard.gameObject.SetActive(canPreviewRoad || legacyKnown);
+            if (_routePreviewButton != null)
+                _routePreviewButton.gameObject.SetActive(canPreviewRoad);
+            if (_routePreviewStatus != null)
+                _routePreviewStatus.gameObject.SetActive(canPreviewRoad);
             if (_schematicTitle != null)
-                _schematicTitle.gameObject.SetActive(legacyKnown);
+                _schematicTitle.gameObject.SetActive(legacyKnown && !canPreviewRoad);
             if (_schematicNote != null)
-                _schematicNote.gameObject.SetActive(legacyKnown);
+                _schematicNote.gameObject.SetActive(legacyKnown && !canPreviewRoad);
             if (_schematicCount != null)
             {
-                _schematicCount.gameObject.SetActive(legacyKnown);
+                _schematicCount.gameObject.SetActive(legacyKnown && !canPreviewRoad);
                 _schematicCount.text = legacyKnown
                     ? MapSchematicLinks.NeighborCount(_shownCity).ToString()
                     : string.Empty;
             }
+            PresentRoadPreviewState();
 
             if (_section != null)
             {
@@ -951,6 +971,12 @@ namespace LogistiCore.Map
             _cityNetworkCard = (RectTransform)MapPremiumUi.CreateSurface(_context,
                 "CityNetworkCard", MapPremiumSurface.Card).transform;
             _cityNetworkCard.gameObject.SetActive(false);
+            _routePreviewButton = ActionButton(_cityNetworkCard,
+                "PreviewRoadGeometry", font, out _routePreviewButtonLabel);
+            _routePreviewStatus = Line(_cityNetworkCard, "RoadPreviewStatus",
+                font, FontStyle.Normal, MapPremiumTheme.TextSecondary);
+            _routePreviewStatus.horizontalOverflow = HorizontalWrapMode.Wrap;
+            _routePreviewStatus.verticalOverflow = VerticalWrapMode.Overflow;
             Stroke(_header);
             Stroke(_rail);
             Stroke(_context);
@@ -1129,6 +1155,103 @@ namespace LogistiCore.Map
             ShowCity(_markers != null ? _markers.SelectedId : null);
         }
 
+        static string RouteCopy(string english, string turkish, string german)
+        {
+            var code = LocalizationSettings.SelectedLocale != null
+                ? LocalizationSettings.SelectedLocale.Identifier.Code : "en";
+            if (code.StartsWith("tr", System.StringComparison.OrdinalIgnoreCase))
+                return turkish;
+            if (code.StartsWith("de", System.StringComparison.OrdinalIgnoreCase))
+                return german;
+            return english;
+        }
+
+        void ReleaseRoadPreview()
+        {
+            if (_roadPreviewController != null)
+            {
+                _roadPreviewController.StateChanged -= PresentRoadPreviewState;
+                _roadPreviewController.Clear();
+            }
+            _roadPreviewController = null;
+        }
+
+        void PreviewSelectedRoadRoute()
+        {
+            if (_markers == null)
+                return;
+            MapBusinessLocation target = _shownWorldCity;
+            if (!target.IsValid && !string.IsNullOrEmpty(_shownCity) &&
+                MapCities.TryGet(_shownCity, out _))
+                target = new MapBusinessLocation("TUR", _shownCity);
+            if (!MapTradeRegionCatalog.Includes(target))
+                return;
+
+            var controller = _markers.GetComponent<MapRoadRoutePreviewController>();
+            if (controller == null)
+                return;
+            if (_roadPreviewController != controller)
+            {
+                ReleaseRoadPreview();
+                _roadPreviewController = controller;
+                _roadPreviewController.StateChanged += PresentRoadPreviewState;
+            }
+            _roadPreviewController.Request(target);
+            PresentRoadPreviewState();
+        }
+
+        void PresentRoadPreviewState()
+        {
+            if (_routePreviewButtonLabel == null || _routePreviewStatus == null)
+                return;
+            _routePreviewButtonLabel.text = RouteCopy("Show road route", "Karayolu rotasını göster",
+                "Straßenroute anzeigen");
+
+            var state = _roadPreviewController != null
+                ? _roadPreviewController.State : MapRoadPreviewState.Idle;
+            switch (state)
+            {
+                case MapRoadPreviewState.CheckingHeadquarters:
+                    _routePreviewStatus.text = RouteCopy("Checking company headquarters...",
+                        "Şirket merkezi kontrol ediliyor...", "Firmensitz wird geprüft...");
+                    break;
+                case MapRoadPreviewState.LoadingRoad:
+                    _routePreviewStatus.text = RouteCopy("Loading actual road geometry...",
+                        "Gerçek yol geometrisi yükleniyor...", "Straßengeometrie wird geladen...");
+                    break;
+                case MapRoadPreviewState.Visible:
+                    _routePreviewStatus.text = RouteCopy(
+                        "Road preview only · © OpenStreetMap contributors. No freight dispatch.",
+                        "Yol önizlemesi · © OpenStreetMap katılımcıları. Sevkiyat izni vermez.",
+                        "Nur Routenvorschau · © OpenStreetMap-Mitwirkende. Kein Frachtversand.");
+                    break;
+                case MapRoadPreviewState.NoRoad:
+                    _routePreviewStatus.text = RouteCopy("No connected driving route found.",
+                        "Bağlantılı karayolu rotası bulunamadı.",
+                        "Keine durchgehende Straßenroute gefunden.");
+                    break;
+                case MapRoadPreviewState.NoHeadquarters:
+                    _routePreviewStatus.text = RouteCopy("Verified company HQ required.",
+                        "Doğrulanmış şirket merkezi gerekli.",
+                        "Bestätigter Firmensitz erforderlich.");
+                    break;
+                case MapRoadPreviewState.Unavailable:
+                    _routePreviewStatus.text = RouteCopy("Road service unavailable. No route invented.",
+                        "Yol hizmeti kullanılamıyor; sahte rota gösterilmez.",
+                        "Routendienst nicht verfügbar; keine Ersatzroute.");
+                    break;
+                default:
+                    _routePreviewStatus.text = RouteCopy(
+                        "From your HQ · Preview only · OpenStreetMap",
+                        "Merkezinden · Yalnızca önizleme · OpenStreetMap",
+                        "Ab Firmensitz · Nur Vorschau · OpenStreetMap");
+                    break;
+            }
+            if (_routePreviewButton != null)
+                _routePreviewButton.interactable = _roadPreviewController == null ||
+                    !_roadPreviewController.IsBusy;
+        }
+
         void HookButtons()
         {
             if (_listening)
@@ -1138,6 +1261,8 @@ namespace LogistiCore.Map
                 _close.onClick.AddListener(CloseContext);
             if (_summaryButton != null)
                 _summaryButton.onClick.AddListener(OpenJobsFromStrip);
+            if (_routePreviewButton != null)
+                _routePreviewButton.onClick.AddListener(PreviewSelectedRoadRoute);
             for (var i = 0; i < _moduleButtons.Length; i++)
             {
                 var slot = i;
@@ -1658,6 +1783,17 @@ namespace LogistiCore.Map
             PlaceCityCard(_cityNetworkCard, schematicTop, metrics.CanvasFont * 7.8f, 13f);
             TopBand(_schematicTitle, schematicTop + 14f, metrics.CanvasFont * 1.7f, rightPad + 56f);
             TopBand(_schematicNote, schematicTop + metrics.CanvasFont * 4.1f, metrics.CanvasFont * 2.8f, rightPad + 16f);
+            if (_routePreviewButton != null)
+            {
+                var routeAction = (RectTransform)_routePreviewButton.transform;
+                routeAction.anchorMin = new Vector2(0f, 1f);
+                routeAction.anchorMax = new Vector2(1f, 1f);
+                routeAction.pivot = new Vector2(0.5f, 1f);
+                routeAction.sizeDelta = new Vector2(-24f, Mathf.Max(30f, metrics.CanvasFont * 2.3f));
+                routeAction.anchoredPosition = new Vector2(0f, -12f);
+            }
+            TopBand(_routePreviewStatus, metrics.CanvasFont * 3.3f,
+                metrics.CanvasFont * 3.6f, 10f);
             if (_schematicCount != null)
             {
                 var count = _schematicCount.rectTransform;

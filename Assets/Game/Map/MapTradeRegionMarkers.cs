@@ -118,6 +118,9 @@ namespace LogistiCore.Map
             if (focus == null)
                 focus = camera.gameObject.AddComponent<MapCompanyHeadquartersFocus>();
             focus.Bind(this, camera);
+            // Real route overlays are separate from decorative schematic links.
+            // They remain empty until an explicit authenticated city preview.
+            MapRoadRoutePreviewController.Ensure(markerLayer, camera);
         }
 
         void OnEnable()
