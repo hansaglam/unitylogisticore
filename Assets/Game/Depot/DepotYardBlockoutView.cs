@@ -132,25 +132,27 @@ namespace LogistiCore.Depot
             _colors.Clear();
             _triangles.Clear();
 
-            // One public approach road, its curb, and one coherent site
-            // ground plane. Previous two same-weight overlapping diamonds
-            // created the appearance of stacked floating slabs.
-            Quad(V(-7.4f, -3.78f), V(-0.25f, -1.16f),
-                V(7.4f, -3.72f), V(0.25f, -6.36f), Road);
-            Quad(V(-7.06f, -1.96f), V(-0.30f, 0.47f),
-                V(7.12f, -2.02f), V(0.38f, -4.53f), Tarmac);
-            // Seam at the access-road edge reads as a curb, not another
-            // raised platform, and keeps the road in the same projection.
-            Strip(V(-6.93f, -2.17f), V(0.38f, -4.75f),
-                0.062f, RoadShoulder);
-            Strip(V(0.38f, -4.75f), V(6.97f, -2.35f),
-                0.062f, RoadShoulder);
-            for (var i = 0; i < 4; i++)
+            // Single ground silhouette. The old approach road and yard were
+            // two overlapping large rhomboids with exposed outer edges,
+            // making the compound look like stacked floating platforms.
+            Quad(V(-7.2f, -2.12f), V(-0.22f, 0.48f),
+                V(7.14f, -2.08f), V(0.24f, -5.20f), Tarmac);
+
+            // Short public access-road band INSIDE the ground silhouette.
+            // It is not another platform or an authorized freight route.
+            Quad(V(-2.55f, -3.55f), V(0.42f, -2.47f),
+                V(3.47f, -3.56f), V(0.45f, -4.64f), Road);
+            Strip(V(-2.55f, -3.55f), V(0.42f, -2.47f),
+                0.038f, RoadShoulder);
+            Strip(V(0.42f, -2.47f), V(3.47f, -3.56f),
+                0.038f, RoadShoulder);
+            // Small approach markings are kept on the road, not outside
+            // the owned lot on a second giant background diamond.
+            for (var i = 0; i < 3; i++)
             {
-                var t = (i + 0.6f) / 4.5f;
-                var p = Vector2.Lerp(V(-5.55f, -4.66f),
-                    V(4.46f, -4.65f), t);
-                Strip(p, p + V(0.45f, 0.15f), 0.042f, Lane);
+                var x = -1.0f + i * 1.0f;
+                Strip(V(x, -3.56f), V(x + 0.30f, -3.46f),
+                    0.033f, Lane);
             }
 
             if (_stage != DepotVisualStage.Unverified)

@@ -207,6 +207,51 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void ApproachRoadIsInsetWithinOneGroundSilhouette()
+        {
+            var obj = new GameObject("DepotGroundInsetRegression",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView));
+            try
+            {
+                var view = obj.GetComponent<DepotYardBlockoutView>();
+                view.SetStage(DepotVisualStage.Unverified);
+                var mesh = obj.GetComponent<MeshFilter>().sharedMesh;
+                Assert.IsNotNull(mesh);
+                var vertices = mesh.vertices;
+                Assert.GreaterOrEqual(vertices.Length, 8);
+                // The first quad is the entire ground; the second is the
+                // inset public road, never a second exposed world platform.
+                var ground = new Vector2[4];
+                for (var i = 0; i < 4; i++)
+                    ground[i] = vertices[i];
+                for (var i = 4; i < 8; i++)
+                    Assert.IsTrue(WithinConvexQuad(vertices[i], ground),
+                        "The approach road must fit within the ground footprint.");
+                Assert.IsFalse(view.ShowsSiteInfrastructure);
+                Assert.IsFalse(view.ShowsWarehouse);
+                Assert.IsFalse(view.ShowsVehicle);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        static bool WithinConvexQuad(Vector2 point, Vector2[] corners)
+        {
+            var hasPositive = false;
+            var hasNegative = false;
+            for (var i = 0; i < corners.Length; i++)
+            {
+                var a = corners[i];
+                var b = corners[(i + 1) % corners.Length];
+                var cross = (b.x - a.x) * (point.y - a.y) -
+                    (b.y - a.y) * (point.x - a.x);
+                hasPositive |= cross > 0.0001f;
+                hasNegative |= cross < -0.0001f;
+            }
+            return !(hasPositive && hasNegative);
+        }
+
+        [Test]
         public void EntryWayfindingOnlyExistsForVerifiedSiteStages()
         {
             var obj = new GameObject("DepotEntryStageRegression",
