@@ -57,6 +57,7 @@ namespace LogistiCore.UI
         ClientReadSession _reader;
 
         public Stage CurrentStage => _stage;
+        public bool IsBusy => _stage == Stage.Checking || _stage == Stage.Saving;
         public bool HasReviewedSelection => _reviewCity.IsValid && !string.IsNullOrEmpty(_reviewName);
         public bool CanConfirm => _stage == Stage.Eligible &&
             !string.IsNullOrEmpty(_verifiedUid) && HasReviewedSelection &&
@@ -479,6 +480,11 @@ namespace LogistiCore.UI
                     break;
             }
 
+            var locked = _awaitingResponse || _stage == Stage.Saved;
+            _companyName.interactable = !locked;
+            var preview = GetComponent<CompanyHeadquartersPreview>();
+            if (preview != null)
+                preview.SetSetupLocked(locked);
             _review.interactable = !_awaitingResponse && _stage != Stage.Saved;
             _confirm.interactable = CanConfirm && !_awaitingResponse;
         }
