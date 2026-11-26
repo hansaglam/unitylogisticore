@@ -366,6 +366,9 @@ namespace LogistiCore.UI
                     else if (CreatedResultMatches(raw, name, city))
                     {
                         _stage = Stage.Saved;
+                        var siteStatus = GetComponentInChildren<CompanyStarterSiteStatus>(true);
+                        if (siteStatus != null)
+                            siteStatus.InvalidateForCompanyCreation();
                     }
                     else
                     {
