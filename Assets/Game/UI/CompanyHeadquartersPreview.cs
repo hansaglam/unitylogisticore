@@ -18,7 +18,7 @@ namespace LogistiCore.UI
     [DisallowMultipleComponent]
     public sealed class CompanyHeadquartersPreview : MonoBehaviour
     {
-        const float PreferredHeight = 1490f;
+        const float PreferredHeight = 1610f;
 
         struct CountryOption
         {
@@ -127,6 +127,11 @@ namespace LogistiCore.UI
             // is a distinct, explicitly confirmed, emulator-gated flow.
             _setup = gameObject.AddComponent<CompanyHeadquartersSetupFlow>();
             _setup.Build(transform, _font, () => SelectedLocation);
+
+            var site = new GameObject("StarterSiteStatus",
+                typeof(RectTransform), typeof(LayoutElement), typeof(CompanyStarterSiteStatus));
+            site.transform.SetParent(transform, false);
+            site.GetComponent<CompanyStarterSiteStatus>().Build(_font);
 
             RefreshLabels();
         }
