@@ -57,6 +57,7 @@ test("CITY-START-02: atomic HQ creation, replay and legacy company preservation"
     return user;
   };
   const read = user => call(user, "getMyCompanyHeadquarters", { protocolVersion: 1 });
+  const readSite = user => call(user, "getMyStarterDepotSite", { protocolVersion: 1 });
   const create = (user, key, countryCode = "TUR", cityKey = "ankara") =>
     call(user, "createCompanyWithHeadquarters", {
       protocolVersion: 1, idempotencyKey: key,
@@ -73,11 +74,16 @@ test("CITY-START-02: atomic HQ creation, replay and legacy company preservation"
 
     const companyRef = track("v2Companies/" + companyIdForUid(user.uid));
     const hqRef = track(companyRef.path + "/state/headquarters");
+    const starterSiteRef = track(companyRef.path + "/state/starterDepotSite");
     const receipt = track("v2Players/" + user.uid + "/commands/hq-initial");
     const created = await create(user, "hq-initial");
     assert.equal(created.status, 200);
     assert.equal(created.body.result.result.headquarters.countryCode, "TUR");
     assert.equal(created.body.result.result.headquarters.cityKey, "ankara");
+    assert.deepEqual(created.body.result.result.starterSite, {
+      countryCode: "TUR", cityKey: "ankara", status: "site_reserved",
+      dispatchStatus: "unavailable_pending_verified_routes",
+    });
 
     const storedCompany = (await companyRef.get()).data();
     assert.deepEqual(Object.keys(storedCompany).sort(),
@@ -92,6 +98,27 @@ test("CITY-START-02: atomic HQ creation, replay and legacy company preservation"
     assert.equal(storedHq.ownerUid, user.uid);
     assert.equal(storedHq.companyId, companyRef.id);
     assert.equal(storedHq.catalogVersion, "lc_tur_europe_2026_11_v1");
+    const storedSite = (await starterSiteRef.get()).data();
+    assert.deepEqual(Object.keys(storedSite).sort(), [
+      "catalogVersion", "cityKey", "companyId", "countryCode", "dispatchStatus",
+      "ownerUid", "reservedAt", "schemaVersion", "source", "status",
+    ]);
+    assert.equal(storedSite.companyId, companyRef.id);
+    assert.equal(storedSite.ownerUid, user.uid);
+    assert.equal(storedSite.cityKey, "ankara");
+    assert.equal(storedSite.status, "site_reserved");
+    assert.equal(storedSite.dispatchStatus, "unavailable_pending_verified_routes");
+    assert.ok(storedSite.reservedAt instanceof Timestamp);
+    assert.deepEqual((await readSite(user)).body.result.result, {
+      hasCompany: true, hasHeadquarters: true, hasStarterSite: true,
+      companyId: companyRef.id,
+      starterSite: {
+        countryCode: "TUR", cityKey: "ankara",
+        catalogVersion: "lc_tur_europe_2026_11_v1",
+        status: "site_reserved",
+        dispatchStatus: "unavailable_pending_verified_routes",
+      },
+    });
 
     const readHq = await read(user);
     assert.equal(readHq.status, 200);
@@ -108,6 +135,7 @@ test("CITY-START-02: atomic HQ creation, replay and legacy company preservation"
       ["bootstrapStatus", "companyId", "economyReady", "hasCompany", "name", "schemaVersion"]);
     const stableCompany = await companyRef.get();
     const stableHq = await hqRef.get();
+    const stableSite = await starterSiteRef.get();
     const stableReceipt = await receipt.get();
 
     assert.deepEqual((await create(user, "hq-initial")).body, created.body);
@@ -119,12 +147,14 @@ test("CITY-START-02: atomic HQ creation, replay and legacy company preservation"
     }), "COMPANY_EXISTS");
     assert.deepEqual((await companyRef.get()).updateTime, stableCompany.updateTime);
     assert.deepEqual((await hqRef.get()).updateTime, stableHq.updateTime);
+    assert.deepEqual((await starterSiteRef.get()).updateTime, stableSite.updateTime);
     assert.deepEqual((await receipt.get()).updateTime, stableReceipt.updateTime);
 
     const legacy = await guest();
     assert.equal((await call(legacy, "ensurePlayerIdentity", { protocolVersion: 1 })).status, 200);
     const legacyCompanyRef = track("v2Companies/" + companyIdForUid(legacy.uid));
     const legacyHq = track(legacyCompanyRef.path + "/state/headquarters");
+    const legacySite = track(legacyCompanyRef.path + "/state/starterDepotSite");
     track("v2Players/" + legacy.uid + "/commands/old-company");
     assert.equal((await call(legacy, "createCompany", {
       protocolVersion: 1, idempotencyKey: "old-company",
@@ -134,6 +164,9 @@ test("CITY-START-02: atomic HQ creation, replay and legacy company preservation"
       { hasCompany: true, hasHeadquarters: false });
     errorIs(await create(legacy, "new-after-legacy"), "COMPANY_EXISTS");
     assert.equal((await legacyHq.get()).exists, false);
+    assert.equal((await legacySite.get()).exists, false);
+    assert.deepEqual((await readSite(legacy)).body.result.result,
+      { hasCompany: true, hasHeadquarters: false, hasStarterSite: false });
     assert.equal((await legacyCompanyRef.get()).data().name, "Legacy Co");
 
     const missing = await guest();

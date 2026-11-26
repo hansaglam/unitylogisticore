@@ -351,6 +351,7 @@ namespace LogistiCore.Backend
         public const string EnsurePlayerIdentity = "ensurePlayerIdentity";
         public const string GetMyCompanyState = "getMyCompanyState";
         public const string GetMyCompanyHeadquarters = "getMyCompanyHeadquarters";
+        public const string GetMyStarterDepotSite = "getMyStarterDepotSite";
         public const string GetMyEconomyState = "getMyEconomyState";
         public const string GetMyFleetState = "getMyFleetState";
         public const string GetMyWarehouseState = "getMyWarehouseState";
@@ -379,7 +380,7 @@ namespace LogistiCore.Backend
 
         static readonly string[] Reads =
         {
-            LocalHealth, GetMyCompanyState, GetMyCompanyHeadquarters, GetMyEconomyState, GetMyFleetState, GetMyWarehouseState,
+            LocalHealth, GetMyCompanyState, GetMyCompanyHeadquarters, GetMyStarterDepotSite, GetMyEconomyState, GetMyFleetState, GetMyWarehouseState,
             GetMyContracts, GetMyDeliveries, GetMyMarketState, GetMyAcquisitionOffers, GetMyWorldEvents,
             GetMyBankState
         };

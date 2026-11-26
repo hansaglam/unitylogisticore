@@ -14,6 +14,7 @@ import { readMyFleetState, readMyWarehouseState } from "./logisticsReads";
 import { initializeCompanyEconomyCommand, readMyEconomyState } from "./economy";
 import { createCompanyCommand, readMyCompanyState } from "./company";
 import { createCompanyWithHeadquartersCommand, readMyCompanyHeadquarters } from "./headquarters";
+import { readMyStarterDepotSite } from "./starterDepotSite";
 
 // Fail before exporting a function or initializing any SDK outside the local environment.
 assertLocalEnvironment(process.env, true);
@@ -49,6 +50,10 @@ export const getMyCompanyState = onCall({ region: "us-central1", maxInstances: 1
 
 export const getMyCompanyHeadquarters = onCall({ region: "us-central1", maxInstances: 1 }, request =>
   readMyCompanyHeadquarters(localFirestore, request.auth, request.data));
+
+// Initial depot is a reserved site, NOT yet an operational warehouse.
+export const getMyStarterDepotSite = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyStarterDepotSite(localFirestore, request.auth, request.data));
 
 export const localHealth = onCall({ region: "us-central1", maxInstances: 1 }, (request) => {
   assertLocalEnvironment(process.env, true);
