@@ -350,6 +350,7 @@ namespace LogistiCore.Backend
         public const string LocalHealth = "localHealth";
         public const string EnsurePlayerIdentity = "ensurePlayerIdentity";
         public const string GetMyCompanyState = "getMyCompanyState";
+        public const string GetMyCompanyHeadquarters = "getMyCompanyHeadquarters";
         public const string GetMyEconomyState = "getMyEconomyState";
         public const string GetMyFleetState = "getMyFleetState";
         public const string GetMyWarehouseState = "getMyWarehouseState";
@@ -360,6 +361,7 @@ namespace LogistiCore.Backend
         public const string GetMyWorldEvents = "getMyWorldEvents";
         public const string GetMyBankState = "getMyBankState";
         public const string CreateCompany = "createCompany";
+        public const string CreateCompanyWithHeadquarters = "createCompanyWithHeadquarters";
         public const string InitializeCompanyEconomy = "initializeCompanyEconomy";
         public const string ProvisionCompanyStarterFleet = "provisionCompanyStarterFleet";
         public const string AcceptContract = "acceptContract";
@@ -377,14 +379,14 @@ namespace LogistiCore.Backend
 
         static readonly string[] Reads =
         {
-            LocalHealth, GetMyCompanyState, GetMyEconomyState, GetMyFleetState, GetMyWarehouseState,
+            LocalHealth, GetMyCompanyState, GetMyCompanyHeadquarters, GetMyEconomyState, GetMyFleetState, GetMyWarehouseState,
             GetMyContracts, GetMyDeliveries, GetMyMarketState, GetMyAcquisitionOffers, GetMyWorldEvents,
             GetMyBankState
         };
 
         static readonly string[] Commands =
         {
-            EnsurePlayerIdentity, CreateCompany, InitializeCompanyEconomy, ProvisionCompanyStarterFleet, AcceptContract, StartDelivery, ClaimDeliveryReward,
+            EnsurePlayerIdentity, CreateCompany, CreateCompanyWithHeadquarters, InitializeCompanyEconomy, ProvisionCompanyStarterFleet, AcceptContract, StartDelivery, ClaimDeliveryReward,
             BuyVehicle, HireDriver, AcquireTrailer, OpenWarehouse, UpgradeWarehouse,
             QuoteCompanyLoan, CancelCompanyLoanQuote, TakeCompanyLoan, RepayCompanyLoan
         };
