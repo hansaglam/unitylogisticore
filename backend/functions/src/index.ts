@@ -16,6 +16,7 @@ import { createCompanyCommand, readMyCompanyState } from "./company";
 import { createCompanyWithHeadquartersCommand, readMyCompanyHeadquarters } from "./headquarters";
 import { readMyStarterDepotSite } from "./starterDepotSite";
 import { activateHeadquartersStarterDepotCommand, readMyStarterDepotProgress } from "./starterDepotActivation";
+import { readMyRoadRoutePreview } from "./roadPreview";
 
 // Fail before exporting a function or initializing any SDK outside the local environment.
 assertLocalEnvironment(process.env, true);
@@ -60,6 +61,10 @@ export const getMyStarterDepotSite = onCall({ region: "us-central1", maxInstance
 // Route/contract dispatch remains unavailable after warehouse activation.
 export const getMyStarterDepotProgress = onCall({ region: "us-central1", maxInstances: 1 }, request =>
   readMyStarterDepotProgress(localFirestore, request.auth, request.data));
+
+// ROAD-01: read-only local OSRM geometry. Never authorizes payable freight.
+export const getMyRoadRoutePreview = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyRoadRoutePreview(localFirestore, request.auth, request.data));
 export const activateHeadquartersStarterDepot = onCall({ region: "us-central1", maxInstances: 1 }, request =>
   activateHeadquartersStarterDepotCommand(localFirestore, request.auth, request.data));
 
