@@ -45,9 +45,11 @@ namespace LogistiCore.Depot
 
         readonly List<Vector3> _vertices = new List<Vector3>(140);
         readonly List<Color32> _colors = new List<Color32>(140);
+        readonly List<Vector2> _uvs = new List<Vector2>(140);
         readonly List<int> _triangles = new List<int>(200);
         Mesh _mesh;
         Material _material;
+        Texture2D _surfaceAtlas;
         MeshFilter _filter;
         MeshRenderer _renderer;
         DepotVisualStage _stage;
@@ -114,8 +116,9 @@ namespace LogistiCore.Depot
                     name = "Depot2D_AuthoredBlockout",
                     hideFlags = HideFlags.HideAndDontSave
                 };
+                _surfaceAtlas = DepotSurfacePatternAtlas.Create();
                 if (_material.HasProperty("_MainTex"))
-                    _material.SetTexture("_MainTex", Texture2D.whiteTexture);
+                    _material.SetTexture("_MainTex", _surfaceAtlas);
             }
 
             if (_mesh == null)
@@ -130,6 +133,7 @@ namespace LogistiCore.Depot
 
             _vertices.Clear();
             _colors.Clear();
+            _uvs.Clear();
             _triangles.Clear();
 
             // Single ground silhouette. The old approach road and yard were
@@ -173,6 +177,7 @@ namespace LogistiCore.Depot
             _mesh.Clear();
             _mesh.SetVertices(_vertices);
             _mesh.SetColors(_colors);
+            _mesh.SetUVs(0, _uvs);
             _mesh.SetTriangles(_triangles, 0);
             _mesh.RecalculateBounds();
             _filter.sharedMesh = _mesh;
@@ -192,6 +197,20 @@ namespace LogistiCore.Depot
             _vertices.Add(new Vector3(c.x, c.y, 0f));
             _vertices.Add(new Vector3(d.x, d.y, 0f));
             for (var i = 0; i < 4; i++) _colors.Add(color);
+            var tile = DepotSurfacePatternAtlas.Plain;
+            if (color.Equals(Tarmac) || color.Equals(Road))
+                tile = DepotSurfacePatternAtlas.Asphalt;
+            else if (color.Equals(Concrete) || color.Equals(Parcel))
+                tile = DepotSurfacePatternAtlas.Concrete;
+            else if (color.Equals(Roof))
+                tile = DepotSurfacePatternAtlas.Roof;
+            else if (color.Equals(WallBright) || color.Equals(WallShade))
+                tile = DepotSurfacePatternAtlas.Siding;
+            DepotSurfacePatternAtlas.UvRect(tile, out var minUv, out var maxUv);
+            _uvs.Add(new Vector2(minUv.x, minUv.y));
+            _uvs.Add(new Vector2(minUv.x, maxUv.y));
+            _uvs.Add(new Vector2(maxUv.x, maxUv.y));
+            _uvs.Add(new Vector2(maxUv.x, minUv.y));
             _triangles.Add(start); _triangles.Add(start + 1); _triangles.Add(start + 2);
             _triangles.Add(start); _triangles.Add(start + 2); _triangles.Add(start + 3);
         }
@@ -446,6 +465,12 @@ namespace LogistiCore.Depot
                 if (Application.isPlaying) Destroy(_material);
                 else DestroyImmediate(_material);
                 _material = null;
+            }
+            if (_surfaceAtlas != null)
+            {
+                if (Application.isPlaying) Destroy(_surfaceAtlas);
+                else DestroyImmediate(_surfaceAtlas);
+                _surfaceAtlas = null;
             }
             _initialized = false;
         }
