@@ -1,4 +1,4 @@
-import { DocumentData, FieldValue, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
+import { DocumentData, DocumentReference, FieldValue, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
 import { CommandError } from "./commands";
 import { readFoundation } from "./company";
 import { validateHeadquartersRecord } from "./headquartersRecord";
@@ -30,7 +30,7 @@ export type VerifiedStarterSite = {
  * stays unchanged. Client cannot choose/grant the depot position independently.
  */
 export function createInitialStarterSite(tx: Transaction,
-  companyRef: FirebaseFirestore.DocumentReference, companyId: string,
+  companyRef: DocumentReference, companyId: string,
   uid: string, verifiedHq: InitialHeadquartersLocation): void {
   assertLocalEnvironment(process.env, true);
   tx.create(companyRef.collection("state").doc(STARTER_SITE_DOCUMENT), {
