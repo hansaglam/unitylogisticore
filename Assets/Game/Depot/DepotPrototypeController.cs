@@ -153,13 +153,15 @@ namespace LogistiCore.Depot
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
 
-            var safe = new GameObject("SafeArea", typeof(RectTransform),
-                typeof(SafeAreaRect));
+            var safe = new GameObject("SafeArea", typeof(RectTransform));
             safe.transform.SetParent(canvasObject.transform, false);
             var safeRect = safe.GetComponent<RectTransform>();
             safeRect.anchorMin = Vector2.zero;
             safeRect.anchorMax = Vector2.one;
             safeRect.offsetMin = safeRect.offsetMax = Vector2.zero;
+            // Add after parenting: SafeAreaRect.OnEnable can now calculate
+            // the correct anchor inset on its first pass.
+            safe.AddComponent<SafeAreaRect>();
 
             var top = Surface(safe.transform, "DepotHeader", 0f, 1f, 1f, 1f, 146f);
             _title = Text(top, "DepotTitle", 44, FontStyle.Bold,
