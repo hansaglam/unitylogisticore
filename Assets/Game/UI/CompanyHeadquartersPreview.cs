@@ -18,7 +18,7 @@ namespace LogistiCore.UI
     [DisallowMultipleComponent]
     public sealed class CompanyHeadquartersPreview : MonoBehaviour
     {
-        const float PreferredHeight = 720f;
+        const float PreferredHeight = 1490f;
 
         struct CountryOption
         {
@@ -43,6 +43,7 @@ namespace LogistiCore.UI
         Text _countryTitle;
         Text _cityTitle;
         Font _font;
+        CompanyHeadquartersSetupFlow _setup;
         bool _built;
 
         public bool Built => _built;
@@ -110,6 +111,11 @@ namespace LogistiCore.UI
             _preview.onClick.AddListener(PreviewOnMap);
             _country.onValueChanged.AddListener(OnCountryChanged);
             _city.onValueChanged.AddListener(OnCityChanged);
+
+            // The existing map preview remains available. Company creation
+            // is a distinct, explicitly confirmed, emulator-gated flow.
+            _setup = gameObject.AddComponent<CompanyHeadquartersSetupFlow>();
+            _setup.Build(transform, _font, () => SelectedLocation);
 
             RefreshLabels();
         }
@@ -273,6 +279,8 @@ namespace LogistiCore.UI
         void OnCountryChanged(int index)
         {
             RebuildCities();
+            if (_setup != null)
+                _setup.SelectionChanged();
         }
 
         void RebuildCities()
@@ -318,6 +326,8 @@ namespace LogistiCore.UI
         {
             if (_preview != null)
                 _preview.interactable = SelectedLocation.IsValid;
+            if (_setup != null)
+                _setup.SelectionChanged();
         }
 
         public bool PreviewOnMap()
