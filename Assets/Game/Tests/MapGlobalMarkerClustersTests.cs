@@ -25,7 +25,7 @@ namespace LogistiCore.Tests
                 new Rect(0, 0, 200, 200), 40f, 3, output));
             Assert.AreEqual(2, output.Count);
             Assert.AreEqual(2, output[0].Members);
-            Assert.AreEqual("ankara", output[0].Representative.Location.CityId);
+            Assert.AreEqual("ankara", output[0].Representative.Location.CityKey);
             Assert.AreEqual(new Vector2(27, 26), output[0].ScreenPosition);
             Assert.AreEqual("Berlin", output[1].Representative.DisplayName);
         }
@@ -39,7 +39,7 @@ namespace LogistiCore.Tests
                     new Vector2(160, 150), new Vector2(600, 600) },
                 new Rect(0, 0, 200, 200), 40f, 1, output));
             Assert.AreEqual(1, output.Count);
-            Assert.AreEqual("ankara", output[0].Representative.Location.CityId);
+            Assert.AreEqual("ankara", output[0].Representative.Location.CityKey);
             Assert.AreEqual(1, output[0].Members);
         }
 
