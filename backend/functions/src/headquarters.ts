@@ -1,5 +1,7 @@
 import { DocumentData, FieldValue, Firestore, Timestamp, Transaction } from "firebase-admin/firestore";
 import { CommandError, executeCommand } from "./commands";
+import { requireUid, validateIdentityRequest } from "./identity";
+import { assertLocalEnvironment } from "./localEnvironment";
 import { COMPANY_STATUS, normalizeCompanyName, readFoundation } from "./company";
 import {
   HEADQUARTERS_CATALOG_VERSION, HEADQUARTERS_SELECTION_KIND,
@@ -109,4 +111,40 @@ export function createCompanyWithHeadquartersCommand(
       };
     },
   });
+}
+
+
+/**
+ * Separate optional read so the existing getMyCompanyState schema stays
+ * byte-for-byte compatible for older clients, including companies with no HQ.
+ */
+export async function readMyCompanyHeadquarters(
+  db: Firestore, auth: { uid: string } | undefined, data: unknown,
+) {
+  assertLocalEnvironment(process.env, true);
+  const uid = requireUid(auth);
+  validateIdentityRequest(data);
+
+  try {
+    const result = await db.runTransaction(async tx => {
+      const state = await readFoundation(tx, db, uid);
+      if (!state.companyData)
+        return { hasCompany: false, hasHeadquarters: false };
+
+      const saved = await tx.get(state.companyRef.collection("state").doc("headquarters"));
+      if (!saved.exists)
+        return { hasCompany: true, hasHeadquarters: false };
+
+      return {
+        hasCompany: true, hasHeadquarters: true,
+        companyId: state.companyId,
+        headquarters: validateHeadquartersRecord(saved.data(), uid, state.companyId),
+      };
+    }, { readOnly: true });
+
+    return { protocolVersion: 1, serverTime: new Date().toISOString(), result };
+  } catch (error) {
+    if (error instanceof CommandError) throw error;
+    throw new CommandError("INTERNAL");
+  }
 }
