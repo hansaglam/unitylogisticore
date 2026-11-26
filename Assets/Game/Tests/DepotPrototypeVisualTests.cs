@@ -207,6 +207,29 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void EntryWayfindingOnlyExistsForVerifiedSiteStages()
+        {
+            var obj = new GameObject("DepotEntryStageRegression",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView));
+            try
+            {
+                var yard = obj.GetComponent<DepotYardBlockoutView>();
+                var filter = obj.GetComponent<MeshFilter>();
+                var entryColor = new Color32(170, 160, 126, 255);
+                yard.SetStage(DepotVisualStage.Unverified);
+                Assert.IsFalse(ContainsColor(filter.sharedMesh.colors32, entryColor));
+                yard.SetStage(DepotVisualStage.ReservedParcel);
+                Assert.IsTrue(ContainsColor(filter.sharedMesh.colors32, entryColor));
+                Assert.IsFalse(yard.ShowsWarehouse);
+                yard.SetStage(DepotVisualStage.StorageOperational);
+                Assert.IsTrue(ContainsColor(filter.sharedMesh.colors32, entryColor));
+                Assert.IsFalse(yard.ShowsVehicle);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        [Test]
         public void YardTapOnlySelectsVerifiedSiteAndNeverInventsDispatch()
         {
             var warehouseFace = new Vector2(2.1f, -1.0f);
