@@ -42,6 +42,7 @@ namespace LogistiCore.Depot
         public static bool TryOpen(bool verified, ClientStarterDepotProgressState progress,
             MapBusinessLocation requested)
         {
+#if UNITY_EDITOR
             var allowed = ClientLocalEmulatorSecurity.AllowsLiveReads(
                 ClientJobsRuntime.Settings, FirebaseClient.Current);
             var sceneIncluded = SceneUtility.GetBuildIndexByScenePath(ScenePath) >= 0;
@@ -51,6 +52,10 @@ namespace LogistiCore.Depot
             AppNavigation.Go(new AppNavigation.Destination(
                 SceneName, ScreenLayoutMode.Landscape));
             return true;
+#else
+            // The depot scene is an editor-only blockout, never shipping content.
+            return false;
+#endif
         }
     }
 }
