@@ -494,3 +494,4 @@ await import('./market.emulators.test.mjs');
 await import('./liveops.emulators.test.mjs');
 await import('./headquarters.emulators.test.mjs');
 await import('./starterDepot.emulators.test.mjs');
+await import('./roadPreview.emulators.test.mjs');
