@@ -40,6 +40,31 @@ namespace LogistiCore.Backend
         public bool EconomyReady { get; }
     }
 
+    /// <summary>
+    /// Separate, read-only HQ projection. A legacy account can have a company
+    /// without a recorded HQ. Never substitute a guessed location for that case.
+    /// </summary>
+    public readonly struct ClientCompanyHeadquartersState
+    {
+        public ClientCompanyHeadquartersState(bool hasCompany, bool hasHeadquarters,
+            string companyId, string countryCode, string cityKey, string catalogVersion)
+        {
+            HasCompany = hasCompany;
+            HasHeadquarters = hasHeadquarters;
+            CompanyId = companyId ?? string.Empty;
+            CountryCode = countryCode ?? string.Empty;
+            CityKey = cityKey ?? string.Empty;
+            CatalogVersion = catalogVersion ?? string.Empty;
+        }
+
+        public bool HasCompany { get; }
+        public bool HasHeadquarters { get; }
+        public string CompanyId { get; }
+        public string CountryCode { get; }
+        public string CityKey { get; }
+        public string CatalogVersion { get; }
+    }
+
     public readonly struct ClientEconomyState
     {
         public ClientEconomyState(
@@ -475,6 +500,49 @@ namespace LogistiCore.Backend
             ClientValue.TryString(ClientValue.Get(map, "bootstrapStatus"), out var bootstrap);
             ClientValue.TryBool(ClientValue.Get(map, "economyReady"), out var ready);
             parsed = new ClientCompanyState(true, companyId, name, bootstrap, ready);
+            return true;
+        }
+
+        public static bool TryCompanyHeadquarters(object result, out ClientCompanyHeadquartersState parsed)
+        {
+            parsed = default;
+            if (!ClientValue.TryMap(result, out var map) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasCompany"), out var hasCompany) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasHeadquarters"), out var hasHeadquarters) ||
+                (hasHeadquarters && !hasCompany))
+                return false;
+
+            if (!hasHeadquarters)
+            {
+                parsed = new ClientCompanyHeadquartersState(hasCompany, false,
+                    "", "", "", "");
+                return true;
+            }
+
+            if (!ClientValue.TryString(ClientValue.Get(map, "companyId"), out var companyId) ||
+                string.IsNullOrEmpty(companyId) ||
+                !ClientValue.TryMap(ClientValue.Get(map, "headquarters"), out var headquarters) ||
+                headquarters.Count != 3 ||
+                !ClientValue.TryString(ClientValue.Get(headquarters, "countryCode"), out var countryCode) ||
+                !ClientValue.TryString(ClientValue.Get(headquarters, "cityKey"), out var cityKey) ||
+                !ClientValue.TryString(ClientValue.Get(headquarters, "catalogVersion"), out var catalogVersion) ||
+                catalogVersion != "lc_tur_europe_2026_11_v1" ||
+                countryCode.Length != 3 || string.IsNullOrEmpty(cityKey) || cityKey.Length > 80)
+                return false;
+
+            for (var i = 0; i < countryCode.Length; i++)
+                if (countryCode[i] < 'A' || countryCode[i] > 'Z')
+                    return false;
+            for (var i = 0; i < cityKey.Length; i++)
+            {
+                var c = cityKey[i];
+                if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+                    c == '_' || c == '-'))
+                    return false;
+            }
+
+            parsed = new ClientCompanyHeadquartersState(true, true,
+                companyId, countryCode, cityKey, catalogVersion);
             return true;
         }
 

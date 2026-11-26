@@ -26,3 +26,6 @@
 - Use standard uGUI dropdown templates for long country/city menus; scrollable company column remains bounded by the safe area.
 - New code lives in `CompanyHeadquartersPreview`, `MapHeadquartersPreviewSelection` and a small runtime marker focus handler.
 - Existing shell test expectation now includes the new preview button. Saved NUnit regression checks are intentionally **not run yet** per requested test schedule.
+
+## CITY-START-02 update (emulator backend only)
+A new authenticated idempotent `createCompanyWithHeadquarters` command and a separate `getMyCompanyHeadquarters` read have been introduced under the **local Firebase emulator** backend. They store the initial HQ in a separate company state document and do not modify the legacy company schema. This does **not** make the preview UI into a live create-company control; the Unity production/command gate remains closed. Existing accounts have no fabricated HQ, and old callable contracts are untouched. See `Docs/CompanyHeadquartersServer.md` for the exact server contract, rollout limitations, and remaining confirmation-UI work.

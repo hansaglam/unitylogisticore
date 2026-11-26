@@ -13,6 +13,7 @@ import { provisionCompanyStarterFleetCommand } from "./fleet";
 import { readMyFleetState, readMyWarehouseState } from "./logisticsReads";
 import { initializeCompanyEconomyCommand, readMyEconomyState } from "./economy";
 import { createCompanyCommand, readMyCompanyState } from "./company";
+import { createCompanyWithHeadquartersCommand, readMyCompanyHeadquarters } from "./headquarters";
 
 // Fail before exporting a function or initializing any SDK outside the local environment.
 assertLocalEnvironment(process.env, true);
@@ -39,8 +40,15 @@ export const ensurePlayerIdentity = onCall({ region: "us-central1", maxInstances
 export const createCompany = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
   createCompanyCommand(localFirestore, request.auth, request.data));
 
+// Separate callable: legacy createCompany(name) and its idempotency receipts are unchanged.
+export const createCompanyWithHeadquarters = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  createCompanyWithHeadquartersCommand(localFirestore, request.auth, request.data));
+
 export const getMyCompanyState = onCall({ region: "us-central1", maxInstances: 1 }, (request) =>
   readMyCompanyState(localFirestore, request.auth, request.data));
+
+export const getMyCompanyHeadquarters = onCall({ region: "us-central1", maxInstances: 1 }, request =>
+  readMyCompanyHeadquarters(localFirestore, request.auth, request.data));
 
 export const localHealth = onCall({ region: "us-central1", maxInstances: 1 }, (request) => {
   assertLocalEnvironment(process.env, true);
