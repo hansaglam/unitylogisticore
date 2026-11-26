@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using Firebase.Auth;
 using LogistiCore.Backend;
 using LogistiCore.Map;
@@ -172,7 +174,34 @@ namespace LogistiCore.UI
         {
             if (value == null)
                 return "";
-            return value.Normalize(System.Text.NormalizationForm.FormC).Trim();
+            try
+            {
+                // Match the server's NFC / Unicode SpaceSeparator collapsing.
+                // Never assume text normalization of malformed UTF-16 succeeds.
+                var nfc = value.Normalize(NormalizationForm.FormC);
+                var output = new StringBuilder(nfc.Length);
+                var lastSpace = false;
+                foreach (var c in nfc)
+                {
+                    var category = CharUnicodeInfo.GetUnicodeCategory(c);
+                    if (category == UnicodeCategory.SpaceSeparator)
+                    {
+                        if (!lastSpace)
+                            output.Append(' ');
+                        lastSpace = true;
+                    }
+                    else
+                    {
+                        output.Append(c);
+                        lastSpace = false;
+                    }
+                }
+                return output.ToString().Trim();
+            }
+            catch (ArgumentException)
+            {
+                return "";
+            }
         }
 
         static bool IsPlausibleCompanyName(string name)
@@ -193,7 +222,12 @@ namespace LogistiCore.UI
                 var c = name[i];
                 if (char.IsLetterOrDigit(c))
                     hasAlphanumeric = true;
-                if (char.IsControl(c))
+                var category = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (category == UnicodeCategory.Control ||
+                    category == UnicodeCategory.Format ||
+                    category == UnicodeCategory.LineSeparator ||
+                    category == UnicodeCategory.ParagraphSeparator ||
+                    category == UnicodeCategory.Surrogate)
                     return false;
                 codePoints++;
             }
