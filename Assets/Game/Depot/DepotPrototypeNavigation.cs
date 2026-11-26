@@ -25,12 +25,12 @@ namespace LogistiCore.Depot
                 !requested.IsValid || !MapGlobalCityCatalog.TryGet(requested, out _) ||
                 !progress.HasCompany || !progress.HasHeadquarters ||
                 !progress.HasStarterSite || progress.DispatchReady ||
-                string.IsNullOrWhiteSpace(progress.HeadquartersCountryCode) ||
-                string.IsNullOrWhiteSpace(progress.HeadquartersCityKey))
+                string.IsNullOrWhiteSpace(progress.CountryCode) ||
+                string.IsNullOrWhiteSpace(progress.CityKey))
                 return false;
 
             var headquarters = new MapBusinessLocation(
-                progress.HeadquartersCountryCode, progress.HeadquartersCityKey);
+                progress.CountryCode, progress.CityKey);
             return headquarters.IsValid && headquarters.Equals(requested);
         }
 
