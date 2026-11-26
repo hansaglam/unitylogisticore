@@ -119,7 +119,9 @@ namespace LogistiCore.UI
             var actionElement = action.GetComponent<LayoutElement>();
             actionElement.preferredHeight = 104f;
             _preview = action;
-            _preview.onClick.AddListener(PreviewOnMap);
+            // Button.onClick requires a void UnityAction; PreviewOnMap returns
+            // bool so callers can still inspect whether queuing succeeded.
+            _preview.onClick.AddListener(() => { PreviewOnMap(); });
             _country.onValueChanged.AddListener(OnCountryChanged);
             _city.onValueChanged.AddListener(OnCityChanged);
 
