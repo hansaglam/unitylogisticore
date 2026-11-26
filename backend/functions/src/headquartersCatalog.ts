@@ -265,10 +265,10 @@ const Allowed = new Set<string>(KEYS);
 
 export function initialHeadquartersCount(): number { return Allowed.size; }
 
-export interface InitialHeadquartersLocation {
+export type InitialHeadquartersLocation = {
   countryCode: string;
   cityKey: string;
-}
+};
 
 export function validateInitialHeadquarters(value: unknown): InitialHeadquartersLocation {
   if (typeof value !== "object" || value === null || Array.isArray(value) ||
