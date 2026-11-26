@@ -142,6 +142,41 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void OperationalBuildingHasTwoDistinctVisibleWallFaces()
+        {
+            var obj = new GameObject("DepotWallContrastRegression",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView));
+            try
+            {
+                var yard = obj.GetComponent<DepotYardBlockoutView>();
+                var filter = obj.GetComponent<MeshFilter>();
+                yard.SetStage(DepotVisualStage.ReservedParcel);
+                Assert.IsFalse(ContainsColor(filter.sharedMesh.colors32,
+                    new Color32(151, 179, 184, 255)));
+
+                yard.SetStage(DepotVisualStage.StorageOperational);
+                var colors = filter.sharedMesh.colors32;
+                Assert.IsTrue(ContainsColor(colors,
+                    new Color32(151, 179, 184, 255)),
+                    "Bright loading facade must be rendered.");
+                Assert.IsTrue(ContainsColor(colors,
+                    new Color32(84, 117, 132, 255)),
+                    "Side wall must create a distinct building silhouette.");
+                Assert.IsFalse(yard.ShowsVehicle);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        static bool ContainsColor(Color32[] colors, Color32 expected)
+        {
+            for (var i = 0; i < colors.Length; i++)
+                if (colors[i].Equals(expected))
+                    return true;
+            return false;
+        }
+
+        [Test]
         public void DepotIllustrationStageNamesAreUniqueAndNeverImplyDispatch()
         {
             var names = new System.Collections.Generic.HashSet<string>();
