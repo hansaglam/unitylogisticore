@@ -230,6 +230,46 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void InspectorPreviewStageChangesRebuildMeshInEditMode()
+        {
+            // Regression from Unity screenshots: switching the Inspector
+            // enum did not change the visible scene until component reload.
+            Assert.IsFalse(Application.isPlaying);
+            var obj = new GameObject("DepotInspectorRefresh",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView));
+            try
+            {
+                var view = obj.GetComponent<DepotYardBlockoutView>();
+                var type = typeof(DepotYardBlockoutView);
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var preview = type.GetField("editorPreviewStage", flags);
+                var refresh = type.GetMethod("Update", flags);
+                Assert.IsNotNull(preview);
+                Assert.IsNotNull(refresh);
+
+                preview.SetValue(view, DepotVisualStage.ReservedParcel);
+                refresh.Invoke(view, null);
+                var reserved = view.AuthoredTriangleCount;
+                Assert.AreEqual(DepotVisualStage.ReservedParcel, view.Stage);
+                Assert.IsFalse(view.ShowsWarehouse);
+
+                preview.SetValue(view, DepotVisualStage.StorageOperational);
+                refresh.Invoke(view, null);
+                Assert.AreEqual(DepotVisualStage.StorageOperational, view.Stage);
+                Assert.IsTrue(view.ShowsWarehouse);
+                Assert.Greater(view.AuthoredTriangleCount, reserved);
+
+                preview.SetValue(view, DepotVisualStage.ActivationReady);
+                refresh.Invoke(view, null);
+                Assert.AreEqual(DepotVisualStage.ActivationReady, view.Stage);
+                Assert.IsFalse(view.ShowsWarehouse);
+                Assert.IsTrue(view.ShowsSiteInfrastructure);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        [Test]
         public void YardTapOnlySelectsVerifiedSiteAndNeverInventsDispatch()
         {
             var warehouseFace = new Vector2(2.1f, -1.0f);
