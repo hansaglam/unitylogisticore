@@ -88,6 +88,47 @@ namespace LogistiCore.Backend
         public bool DispatchReady => false;
     }
 
+    /// <summary>
+    /// Authenticated depot readiness, not a simulated city or AI-generated
+    /// building. Readiness comes from real account, catalog and fleet state.
+    /// </summary>
+    public readonly struct ClientStarterDepotProgressState
+    {
+        public ClientStarterDepotProgressState(bool company, bool headquarters, bool site,
+            bool economy, bool fleet, bool warehouse, string stage,
+            string countryCode, string cityKey, string warehouseId,
+            string capacityModel, int capacityUnits)
+        {
+            HasCompany = company;
+            HasHeadquarters = headquarters;
+            HasStarterSite = site;
+            EconomyReady = economy;
+            StarterFleetReady = fleet;
+            WarehouseReady = warehouse;
+            Stage = stage ?? "";
+            CountryCode = countryCode ?? "";
+            CityKey = cityKey ?? "";
+            WarehouseId = warehouseId ?? "";
+            CapacityModelId = capacityModel ?? "";
+            CapacityUnits = capacityUnits;
+        }
+
+        public bool HasCompany { get; }
+        public bool HasHeadquarters { get; }
+        public bool HasStarterSite { get; }
+        public bool EconomyReady { get; }
+        public bool StarterFleetReady { get; }
+        public bool WarehouseReady { get; }
+        public bool DispatchReady => false;
+        public bool CanRequestActivation => Stage == "ready_to_activate";
+        public string Stage { get; }
+        public string CountryCode { get; }
+        public string CityKey { get; }
+        public string WarehouseId { get; }
+        public string CapacityModelId { get; }
+        public int CapacityUnits { get; }
+    }
+
     public readonly struct ClientEconomyState
     {
         public ClientEconomyState(
@@ -614,6 +655,97 @@ namespace LogistiCore.Backend
 
             parsed = new ClientStarterDepotSiteState(true, true, true,
                 companyId, countryCode, cityKey);
+            return true;
+        }
+
+        public static bool TryStarterDepotProgress(object result,
+            out ClientStarterDepotProgressState parsed)
+        {
+            parsed = default;
+            if (!ClientValue.TryMap(result, out var map) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasCompany"), out var company) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasHeadquarters"), out var hq) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasStarterSite"), out var site) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "economyReady"), out var economy) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "starterFleetReady"), out var fleet) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "warehouseReady"), out var warehouse) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "dispatchReady"), out var dispatch) ||
+                !ClientValue.TryString(ClientValue.Get(map, "stage"), out var stage) ||
+                dispatch || (hq && !company) || (site && !hq) ||
+                (warehouse && (!site || !economy || !fleet)))
+                return false;
+
+            switch (stage)
+            {
+                case "no_company":
+                    if (company || hq || site || economy || fleet || warehouse) return false;
+                    break;
+                case "legacy_hq_missing":
+                    if (!company || hq || site || fleet || warehouse) return false;
+                    break;
+                case "starter_site_missing":
+                    if (!company || !hq || site || fleet || warehouse) return false;
+                    break;
+                case "awaiting_economy":
+                    if (!company || !hq || !site || economy || fleet || warehouse) return false;
+                    break;
+                case "unsupported_starter_region":
+                    if (!company || !hq || !site || !economy || fleet || warehouse) return false;
+                    break;
+                case "awaiting_starter_fleet":
+                    if (!company || !hq || !site || !economy || fleet || warehouse) return false;
+                    break;
+                case "awaiting_warehouse_catalog":
+                case "ready_to_activate":
+                    if (!company || !hq || !site || !economy || !fleet || warehouse) return false;
+                    break;
+                case "warehouse_operational_dispatch_pending_routes":
+                    if (!company || !hq || !site || !economy || !fleet || !warehouse) return false;
+                    break;
+                default: return false;
+            }
+
+            var country = "";
+            var city = "";
+            if (hq)
+            {
+                if (!ClientValue.TryMap(ClientValue.Get(map, "headquarters"), out var location) ||
+                    location.Count != 2 ||
+                    !ClientValue.TryString(ClientValue.Get(location, "countryCode"), out country) ||
+                    !ClientValue.TryString(ClientValue.Get(location, "cityKey"), out city) ||
+                    country.Length != 3 || city.Length < 1 || city.Length > 80)
+                    return false;
+                for (var i = 0; i < country.Length; i++)
+                    if (country[i] < 'A' || country[i] > 'Z') return false;
+                foreach (var c in city)
+                    if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+                          c == '_' || c == '-')) return false;
+            }
+            else if (ClientValue.Get(map, "headquarters") != null)
+                return false;
+
+            string warehouseId = "", capacityModel = "";
+            int units = 0;
+            if (warehouse)
+            {
+                if (!ClientValue.TryMap(ClientValue.Get(map, "warehouse"), out var depot) ||
+                    depot.Count != 3 ||
+                    !ClientValue.TryString(ClientValue.Get(depot, "warehouseId"), out warehouseId) ||
+                    !ClientValue.TryString(ClientValue.Get(depot, "capacityModelId"), out capacityModel) ||
+                    !ClientValue.TryInt(ClientValue.Get(depot, "capacityUnits"), out units) ||
+                    warehouseId.Length != 64 || capacityModel != "pallet_slots_v1" ||
+                    units != 24)
+                    return false;
+            }
+            else if (ClientValue.Get(map, "warehouse") != null)
+                return false;
+
+            if (map.Count != 8 + (hq ? 1 : 0) + (warehouse ? 1 : 0))
+                return false;
+
+            parsed = new ClientStarterDepotProgressState(
+                company, hq, site, economy, fleet, warehouse, stage,
+                country, city, warehouseId, capacityModel, units);
             return true;
         }
 
