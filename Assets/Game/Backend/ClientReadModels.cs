@@ -65,6 +65,29 @@ namespace LogistiCore.Backend
         public string CatalogVersion { get; }
     }
 
+    /// <summary>Verified starter HQ site is reserved, never an operational warehouse or delivery permit.</summary>
+    public readonly struct ClientStarterDepotSiteState
+    {
+        public ClientStarterDepotSiteState(bool hasCompany, bool hasHeadquarters,
+            bool hasStarterSite, string companyId, string countryCode, string cityKey)
+        {
+            HasCompany = hasCompany;
+            HasHeadquarters = hasHeadquarters;
+            HasStarterSite = hasStarterSite;
+            CompanyId = companyId ?? string.Empty;
+            CountryCode = countryCode ?? string.Empty;
+            CityKey = cityKey ?? string.Empty;
+        }
+
+        public bool HasCompany { get; }
+        public bool HasHeadquarters { get; }
+        public bool HasStarterSite { get; }
+        public string CompanyId { get; }
+        public string CountryCode { get; }
+        public string CityKey { get; }
+        public bool DispatchReady => false;
+    }
+
     public readonly struct ClientEconomyState
     {
         public ClientEconomyState(
@@ -543,6 +566,54 @@ namespace LogistiCore.Backend
 
             parsed = new ClientCompanyHeadquartersState(true, true,
                 companyId, countryCode, cityKey, catalogVersion);
+            return true;
+        }
+
+        /// <summary>Read only. Site reservation does not grant a warehouse or fleet.</summary>
+        public static bool TryStarterDepotSite(object result, out ClientStarterDepotSiteState parsed)
+        {
+            parsed = default;
+            if (!ClientValue.TryMap(result, out var map) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasCompany"), out var company) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasHeadquarters"), out var hq) ||
+                !ClientValue.TryBool(ClientValue.Get(map, "hasStarterSite"), out var site) ||
+                (hq && !company) || (site && !hq))
+                return false;
+
+            if (!site)
+            {
+                parsed = new ClientStarterDepotSiteState(company, hq, false, "", "", "");
+                return true;
+            }
+
+            if (!ClientValue.TryString(ClientValue.Get(map, "companyId"), out var companyId) ||
+                string.IsNullOrEmpty(companyId) ||
+                !ClientValue.TryMap(ClientValue.Get(map, "starterSite"), out var siteData) ||
+                siteData.Count != 5 ||
+                !ClientValue.TryString(ClientValue.Get(siteData, "countryCode"), out var countryCode) ||
+                !ClientValue.TryString(ClientValue.Get(siteData, "cityKey"), out var cityKey) ||
+                !ClientValue.TryString(ClientValue.Get(siteData, "catalogVersion"), out var catalog) ||
+                !ClientValue.TryString(ClientValue.Get(siteData, "status"), out var status) ||
+                !ClientValue.TryString(ClientValue.Get(siteData, "dispatchStatus"), out var dispatch) ||
+                catalog != "lc_tur_europe_2026_11_v1" ||
+                status != "site_reserved" ||
+                dispatch != "unavailable_pending_verified_routes" ||
+                countryCode.Length != 3 || cityKey.Length < 1 || cityKey.Length > 80)
+                return false;
+
+            for (var i = 0; i < countryCode.Length; i++)
+                if (countryCode[i] < 'A' || countryCode[i] > 'Z')
+                    return false;
+            for (var i = 0; i < cityKey.Length; i++)
+            {
+                var c = cityKey[i];
+                if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+                    c == '_' || c == '-'))
+                    return false;
+            }
+
+            parsed = new ClientStarterDepotSiteState(true, true, true,
+                companyId, countryCode, cityKey);
             return true;
         }
 
