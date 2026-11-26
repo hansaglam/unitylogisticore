@@ -1,3 +1,4 @@
+using System.Reflection;
 using LogistiCore.Backend;
 using LogistiCore.Depot;
 using NUnit.Framework;
@@ -74,6 +75,37 @@ namespace LogistiCore.Tests
                 view.SetStage(DepotVisualStage.StorageOperational);
                 Assert.IsTrue(view.ShowsWarehouse);
                 Assert.IsFalse(view.ShowsVehicle);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        [Test]
+        public void AccountChangeClearsFailedReadLatchAndPreviouslyVerifiedDepot()
+        {
+            var obj = new GameObject("DepotAccountScopeRegression",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView), typeof(DepotPrototypeController));
+            try
+            {
+                var controller = obj.GetComponent<DepotPrototypeController>();
+                var type = typeof(DepotPrototypeController);
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                type.GetField("_uid", flags).SetValue(controller, "old-player");
+                type.GetField("_error", flags).SetValue(controller, true);
+                type.GetField("_verified", flags).SetValue(controller, true);
+                type.GetField("_requested", flags).SetValue(controller, true);
+                type.GetField("_stage", flags).SetValue(controller,
+                    DepotVisualStage.StorageOperational);
+                type.GetField("_generation", flags).SetValue(controller, 5);
+
+                type.GetMethod("ResetReadState", flags).Invoke(controller, null);
+
+                Assert.IsFalse(controller.HasVerifiedData);
+                Assert.AreEqual(DepotVisualStage.Unverified, controller.CurrentStage);
+                Assert.IsFalse((bool)type.GetField("_error", flags).GetValue(controller));
+                Assert.IsFalse((bool)type.GetField("_requested", flags).GetValue(controller));
+                Assert.AreEqual("", type.GetField("_uid", flags).GetValue(controller));
+                Assert.AreEqual(6, type.GetField("_generation", flags).GetValue(controller));
             }
             finally { Object.DestroyImmediate(obj); }
         }
