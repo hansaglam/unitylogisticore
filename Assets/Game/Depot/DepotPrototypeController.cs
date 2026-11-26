@@ -6,6 +6,8 @@ using LogistiCore.UI;
 using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
+using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LogistiCore.Depot
@@ -94,6 +96,7 @@ namespace LogistiCore.Depot
             // error latch, cached warehouse and late response generation.
             if (!string.IsNullOrEmpty(_uid) && CurrentUid() != _uid)
                 ResetReadState();
+            HandleYardInspection();
             if (_requested || _verified || _error ||
                 !FirebaseClient.SdkAppReady ||
                 !ClientLocalEmulatorSecurity.AllowsLiveReads(
@@ -134,6 +137,53 @@ namespace LogistiCore.Depot
                     }
                     Refresh();
                 });
+        }
+
+        void HandleYardInspection()
+        {
+            // A user may only inspect a verified site. This is a local
+            // tab-selection affordance, not a backend command.
+            if (!_verified || _stage == DepotVisualStage.Unverified ||
+                _yard == null)
+                return;
+
+            var screen = Vector2.zero;
+            var pressed = false;
+            var overUi = false;
+            if (Touchscreen.current != null &&
+                Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            {
+                screen = Touchscreen.current.primaryTouch.position.ReadValue();
+                pressed = true;
+                if (EventSystem.current != null)
+                    overUi = EventSystem.current.IsPointerOverGameObject(
+                        Touchscreen.current.primaryTouch.touchId.ReadValue());
+            }
+            else if (Mouse.current != null &&
+                Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                screen = Mouse.current.position.ReadValue();
+                pressed = true;
+                if (EventSystem.current != null)
+                    overUi = EventSystem.current.IsPointerOverGameObject();
+            }
+            if (!pressed || overUi)
+                return;
+
+            var camera = Camera.main;
+            if (camera == null)
+                return;
+            var world = camera.ScreenToWorldPoint(
+                new Vector3(screen.x, screen.y,
+                    Mathf.Abs(camera.transform.position.z -
+                        _yard.transform.position.z)));
+            var local = _yard.transform.InverseTransformPoint(world);
+            var target = DepotYardInspectionPolicy.Resolve(
+                _stage, new Vector2(local.x, local.y));
+            if (target == DepotYardInspectTarget.Parcel)
+                SelectTab(InspectTab.Parcel);
+            else if (target == DepotYardInspectTarget.Storage)
+                SelectTab(InspectTab.Storage);
         }
 
         static string CurrentUid()

@@ -177,6 +177,63 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void SiteInfrastructureAndVisualStateStayVerifiedOnly()
+        {
+            var obj = new GameObject("DepotSiteInfrastructureRegression",
+                typeof(MeshFilter), typeof(MeshRenderer),
+                typeof(DepotYardBlockoutView));
+            try
+            {
+                var view = obj.GetComponent<DepotYardBlockoutView>();
+                view.SetStage(DepotVisualStage.Unverified);
+                Assert.IsFalse(view.ShowsSiteInfrastructure);
+                var neutralTriangles = view.AuthoredTriangleCount;
+
+                view.SetStage(DepotVisualStage.ReservedParcel);
+                Assert.IsTrue(view.ShowsSiteInfrastructure);
+                Assert.Greater(view.AuthoredTriangleCount, neutralTriangles);
+                Assert.IsFalse(view.ShowsWarehouse);
+
+                view.SetStage(DepotVisualStage.ActivationReady);
+                Assert.IsTrue(view.ShowsSiteInfrastructure);
+                Assert.IsFalse(view.ShowsLoadingDockArt);
+
+                view.SetStage(DepotVisualStage.StorageOperational);
+                Assert.IsTrue(view.ShowsSiteInfrastructure);
+                Assert.IsTrue(view.ShowsLoadingDockArt);
+                Assert.IsFalse(view.ShowsVehicle);
+            }
+            finally { Object.DestroyImmediate(obj); }
+        }
+
+        [Test]
+        public void YardTapOnlySelectsVerifiedSiteAndNeverInventsDispatch()
+        {
+            var warehouseFace = new Vector2(2.1f, -1.0f);
+            var site = new Vector2(-2.9f, -0.3f);
+            var road = new Vector2(6.0f, -5.5f);
+            Assert.AreEqual(DepotYardInspectTarget.None,
+                DepotYardInspectionPolicy.Resolve(
+                    DepotVisualStage.Unverified, warehouseFace));
+            Assert.AreEqual(DepotYardInspectTarget.Parcel,
+                DepotYardInspectionPolicy.Resolve(
+                    DepotVisualStage.ReservedParcel, site));
+            Assert.AreEqual(DepotYardInspectTarget.Storage,
+                DepotYardInspectionPolicy.Resolve(
+                    DepotVisualStage.StorageOperational, warehouseFace));
+            Assert.AreNotEqual(DepotYardInspectTarget.Storage,
+                DepotYardInspectionPolicy.Resolve(
+                    DepotVisualStage.ActivationReady, warehouseFace));
+            Assert.AreEqual(DepotYardInspectTarget.None,
+                DepotYardInspectionPolicy.Resolve(
+                    DepotVisualStage.StorageOperational, road));
+            Assert.AreEqual(DepotYardInspectTarget.None,
+                DepotYardInspectionPolicy.Resolve(
+                    DepotVisualStage.StorageOperational,
+                    new Vector2(float.NaN, 0f)));
+        }
+
+        [Test]
         public void DepotIllustrationStageNamesAreUniqueAndNeverImplyDispatch()
         {
             var names = new System.Collections.Generic.HashSet<string>();

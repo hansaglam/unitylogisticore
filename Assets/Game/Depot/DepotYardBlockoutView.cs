@@ -37,6 +37,9 @@ namespace LogistiCore.Depot
         static readonly Color32 Vent = new Color32(37, 65, 79, 255);
         static readonly Color32 DockSeal = new Color32(19, 33, 44, 255);
         static readonly Color32 Safety = new Color32(205, 171, 105, 255);
+        static readonly Color32 YardJoint = new Color32(56, 80, 90, 255);
+        static readonly Color32 Fence = new Color32(122, 152, 153, 255);
+        static readonly Color32 Gate = new Color32(205, 174, 119, 255);
 
         readonly List<Vector3> _vertices = new List<Vector3>(140);
         readonly List<Color32> _colors = new List<Color32>(140);
@@ -53,6 +56,8 @@ namespace LogistiCore.Depot
         public bool ShowsVehicle => false; // No verified vehicle location exists yet.
         public int AuthoredTriangleCount => _triangles.Count / 3;
         public bool ShowsLoadingDockArt => ShowsWarehouse;
+        // Infrastructure conveys site boundaries, never an open trade route.
+        public bool ShowsSiteInfrastructure => _stage != DepotVisualStage.Unverified;
 
         void Awake()
         {
@@ -127,7 +132,10 @@ namespace LogistiCore.Depot
             }
 
             if (_stage != DepotVisualStage.Unverified)
+            {
                 BuildParcel(_stage);
+                BuildSiteInfrastructure();
+            }
             if (_stage == DepotVisualStage.StorageOperational)
                 BuildWarehouse();
             else if (_stage == DepotVisualStage.ActivationReady)
@@ -198,6 +206,58 @@ namespace LogistiCore.Depot
                 var t = 0.19f + i * 0.29f;
                 var start = Vector2.Lerp(V(0.3f, -2.2f), V(4.4f, -0.82f), t);
                 Strip(start, start + V(-0.8f, -0.45f), 0.035f, Perimeter);
+            }
+        }
+
+        void BuildSiteInfrastructure()
+        {
+            // Infrastructure is tied to a verified reserved site. The road
+            // outside it remains neutral and public on an unverified account.
+            // These fences/markings do not imply active vehicle movements.
+            var rearLeft = V(-3.80f, -0.34f);
+            var rear = V(0.39f, 1.20f);
+            var rearRight = V(4.79f, -0.35f);
+            var front = V(0.61f, -2.02f);
+
+            // Three continuous perimeter sides. The approach side has a
+            // deliberate opening facing the loading apron.
+            FenceSegment(rearLeft, rear, 4);
+            FenceSegment(rear, rearRight, 4);
+            FenceSegment(rearLeft, front, 4);
+            var entranceStart = Vector2.Lerp(front, rearRight, 0.38f);
+            var entranceEnd = Vector2.Lerp(front, rearRight, 0.71f);
+            FenceSegment(front, entranceStart, 2);
+            FenceSegment(entranceEnd, rearRight, 2);
+
+            // No fabricated barrier opening or active security booth. A
+            // small static entry threshold marks the future access point.
+            Strip(entranceStart, entranceStart + V(0.20f, -0.17f),
+                0.055f, Gate);
+            Strip(entranceEnd, entranceEnd + V(0.20f, -0.17f),
+                0.055f, Gate);
+
+            // Sparse paved-apron seams, matched to the warehouse perspective.
+            // Deliberately no parking cars, pallets or dynamic traffic.
+            for (var i = 1; i < 4; i++)
+            {
+                var t = i / 4f;
+                var a = Vector2.Lerp(V(-3.22f, -0.40f),
+                    V(0.51f, -1.83f), t);
+                var b = Vector2.Lerp(V(0.51f, 0.89f),
+                    V(4.18f, -0.40f), t);
+                Strip(a, b, 0.016f, YardJoint);
+            }
+        }
+
+        void FenceSegment(Vector2 a, Vector2 b, int sections)
+        {
+            // Fixed 2D perspective fixtures; no procedural/random variation.
+            Strip(a, b, 0.034f, Fence);
+            for (var i = 0; i <= sections; i++)
+            {
+                var p = Vector2.Lerp(a, b, i / (float)sections);
+                Strip(p + V(0f, -0.06f), p + V(0f, 0.15f),
+                    0.044f, Fence);
             }
         }
 
