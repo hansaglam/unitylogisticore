@@ -132,7 +132,10 @@ namespace LogistiCore.Map
                 _lastTouch = touch.screenPosition;
                 _touchTravel += delta.magnitude;
                 if (delta.sqrMagnitude > 0f)
+                {
+                    NotifyUserNavigation();
                     _rig.PanScreenDelta(delta);
+                }
                 return;
             }
 
@@ -147,7 +150,10 @@ namespace LogistiCore.Map
             {
                 var factor = distance / _pinchDistance;
                 if (factor > 1.002f || factor < 0.998f)
+                {
+                    NotifyUserNavigation();
                     _rig.ZoomAtScreen(_pinchMid, factor);
+                }
             }
 
             _pinchDistance = distance;
@@ -176,7 +182,10 @@ namespace LogistiCore.Map
                 _lastMouse = position;
                 _mouseTravel += delta.magnitude;
                 if (delta.sqrMagnitude > 0f)
+                {
+                    NotifyUserNavigation();
                     _rig.PanScreenDelta(delta);
+                }
             }
 
             if (mouse.leftButton.wasReleasedThisFrame)
@@ -191,12 +200,14 @@ namespace LogistiCore.Map
             if (scroll != 0f && !OverUi(position, -1))
             {
                 var factor = scroll > 0f ? 1.12f : 1f / 1.12f;
+                NotifyUserNavigation();
                 _rig.ZoomAtScreen(position, factor);
             }
         }
 
         void SelectAt(Vector2 screen)
         {
+            NotifyUserNavigation();
             var layer = GetComponent<MapMarkerLayer>();
             if (layer == null)
                 layer = FindAnyObjectByType<MapMarkerLayer>();
@@ -242,6 +253,13 @@ namespace LogistiCore.Map
 
             if (!layer.TrySelect(screen, out _))
                 layer.ClearSelection();
+        }
+
+        void NotifyUserNavigation()
+        {
+            var focus = GetComponent<MapCompanyHeadquartersFocus>();
+            if (focus != null)
+                focus.SuppressNavigation();
         }
 
         bool OverUi(Vector2 screen, int pointerId)

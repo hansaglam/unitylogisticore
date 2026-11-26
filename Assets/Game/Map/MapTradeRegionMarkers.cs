@@ -61,6 +61,7 @@ namespace LogistiCore.Map
 
         public int CityCount => _cities.Count;
         public int VisibleMarkerCount => _visible;
+        public bool ManualPreviewApplied { get; private set; }
 
         public static void Ensure(MapMarkerLayer markerLayer, Camera camera)
         {
@@ -111,6 +112,12 @@ namespace LogistiCore.Map
             _root.hideFlags = HideFlags.DontSave;
             _root.transform.SetParent(transform, false);
             Refresh(true);
+            // The focus controller is camera-bound so user pan/zoom can cancel
+            // a late HQ response. It never replaces the original map rig.
+            var focus = camera.GetComponent<MapCompanyHeadquartersFocus>();
+            if (focus == null)
+                focus = camera.gameObject.AddComponent<MapCompanyHeadquartersFocus>();
+            focus.Bind(this, camera);
         }
 
         void OnEnable()
@@ -124,6 +131,8 @@ namespace LogistiCore.Map
                 _camera == null || _root == null)
                 return;
 
+            // Intentional manual preview is an absolute one-entry override.
+            ManualPreviewApplied = true;
             if (!MapHeadquartersPreviewSelection.TryConsume(out var location) ||
                 !MapGlobalCityCatalog.TryGet(location, out var city) ||
                 !MapTradeRegionCatalog.Includes(city) ||
