@@ -325,9 +325,12 @@ namespace LogistiCore.Tests
                 Assert.AreEqual(0, Count<MapCameraRig>(company));
                 Assert.AreEqual(0, Count<HomeShell>(company));
                 Assert.IsNotNull(shell.HomeButton);
-                Assert.AreEqual(2, shell.GetComponentsInChildren<Button>(true).Length);
+                Assert.AreEqual(4, shell.GetComponentsInChildren<Button>(true).Length);
                 Assert.IsNotNull(FindNamed(shell.transform, "HeadquartersPreview"));
                 Assert.IsNotNull(FindNamed(shell.transform, "PreviewMap"));
+                Assert.IsNotNull(FindNamed(shell.transform, "CompanyNameInput"));
+                Assert.IsNotNull(FindNamed(shell.transform, "ReviewCompany"));
+                Assert.IsNotNull(FindNamed(shell.transform, "ConfirmCompany"));
                 Assert.IsNotNull(FindNamed(shell.transform, "Overview"));
                 Assert.AreEqual(string.Empty, shell.Body);
                 Assert.AreEqual(0, shell.HomeButton.onClick.GetPersistentEventCount());
