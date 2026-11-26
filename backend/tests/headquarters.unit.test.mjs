@@ -46,7 +46,9 @@ test("initial HQ catalog matches C# region exactly, without user-supplied locati
     }), { countryCode: city.countryCode, cityKey: city.cityKey });
 
   for (const city of cities.filter(c => !inScope(c)))
-    assert.throws(() => validateInitialHeadquarters(city), errorIs("INVALID_ARGUMENT"));
+    assert.throws(() => validateInitialHeadquarters({
+      countryCode: city.countryCode, cityKey: city.cityKey,
+    }), errorIs("INVALID_ARGUMENT"));
   assert.equal(HEADQUARTERS_CATALOG_VERSION, "lc_tur_europe_2026_11_v1");
 });
 
