@@ -58,6 +58,54 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void AccountSwitchClosesPendingGateAndDockVisuals()
+        {
+            var go = new GameObject("DepotSessionResetTest");
+            var gate = new GameObject("MovableGate").transform;
+            var door = new GameObject("MovableDoor").transform;
+            try
+            {
+                gate.SetParent(go.transform, false);
+                door.SetParent(go.transform, false);
+                gate.localPosition = new Vector3(2f, -1f, 0f);
+                door.localPosition = new Vector3(-2f, 1f, 0f);
+                var rig = go.AddComponent<DepotMotionRig>();
+                var flags = System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance;
+                // The rig is isolated from a live backend/scene; bind only
+                // local dummy sprite transforms and explicitly reset rest.
+                rig.ResetForIdentityChange();
+                typeof(DepotMotionRig).GetField("slidingGateLeaf", flags)
+                    .SetValue(rig, gate);
+                typeof(DepotMotionRig).GetField("loadingDoorLeaf", flags)
+                    .SetValue(rig, door);
+                typeof(DepotMotionRig).GetField("_initialized", flags)
+                    .SetValue(rig, false);
+                rig.CaptureRestPose();
+
+                rig.ApplyEvidence(new DepotMotionEvidence(true,
+                    DepotVisualStage.StorageOperational, true, true));
+                Assert.IsTrue(rig.GateTargetOpen);
+                Assert.IsTrue(rig.DockTargetOpen);
+                gate.localPosition = new Vector3(3f, -1f, 0f);
+                door.localPosition = new Vector3(-2f, 1.8f, 0f);
+
+                rig.ResetForIdentityChange();
+                Assert.IsFalse(rig.ShowsFacility);
+                Assert.IsFalse(rig.GateTargetOpen);
+                Assert.IsFalse(rig.DockTargetOpen);
+                Assert.AreEqual(new Vector3(2f, -1f, 0f),
+                    gate.localPosition);
+                Assert.AreEqual(new Vector3(-2f, 1f, 0f),
+                    door.localPosition);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
         public void FreshRigNeverInventsOpenEvents()
         {
             var go = new GameObject("DepotMotionRigSafety",
