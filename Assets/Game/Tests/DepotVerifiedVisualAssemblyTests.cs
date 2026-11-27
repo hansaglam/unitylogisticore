@@ -82,6 +82,35 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void DowngradeFromOperationalToReservedHidesWarehouse()
+        {
+            var root = new GameObject("DepotStageDowngrade");
+            try
+            {
+                var site = new GameObject("Site", typeof(SpriteRenderer))
+                    .GetComponent<SpriteRenderer>();
+                var warehouse = new GameObject("Warehouse",
+                    typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+                site.transform.SetParent(root.transform, false);
+                warehouse.transform.SetParent(root.transform, false);
+                var assembly = root.AddComponent<DepotVerifiedVisualAssembly>();
+                SetField(assembly, "siteRenderers", new[] { site });
+                SetField(assembly, "warehouseRenderers", new[] { warehouse });
+
+                assembly.Apply(new DepotMotionEvidence(true,
+                    DepotVisualStage.StorageOperational, false, false));
+                Assert.IsTrue(warehouse.enabled);
+                assembly.Apply(new DepotMotionEvidence(true,
+                    DepotVisualStage.ReservedParcel, false, false));
+                Assert.IsTrue(site.enabled);
+                Assert.IsFalse(warehouse.enabled);
+                Assert.AreEqual(DepotVisualStage.ReservedParcel,
+                    assembly.VisibleStage);
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
         public void UnexpectedStageFailsClosed()
         {
             var root = new GameObject("DepotUnexpectedStage");
