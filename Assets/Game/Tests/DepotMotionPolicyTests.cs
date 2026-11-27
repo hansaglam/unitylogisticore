@@ -106,6 +106,93 @@ namespace LogistiCore.Tests
         }
 
         [Test]
+        public void GateAndDockAdvanceDeterministicallyAndResetOnLossOfEvidence()
+        {
+            var root = new GameObject("MotionStepRoot");
+            var gate = new GameObject("GateLeaf").transform;
+            var dock = new GameObject("DockLeaf").transform;
+            try
+            {
+                gate.SetParent(root.transform, false);
+                dock.SetParent(root.transform, false);
+                gate.localPosition = new Vector3(-1f, -0.2f, 0f);
+                dock.localPosition = new Vector3(0.8f, 0.2f, 0f);
+                var rig = root.AddComponent<DepotMotionRig>();
+                var binding = System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.NonPublic;
+                typeof(DepotMotionRig).GetField("slidingGateLeaf", binding)
+                    .SetValue(rig, gate);
+                typeof(DepotMotionRig).GetField("loadingDoorLeaf", binding)
+                    .SetValue(rig, dock);
+                typeof(DepotMotionRig).GetField("_initialized", binding)
+                    .SetValue(rig, false);
+                rig.CaptureRestPose();
+
+                rig.Advance(1f);
+                Assert.AreEqual(new Vector3(-1f, -0.2f, 0f), gate.localPosition);
+                Assert.AreEqual(new Vector3(0.8f, 0.2f, 0f), dock.localPosition);
+
+                rig.ApplyEvidence(new DepotMotionEvidence(true,
+                    DepotVisualStage.StorageOperational, true, true));
+                rig.Advance(0.5f);
+                Assert.Less(Vector3.Distance(gate.localPosition,
+                    new Vector3(0f, -0.2f, 0f)), 0.11f);
+                Assert.Less(Vector3.Distance(dock.localPosition,
+                    new Vector3(0.8f, 0.8f, 0f)), 0.01f);
+                rig.Advance(5f);
+                Assert.AreEqual(new Vector3(0f, -0.2f, 0f), gate.localPosition);
+                Assert.AreEqual(new Vector3(0.8f, 1f, 0f), dock.localPosition);
+
+                rig.ApplyEvidence(new DepotMotionEvidence(true,
+                    DepotVisualStage.StorageOperational, false, false));
+                rig.Advance(5f);
+                Assert.AreEqual(new Vector3(-1f, -0.2f, 0f), gate.localPosition);
+                Assert.AreEqual(new Vector3(0.8f, 0.2f, 0f), dock.localPosition);
+
+                rig.ApplyEvidence(new DepotMotionEvidence(true,
+                    DepotVisualStage.StorageOperational, true, true));
+                rig.Advance(0.15f);
+                rig.ApplyEvidence(default);
+                Assert.AreEqual(new Vector3(-1f, -0.2f, 0f), gate.localPosition);
+                Assert.AreEqual(new Vector3(0.8f, 0.2f, 0f), dock.localPosition);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void InvalidDeltaNeverMovesSpriteLeaves()
+        {
+            var root = new GameObject("MotionInvalidDelta");
+            var leaf = new GameObject("Leaf").transform;
+            try
+            {
+                leaf.SetParent(root.transform, false);
+                var rig = root.AddComponent<DepotMotionRig>();
+                var binding = System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.NonPublic;
+                typeof(DepotMotionRig).GetField("slidingGateLeaf", binding)
+                    .SetValue(rig, leaf);
+                typeof(DepotMotionRig).GetField("_initialized", binding)
+                    .SetValue(rig, false);
+                rig.CaptureRestPose();
+                rig.ApplyEvidence(new DepotMotionEvidence(true,
+                    DepotVisualStage.StorageOperational, true, false));
+                rig.Advance(float.NaN);
+                rig.Advance(float.PositiveInfinity);
+                rig.Advance(-1f);
+                rig.Advance(0f);
+                Assert.AreEqual(Vector3.zero, leaf.localPosition);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void FreshRigNeverInventsOpenEvents()
         {
             var go = new GameObject("DepotMotionRigSafety",
