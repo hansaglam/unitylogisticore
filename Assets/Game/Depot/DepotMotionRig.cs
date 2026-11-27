@@ -82,15 +82,28 @@ namespace LogistiCore.Depot
 
         void Update()
         {
-            if (!_initialized || !_showFacility)
+            Advance(Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Deterministic motion step that can be exercised in isolation in
+        /// EditMode and PlayMode. A negative/invalid delta never moves art.
+        /// This method does not infer, request or invent any operation event.
+        /// </summary>
+        public void Advance(float deltaTime)
+        {
+            if (!_initialized || !_showFacility ||
+                float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) ||
+                deltaTime <= 0f)
                 return;
+
             if (slidingGateLeaf != null)
             {
                 var target = _gateRest +
                     (_gateTargetOpen ? gateTravel : Vector3.zero);
                 slidingGateLeaf.localPosition = Vector3.MoveTowards(
                     slidingGateLeaf.localPosition, target,
-                    Mathf.Max(0.01f, gateSpeed) * Time.deltaTime);
+                    Mathf.Max(0.01f, gateSpeed) * deltaTime);
             }
             if (loadingDoorLeaf != null)
             {
@@ -98,7 +111,7 @@ namespace LogistiCore.Depot
                     (_dockTargetOpen ? dockTravel : Vector3.zero);
                 loadingDoorLeaf.localPosition = Vector3.MoveTowards(
                     loadingDoorLeaf.localPosition, target,
-                    Mathf.Max(0.01f, dockSpeed) * Time.deltaTime);
+                    Mathf.Max(0.01f, dockSpeed) * deltaTime);
             }
         }
 
