@@ -16,6 +16,10 @@ namespace LogistiCore.Depot
     public sealed class DepotVerifiedVisualAssembly : MonoBehaviour
     {
         [SerializeField] SpriteRenderer[] siteRenderers = Array.Empty<SpriteRenderer>();
+        // Foundation/pad artwork is visible ONLY while activation is ready.
+        // Keep it in a distinct collection: a foundation must never be
+        // mistaken for a fully commissioned warehouse.
+        [SerializeField] SpriteRenderer[] activationRenderers = Array.Empty<SpriteRenderer>();
         [SerializeField] SpriteRenderer[] warehouseRenderers = Array.Empty<SpriteRenderer>();
         [SerializeField] SpriteRenderer[] operationalDetails = Array.Empty<SpriteRenderer>();
         [SerializeField] DepotMotionRig motionRig;
@@ -60,8 +64,11 @@ namespace LogistiCore.Depot
 
             VisibleStage = evidence.FacilityStage;
             SetVisible(siteRenderers, true);
+            var activationReady =
+                evidence.FacilityStage == DepotVisualStage.ActivationReady;
             var hasWarehouse =
                 evidence.FacilityStage == DepotVisualStage.StorageOperational;
+            SetVisible(activationRenderers, activationReady);
             SetVisible(warehouseRenderers, hasWarehouse);
             SetVisible(operationalDetails, hasWarehouse);
 
@@ -79,6 +86,7 @@ namespace LogistiCore.Depot
         {
             VisibleStage = DepotVisualStage.Unverified;
             SetVisible(siteRenderers, false);
+            SetVisible(activationRenderers, false);
             SetVisible(warehouseRenderers, false);
             SetVisible(operationalDetails, false);
             if (motionRig != null)
