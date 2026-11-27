@@ -37,8 +37,19 @@ namespace LogistiCore.Depot
 
         void OnDisable()
         {
-            // A disabled scene must not retain the previous player's visual
-            // open state when it is re-enabled under a different identity.
+            // No visual motion survives leaving the scene, including a
+            // paused animation part-way through a transition.
+            ResetForIdentityChange();
+        }
+
+        /// <summary>
+        /// Must be invoked by the owning session adapter on account switch,
+        /// sign-out or failed/expired authenticated data refresh. Does not
+        /// confer or remove facility ownership; only clears visual movement.
+        /// </summary>
+        public void ResetForIdentityChange()
+        {
+            CaptureRestPose();
             _gateTargetOpen = false;
             _dockTargetOpen = false;
             _showFacility = false;
